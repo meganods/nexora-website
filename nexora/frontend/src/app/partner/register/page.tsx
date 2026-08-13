@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   ShieldCheck, User, Mail, Lock, Phone, Wrench, Eye, EyeOff, Loader2, Star, 
-  FileText, Briefcase, Users, MapPin, Calendar, Clock, CreditCard, Landmark, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft 
+  FileText, Briefcase, Users, MapPin, Calendar, Clock, CreditCard, Landmark, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft, Search 
 } from 'lucide-react';
 import api from '@/lib/api';
 
@@ -43,28 +43,43 @@ export default function PartnerRegisterWizard() {
   const [allCategories, setAllCategories] = useState<any[]>([]);
   const [selectedServices, setSelectedServices] = useState<any[]>([]); // array of service objects
   const [pricingOverrides, setPricingOverrides] = useState<Record<string, number>>({});
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // Step 4: Areas & Availability
   const [days, setDays] = useState<string[]>(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']);
   const [slots, setSlots] = useState<string[]>(['Morning', 'Afternoon', 'Evening']);
   const [serviceAreas, setServiceAreas] = useState<string[]>(['Delhi NCR']);
   const [newAreaInput, setNewAreaInput] = useState('');
+  const [availableAreas, setAvailableAreas] = useState<any[]>([]);
 
   // Step 5: KYC details
   const [aadharNumber, setAadharNumber] = useState('');
   const [panNumber, setPanNumber] = useState('');
   const [gstNumber, setGstNumber] = useState('');
   const [isGstRegistered, setIsGstRegistered] = useState(false);
+  const [aadharVerified, setAadharVerified] = useState(false);
+  const [aadharName, setAadharName] = useState('');
+  const [aadharDob, setAadharDob] = useState('');
+  const [panVerified, setPanVerified] = useState(false);
+  const [panName, setPanName] = useState('');
+  const [gstVerified, setGstVerified] = useState(false);
+  const [otpInput, setOtpInput] = useState('');
+  const [aadharError, setAadharError] = useState('');
+  const [panError, setPanError] = useState('');
+  const [gstError, setGstError] = useState('');
+  const [showOtpField, setShowOtpField] = useState(false);
 
   // Step 6: Bank details
   const [accountHolderName, setAccountHolderName] = useState('');
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
+  const [showBankDropdown, setShowBankDropdown] = useState(false);
   const [ifscCode, setIfscCode] = useState('');
   const [accountType, setAccountType] = useState('Savings');
 
   useEffect(() => {
     fetchPublicCategories();
+    fetchAvailableAreas();
     // If token already exists, check if onboarding is in progress
     checkExistingDraft();
   }, []);
@@ -75,6 +90,15 @@ export default function PartnerRegisterWizard() {
       setAllCategories(data || []);
     } catch (e) {
       console.error("Failed to fetch platform categories", e);
+    }
+  };
+
+  const fetchAvailableAreas = async () => {
+    try {
+      const { data } = await api.get('/locations/public/areas?limit=1000&isActive=true');
+      setAvailableAreas(data?.data || []);
+    } catch (e) {
+      console.error("Failed to fetch platform areas", e);
     }
   };
 
@@ -103,8 +127,14 @@ export default function PartnerRegisterWizard() {
           setSlots(v.availability?.slots || []);
           setServiceAreas(v.serviceAreas || []);
           setAadharNumber(v.kycDetails?.aadharNumber || '');
+          setAadharVerified(!!v.kycDetails?.aadharVerified);
+          setAadharName(v.kycDetails?.aadharName || '');
+          setAadharDob(v.kycDetails?.aadharDob || '');
           setPanNumber(v.kycDetails?.panNumber || '');
+          setPanVerified(!!v.kycDetails?.panVerified);
+          setPanName(v.kycDetails?.panName || '');
           setGstNumber(v.kycDetails?.gstNumber || '');
+          setGstVerified(!!v.kycDetails?.gstVerified);
           setIsGstRegistered(!!v.kycDetails?.gstNumber);
 
           setAccountHolderName(v.bankDetails?.accountHolderName || '');
@@ -113,6 +143,7 @@ export default function PartnerRegisterWizard() {
           setIfscCode(v.bankDetails?.ifscCode || '');
           setAccountType(v.bankDetails?.accountType || 'Savings');
 
+          setSelectedCategories(v.category ? v.category.split(', ') : []);
           setSelectedServices(v.customServices?.map((cs: any) => cs.serviceId) || []);
           const overrides: Record<string, number> = {};
           v.customServices?.forEach((cs: any) => {
@@ -146,6 +177,7 @@ export default function PartnerRegisterWizard() {
 
       const payload: any = {
         onboardingStep: step,
+        category: selectedCategories.join(', '),
         businessType,
         experience,
         teamSize,
@@ -167,7 +199,13 @@ export default function PartnerRegisterWizard() {
           aadharNumber,
           panNumber,
           gstNumber: isGstRegistered ? gstNumber : "",
-          businessName
+          businessName,
+          aadharVerified,
+          aadharName,
+          aadharDob,
+          panVerified,
+          panName,
+          gstVerified
         },
         availability: { days, slots },
         serviceAreas,
@@ -184,6 +222,90 @@ export default function PartnerRegisterWizard() {
     }
   };
 
+
+  const handleVerifyAadhar = async () => {
+    if (!/^\d{12}$/.test(aadharNumber)) {
+      setAadharError("Aadhaar must be a 12-digit number.");
+      return;
+    }
+    setAadharError('');
+    setApiLoading(true);
+    try {
+      const { data } = await api.post('/partner/kyc/aadhar', { aadharNumber });
+      if (data.success) {
+        setShowOtpField(true);
+        setSuccessMsg("Mock verification OTP '1234' sent to registered mobile number!");
+      }
+    } catch (err: any) {
+      setAadharError(err.response?.data?.message || "Failed to start Aadhaar verification.");
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const handleVerifyAadharOtp = async () => {
+    if (otpInput !== "1234") {
+      setAadharError("Invalid Mock OTP. Use '1234'.");
+      return;
+    }
+    setAadharError('');
+    setApiLoading(true);
+    try {
+      const { data } = await api.post('/partner/kyc/aadhar/verify', { otp: otpInput });
+      if (data.success) {
+        setAadharVerified(true);
+        setAadharName(data.vendor?.kycDetails?.aadharName || name);
+        setAadharDob(data.vendor?.kycDetails?.aadharDob || "15-08-1990");
+        setShowOtpField(false);
+        setSuccessMsg("Aadhaar verified successfully!");
+      }
+    } catch (err: any) {
+      setAadharError(err.response?.data?.message || "Aadhaar verification failed.");
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const handleVerifyPan = async () => {
+    if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panNumber)) {
+      setPanError("Please enter a valid 10-character PAN number (e.g. ABCDE1234F).");
+      return;
+    }
+    setPanError('');
+    setApiLoading(true);
+    try {
+      const { data } = await api.post('/partner/kyc/pan', { panNumber });
+      if (data.success) {
+        setPanVerified(true);
+        setPanName(data.vendor?.kycDetails?.panName || name.toUpperCase());
+        setSuccessMsg("PAN Card verified successfully!");
+      }
+    } catch (err: any) {
+      setPanError(err.response?.data?.message || "PAN verification failed.");
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const handleVerifyGst = async () => {
+    if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstNumber)) {
+      setGstError("Please enter a valid 15-character GSTIN format.");
+      return;
+    }
+    setGstError('');
+    setApiLoading(true);
+    try {
+      const { data } = await api.post('/partner/kyc/gst', { gstNumber });
+      if (data.success) {
+        setGstVerified(true);
+        setSuccessMsg("GST details verified successfully!");
+      }
+    } catch (err: any) {
+      setGstError(err.response?.data?.message || "GST verification failed.");
+    } finally {
+      setApiLoading(false);
+    }
+  };
 
   const handleStep1 = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -323,7 +445,7 @@ export default function PartnerRegisterWizard() {
       {/* ─── RIGHT FORM PANEL (60%) ───────────────────────────────────────────── */}
       <div className="w-full lg:ml-[40%] xl:ml-[38%] lg:w-3/5 xl:w-[62%] min-h-screen flex flex-col">
         <div className="flex-1 py-8 px-4 sm:px-8 lg:px-10 xl:px-12">
-          <div className="max-w-2xl mx-auto">
+          <div className="w-full max-w-4xl mx-auto">
 
             {/* Form Card */}
             <div className="bg-white border border-gold/20 rounded-3xl shadow-xl overflow-hidden">
@@ -567,57 +689,42 @@ export default function PartnerRegisterWizard() {
           {currentStep === 3 && (
             <div className="space-y-6">
               <p className="text-xs text-foreground/60 leading-normal mb-4">
-                Choose the services you provide. You may optionally override the base price with your customized vendor quote if needed.
+                Choose the categories of services you provide. Multiple selections are allowed. You will be able to customize your service list after admin approval.
               </p>
 
-              {allCategories.map(cat => (
-                <div key={cat._id} className="border border-gold/15 rounded-2xl p-4 bg-cream/10">
-                  <h3 className="font-serif font-bold text-primary text-base mb-3 border-b border-gold/10 pb-1.5">{cat.name}</h3>
-                  <div className="space-y-4">
-                    {cat.services?.map((svc: any) => {
-                      const isSelected = selectedServices.some(s => (s._id || s) === svc._id);
-                      return (
-                        <div key={svc._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2.5">
-                          <div className="flex items-start gap-2.5">
-                            <input 
-                              type="checkbox" checked={isSelected}
-                              onChange={() => {
-                                if (isSelected) {
-                                  setSelectedServices(selectedServices.filter(s => (s._id || s) !== svc._id));
-                                } else {
-                                  setSelectedServices([...selectedServices, svc]);
-                                }
-                              }}
-                              className="h-4.5 w-4.5 rounded border-gold/30 text-primary accent-primary mt-1"
-                            />
-                            <div>
-                              <h4 className="font-bold text-sm text-primary">{svc.name}</h4>
-                              <p className="text-xs text-foreground/50">{svc.description || 'Premium service option'}</p>
-                            </div>
-                          </div>
-
-                          {isSelected && (
-                            <div className="flex items-center gap-2 pl-7 sm:pl-0">
-                              <span className="text-xs text-foreground/60">Standard: ₹{svc.basePrice}</span>
-                              <input 
-                                type="number" placeholder="Override (₹)"
-                                value={pricingOverrides[svc._id] || ''}
-                                onChange={e => {
-                                  setPricingOverrides({
-                                    ...pricingOverrides,
-                                    [svc._id]: parseInt(e.target.value) || 0
-                                  });
-                                }}
-                                className="w-28 px-2 py-1 text-xs rounded border border-gold/30 focus:outline-none"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {allCategories.map(cat => {
+                  const isSelected = selectedCategories.includes(cat.name);
+                  return (
+                    <div 
+                      key={cat._id} 
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedCategories(selectedCategories.filter(c => c !== cat.name));
+                        } else {
+                          setSelectedCategories([...selectedCategories, cat.name]);
+                        }
+                      }}
+                      className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex flex-col justify-between h-32 ${
+                        isSelected 
+                          ? 'border-primary bg-primary/5 shadow-md' 
+                          : 'border-gold/20 bg-white hover:border-gold/45 hover:shadow-sm'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="font-serif font-bold text-primary text-base">{cat.name}</div>
+                        <input 
+                          type="checkbox" 
+                          checked={isSelected}
+                          readOnly
+                          className="h-5 w-5 rounded border-gold/30 text-primary accent-primary cursor-pointer mt-0.5"
+                        />
+                      </div>
+                      <p className="text-xs text-foreground/50 line-clamp-2 mt-2">{cat.description || 'Professional home service category'}</p>
+                    </div>
+                  );
+                })}
+              </div>
 
               <div className="flex gap-4 pt-4">
                 <button 
@@ -627,7 +734,14 @@ export default function PartnerRegisterWizard() {
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
                 <button 
-                  onClick={() => saveProgress(4)} disabled={apiLoading}
+                  onClick={() => {
+                    if (selectedCategories.length === 0) {
+                      setErrorMsg("Please select at least one service category.");
+                      return;
+                    }
+                    saveProgress(4);
+                  }} 
+                  disabled={apiLoading}
                   className="w-2/3 py-3 bg-[#1D3B31] text-white rounded-full font-bold hover:bg-[#1D3B31]/95 transition-all flex items-center justify-center gap-2"
                 >
                   {apiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save & Continue'} <ArrowRight className="w-4 h-4" />
@@ -641,31 +755,34 @@ export default function PartnerRegisterWizard() {
             <div className="space-y-6">
               <div>
                 <label className="block text-xs font-bold text-primary mb-2 uppercase tracking-wider">Service Areas (Delhi NCR) *</label>
-                <div className="flex gap-2 mb-3">
-                  <input 
-                    type="text" value={newAreaInput} onChange={e => setNewAreaInput(e.target.value)}
-                    placeholder="Enter city or locality (e.g. Noida Sector 62)"
-                    className="flex-1 px-4 py-2 rounded-xl border border-gold/30 focus:outline-none text-sm"
-                  />
-                  <button 
-                    onClick={() => {
-                      if (newAreaInput.trim() && !serviceAreas.includes(newAreaInput.trim())) {
-                        setServiceAreas([...serviceAreas, newAreaInput.trim()]);
-                        setNewAreaInput('');
-                      }
-                    }}
-                    className="px-4 bg-[#1D3B31] text-white font-bold rounded-xl text-xs hover:bg-[#1D3B31]/95"
-                  >
-                    Add Area
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {serviceAreas.map(a => (
-                    <span key={a} className="inline-flex items-center gap-1.5 bg-cream px-3 py-1 rounded-full text-xs font-semibold text-primary border border-gold/15">
-                      {a}
-                      <button onClick={() => setServiceAreas(serviceAreas.filter(x => x !== a))} className="text-red-500 hover:text-red-700 font-bold">×</button>
-                    </span>
-                  ))}
+                <div className="flex flex-wrap gap-2.5">
+                  {availableAreas.length === 0 ? (
+                    <p className="text-xs text-foreground/40 italic">No areas available. Please contact admin.</p>
+                  ) : (
+                    availableAreas.map(area => {
+                      const active = serviceAreas.includes(area.name);
+                      return (
+                        <button 
+                          key={area._id} 
+                          type="button"
+                          onClick={() => {
+                            if (active) {
+                              setServiceAreas(serviceAreas.filter(x => x !== area.name));
+                            } else {
+                              setServiceAreas([...serviceAreas, area.name]);
+                            }
+                          }}
+                          className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition-all ${
+                            active 
+                              ? 'bg-primary text-white border-primary shadow-sm' 
+                              : 'bg-cream text-foreground/75 border-gold/20 hover:border-gold/35'
+                          }`}
+                        >
+                          {area.name}
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
@@ -730,60 +847,233 @@ export default function PartnerRegisterWizard() {
 
           {/* STEP 5: KYC Verification */}
           {currentStep === 5 && (
-            <div className="space-y-4">
-              <div className="p-4 bg-cream rounded-2xl border border-gold/15 mb-4">
+            <div className="space-y-8">
+              <div className="p-4 bg-cream/40 rounded-2xl border border-gold/15">
                 <span className="text-[10px] font-bold text-gold uppercase tracking-wider flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4" /> KYC Verification
+                  <ShieldCheck className="w-4 h-4" /> Secure Verification System
                 </span>
-                <p className="text-xs text-foreground/60 leading-relaxed mt-1">
-                  Your verification information is securely handled and is only visible to authorized Nexora administrators.
+                <p className="text-xs text-foreground/50 leading-relaxed mt-1">
+                  Please verify your credentials. Once verified, the details from government databases will be displayed and saved.
                 </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Aadhaar Card Number *</label>
-                <input 
-                  type="text" required 
-                  value={aadharNumber.replace(/(\d{4})(?=\d)/g, '$1 ')} 
-                  onChange={e => {
-                    const raw = e.target.value.replace(/\D/g, '').slice(0, 12);
-                    setAadharNumber(raw);
-                  }}
-                  placeholder="XXXX XXXX XXXX" 
-                  className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none font-mono text-lg tracking-widest bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">PAN Card Number *</label>
-                <input 
-                  type="text" maxLength={10} required 
-                  value={panNumber} 
-                  onChange={e => setPanNumber(e.target.value.toUpperCase())}
-                  placeholder="ABCDE1234F" 
-                  className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none font-mono text-lg tracking-widest bg-white uppercase"
-                />
-              </div>
-
-              <div className="flex items-center gap-2.5 py-2">
-                <input 
-                  id="gstToggle" type="checkbox" checked={isGstRegistered} onChange={e => setIsGstRegistered(e.target.checked)}
-                  className="h-4.5 w-4.5 text-primary accent-primary"
-                />
-                <label htmlFor="gstToggle" className="text-xs font-bold text-foreground/75">I have a GSTIN for my business</label>
-              </div>
-
-              {isGstRegistered && (
-                <div>
-                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">GSTIN Number *</label>
-                  <input 
-                    type="text" maxLength={15} value={gstNumber} onChange={e => setGstNumber(e.target.value.toUpperCase())}
-                    placeholder="22AAAAA0000A1Z5" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none font-mono text-lg tracking-widest bg-white uppercase"
-                  />
+              {/* Part 1: Aadhaar Card */}
+              <div className="border border-gold/15 p-6 rounded-3xl bg-cream/10 space-y-4">
+                <div className="flex justify-between items-center border-b border-gold/10 pb-3">
+                  <h3 className="font-serif font-bold text-primary text-base">Part 1: Aadhaar Card Verification</h3>
+                  {aadharVerified && <span className="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">Verified ✓</span>}
                 </div>
-              )}
 
-              <div className="flex gap-4 pt-4">
+                {aadharError && (
+                  <div className="bg-red-50 border border-red-100 rounded-xl p-3 flex gap-2 items-center">
+                    <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                    <p className="text-xs text-red-700 font-bold leading-normal">{aadharError}</p>
+                  </div>
+                )}
+
+                {/* Aadhaar Card Template Preview */}
+                <div className="w-full max-w-sm mx-auto bg-gradient-to-br from-orange-50/30 via-white to-sky-50 border border-blue-200 rounded-2xl p-4 pt-6 pb-6 shadow-sm relative overflow-hidden font-sans text-blue-900">
+                  {/* Authentic Top Saffron Band */}
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
+                  
+                  {/* Authentic Bottom Green Band */}
+                  <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600"></div>
+
+                  <div className="flex justify-between items-start border-b border-orange-200/50 pb-2 mb-3">
+                    <div>
+                      <p className="text-[9px] font-bold uppercase text-orange-700">Government of India</p>
+                      <p className="text-[7px] text-blue-800/70 font-semibold">Unique Identification Authority of India</p>
+                    </div>
+                    <span className="text-[10px] font-extrabold text-orange-600 tracking-wider">Aadhaar</span>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="w-14 h-16 bg-blue-50 border border-blue-200/80 rounded-lg flex items-center justify-center text-blue-900/30 text-[10px] font-bold">Photo</div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-[11px] font-bold text-blue-900">Name: {aadharVerified ? aadharName : 'Your Full Name'}</p>
+                      <p className="text-[9px] text-blue-900/75">DOB: {aadharVerified ? aadharDob : 'DD/MM/YYYY'}</p>
+                      <p className="text-[9px] text-blue-900/75">Gender: Male / Female</p>
+                    </div>
+                  </div>
+                  <div className="text-center font-mono font-bold text-sm tracking-widest text-blue-900/90 mt-4 border-t border-blue-100 pt-2">
+                    {aadharNumber ? aadharNumber.replace(/(\d{4})/g, '$1 ').trim() : 'XXXX XXXX XXXX'}
+                  </div>
+                </div>
+
+                {!aadharVerified ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Aadhaar Card Number *</label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          value={aadharNumber.replace(/(\d{4})(?=\d)/g, '$1 ')} 
+                          onChange={e => {
+                            const raw = e.target.value.replace(/\D/g, '').slice(0, 12);
+                            setAadharNumber(raw);
+                          }}
+                          placeholder="XXXX XXXX XXXX" 
+                          className="flex-1 px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none font-mono text-base tracking-widest bg-white"
+                        />
+                        {!showOtpField && (
+                          <button 
+                            type="button"
+                            onClick={handleVerifyAadhar}
+                            className="px-5 bg-[#1D3B31] text-white text-xs font-bold rounded-xl hover:bg-[#1D3B31]/95 transition-all"
+                          >
+                            Verify
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {showOtpField && (
+                      <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 space-y-3">
+                        <label className="block text-xs font-bold text-blue-900 uppercase tracking-wider">Enter OTP sent to Aadhaar Mobile *</label>
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            maxLength={4}
+                            value={otpInput}
+                            onChange={e => setOtpInput(e.target.value.replace(/\D/g, ''))}
+                            placeholder="Enter 1234" 
+                            className="flex-1 px-4 py-2 rounded-xl border border-blue-200 focus:outline-none font-mono text-center text-lg tracking-widest bg-white"
+                          />
+                          <button 
+                            type="button"
+                            onClick={handleVerifyAadharOtp}
+                            className="px-5 bg-blue-900 text-white text-xs font-bold rounded-xl hover:bg-blue-800 transition-all"
+                          >
+                            Submit OTP
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-2xl text-xs text-emerald-800 font-medium">
+                    Verified from Aadhaar database. Name: <strong>{aadharName}</strong> | DOB: <strong>{aadharDob}</strong>
+                  </div>
+                )}
+              </div>
+
+              {/* Part 2: PAN Card */}
+              <div className="border border-gold/15 p-6 rounded-3xl bg-cream/10 space-y-4">
+                <div className="flex justify-between items-center border-b border-gold/10 pb-3">
+                  <h3 className="font-serif font-bold text-primary text-base">Part 2: PAN Card Verification</h3>
+                  {panVerified && <span className="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">Verified ✓</span>}
+                </div>
+
+                {panError && (
+                  <div className="bg-red-50 border border-red-100 rounded-xl p-3 flex gap-2 items-center">
+                    <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                    <p className="text-xs text-red-700 font-bold leading-normal">{panError}</p>
+                  </div>
+                )}
+
+                {/* PAN Card Template Preview */}
+                <div className="w-full max-w-sm mx-auto bg-gradient-to-r from-teal-800 to-[#1D3B31] border border-teal-700 rounded-2xl p-4 shadow-md relative overflow-hidden font-sans text-white">
+                  <div className="flex justify-between items-start border-b border-teal-700/50 pb-2 mb-3">
+                    <div>
+                      <p className="text-[10px] font-bold text-teal-100 uppercase font-serif">Income Tax Department</p>
+                      <p className="text-[8px] text-white/60">Government of India</p>
+                    </div>
+                    <span className="text-[9px] font-bold text-teal-300 bg-teal-950/40 border border-teal-700 px-1.5 py-0.5 rounded">Permanent Account Number</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] text-white/80">Name: <span className="font-bold text-white">{panVerified ? panName : 'YOUR FULL NAME'}</span></p>
+                    <p className="text-[10px] text-white/80">Father's Name: <span className="font-bold text-white">{panVerified ? 'MOCK FATHER NAME' : 'FATHER\'S NAME'}</span></p>
+                  </div>
+                  <div className="text-center font-mono font-bold text-base tracking-widest text-white mt-4 border-t border-teal-700/50 pt-2 bg-teal-950/40 py-1 rounded border border-teal-700/30">
+                    {panNumber ? panNumber : 'ABCDE1234F'}
+                  </div>
+                </div>
+
+                {!panVerified ? (
+                  <div>
+                    <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">PAN Card Number *</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" maxLength={10} 
+                        value={panNumber} 
+                        onChange={e => {
+                          const raw = e.target.value.replace(/[^A-Z0-9]/ig, '').toUpperCase().slice(0, 10);
+                          setPanNumber(raw);
+                        }}
+                        placeholder="ABCDE1234F" 
+                        className="flex-1 px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none font-mono text-base tracking-widest bg-white uppercase"
+                      />
+                      <button 
+                        type="button"
+                        onClick={handleVerifyPan}
+                        className="px-5 bg-[#1D3B31] text-white text-xs font-bold rounded-xl hover:bg-[#1D3B31]/95 transition-all"
+                      >
+                        Verify
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-2xl text-xs text-emerald-800 font-medium">
+                    Verified from Income Tax database. Name: <strong>{panName}</strong>
+                  </div>
+                )}
+              </div>
+
+              {/* Part 3: GSTIN (Optional) */}
+              <div className="border border-gold/15 p-6 rounded-3xl bg-cream/10 space-y-4">
+                <div className="flex justify-between items-center border-b border-gold/10 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <input 
+                      id="gstToggle" type="checkbox" checked={isGstRegistered} onChange={e => setIsGstRegistered(e.target.checked)}
+                      className="h-5 w-5 text-[#1D3B31] accent-[#1D3B31] cursor-pointer"
+                    />
+                    <label htmlFor="gstToggle" className="text-sm font-bold text-primary cursor-pointer select-none">Part 3: I have a GSTIN for my business (Optional)</label>
+                  </div>
+                  {isGstRegistered && gstVerified && <span className="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">Verified ✓</span>}
+                </div>
+
+                {gstError && (
+                  <div className="bg-red-50 border border-red-100 rounded-xl p-3 flex gap-2 items-center">
+                    <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                    <p className="text-xs text-red-700 font-bold leading-normal">{gstError}</p>
+                  </div>
+                )}
+
+                {isGstRegistered && (
+                  <div className="space-y-4">
+                    {!gstVerified ? (
+                      <div>
+                        <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">GSTIN Number *</label>
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" maxLength={15} 
+                            value={gstNumber} 
+                            onChange={e => {
+                              const raw = e.target.value.replace(/[^A-Z0-9]/ig, '').toUpperCase().slice(0, 15);
+                              setGstNumber(raw);
+                            }}
+                            placeholder="22AAAAA0000A1Z5" 
+                            className="flex-1 px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none font-mono text-base tracking-widest bg-white uppercase"
+                          />
+                          <button 
+                            type="button"
+                            onClick={handleVerifyGst}
+                            className="px-5 bg-[#1D3B31] text-white text-xs font-bold rounded-xl hover:bg-[#1D3B31]/95 transition-all"
+                          >
+                            Verify
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-2xl text-xs text-emerald-800 font-medium">
+                        GSTIN verified successfully.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Navigation buttons */}
+              <div className="flex gap-4 pt-4 border-t border-gold/10">
                 <button 
                   onClick={() => setCurrentStep(4)} 
                   className="w-1/3 py-3 border border-primary/30 text-primary rounded-full font-bold hover:bg-cream/40 transition-all flex items-center justify-center gap-1.5"
@@ -791,7 +1081,22 @@ export default function PartnerRegisterWizard() {
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
                 <button 
-                  onClick={() => saveProgress(6)} disabled={apiLoading}
+                  onClick={() => {
+                    if (!aadharVerified) {
+                      setErrorMsg("Please verify your Aadhaar Card to proceed.");
+                      return;
+                    }
+                    if (!panVerified) {
+                      setErrorMsg("Please verify your PAN Card to proceed.");
+                      return;
+                    }
+                    if (isGstRegistered && !gstVerified) {
+                      setErrorMsg("Please verify your GSTIN or uncheck the GSTIN option to proceed.");
+                      return;
+                    }
+                    saveProgress(6);
+                  }} 
+                  disabled={apiLoading}
                   className="w-2/3 py-3 bg-[#1D3B31] text-white rounded-full font-bold hover:bg-[#1D3B31]/95 transition-all flex items-center justify-center gap-2"
                 >
                   {apiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save & Continue'} <ArrowRight className="w-4 h-4" />
@@ -821,12 +1126,69 @@ export default function PartnerRegisterWizard() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
+                <div className="relative">
                   <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Bank Name *</label>
-                  <input 
-                    type="text" required value={bankName} onChange={e => setBankName(e.target.value)}
-                    placeholder="e.g. HDFC Bank" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-white focus:outline-none"
-                  />
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      required 
+                      value={bankName} 
+                      onFocus={() => setShowBankDropdown(true)}
+                      onBlur={() => {
+                        // Delay closing slightly so onMouseDown can trigger first
+                        setTimeout(() => setShowBankDropdown(false), 200);
+                      }}
+                      onChange={e => {
+                        setBankName(e.target.value);
+                        setShowBankDropdown(true);
+                      }}
+                      placeholder="Type to Search & Select Bank" 
+                      className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gold/30 bg-white focus:outline-none text-sm font-semibold"
+                    />
+                    <Search className="w-4 h-4 text-foreground/40 absolute right-3.5 top-3.5 pointer-events-none" />
+                  </div>
+
+                  {showBankDropdown && (
+                    <div className="absolute top-full left-0 right-0 bg-white border border-gold/20 rounded-2xl shadow-xl z-20 max-h-48 overflow-y-auto mt-1 divide-y divide-gold/5">
+                      {[
+                        { name: 'State Bank of India', code: 'SBIN0' },
+                        { name: 'HDFC Bank', code: 'HDFC0' },
+                        { name: 'ICICI Bank', code: 'ICIC0' },
+                        { name: 'Axis Bank', code: 'UTIB0' },
+                        { name: 'Punjab National Bank', code: 'PUNB0' },
+                        { name: 'Bank of Baroda', code: 'BARB0' },
+                        { name: 'Canara Bank', code: 'CNRB0' },
+                        { name: 'Union Bank of India', code: 'UBIN0' },
+                        { name: 'Bank of India', code: 'BKID0' },
+                        { name: 'Indian Bank', code: 'IDIB0' },
+                        { name: 'Central Bank of India', code: 'CBIN0' },
+                        { name: 'Indian Overseas Bank', code: 'IOBA0' },
+                        { name: 'UCO Bank', code: 'UCBA0' },
+                        { name: 'Bank of Maharashtra', code: 'MAHB0' },
+                        { name: 'Yes Bank', code: 'YESB0' },
+                        { name: 'Kotak Mahindra Bank', code: 'KKBK0' },
+                        { name: 'Federal Bank', code: 'FDRL0' },
+                        { name: 'IDFC First Bank', code: 'IDFB0' },
+                        { name: 'IndusInd Bank', code: 'INDB0' },
+                        { name: 'Bandhan Bank', code: 'BDBL0' }
+                      ]
+                        .filter(b => b.name.toLowerCase().includes(bankName.toLowerCase()))
+                        .map(b => (
+                          <button
+                            key={b.name}
+                            type="button"
+                            onMouseDown={() => {
+                              setBankName(b.name);
+                              setIfscCode(b.code);
+                              setShowBankDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-cream/40 text-xs font-semibold text-foreground transition-all"
+                          >
+                            {b.name}
+                          </button>
+                        ))}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Account Type *</label>
@@ -844,7 +1206,7 @@ export default function PartnerRegisterWizard() {
                 <div>
                   <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Account Number *</label>
                   <input 
-                    type="text" required value={accountNumber} onChange={e => setAccountNumber(e.target.value.replace(/\D/g, ''))}
+                    type="text" maxLength={18} required value={accountNumber} onChange={e => setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 18))}
                     placeholder="Enter account number" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-white focus:outline-none font-mono tracking-widest text-lg"
                   />
                 </div>
@@ -873,6 +1235,8 @@ export default function PartnerRegisterWizard() {
               </div>
             </div>
           )}
+
+
 
           {/* STEP 7: Final Review */}
           {currentStep === 7 && (
@@ -904,11 +1268,11 @@ export default function PartnerRegisterWizard() {
 
                 <div className="space-y-3.5 border-t md:border-t-0 md:border-l border-gold/10 pt-4 md:pt-0 md:pl-6">
                   <div>
-                    <h4 className="text-xs font-bold text-gold uppercase tracking-wider mb-1">Services Provided</h4>
+                    <h4 className="text-xs font-bold text-gold uppercase tracking-wider mb-1">Categories Selected</h4>
                     <div className="flex flex-wrap gap-1.5 mt-1">
-                      {selectedServices.map(s => (
-                        <span key={s._id} className="bg-cream px-2 py-0.5 rounded text-xs border border-gold/15 font-semibold text-primary">
-                          {s.name} {pricingOverrides[s._id] ? `(₹${pricingOverrides[s._id]})` : ''}
+                      {selectedCategories.map(cat => (
+                        <span key={cat} className="bg-cream px-2 py-0.5 rounded text-xs border border-gold/15 font-semibold text-primary">
+                          {cat}
                         </span>
                       ))}
                     </div>

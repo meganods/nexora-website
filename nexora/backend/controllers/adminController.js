@@ -54,7 +54,11 @@ const listVendors = asyncHandler(async (req, res) => {
   const { kycStatus, category, page = 1, limit = 20 } = req.query;
   const filter = {};
 
-  if (kycStatus) filter.kycStatus = kycStatus;
+  if (kycStatus && kycStatus !== 'ALL') {
+    filter.kycStatus = kycStatus;
+  } else {
+    filter.kycStatus = { $nin: ["NOT_STARTED", "REGISTERED", "KYC_NOT_STARTED", "KYC_IN_PROGRESS"] };
+  }
   if (category) filter.category = category;
 
   const pageNum = Math.max(1, parseInt(page, 10));
@@ -143,6 +147,18 @@ const verifyVendorKyc = asyncHandler(async (req, res) => {
   }
 
   await vendor.save();
+
+  const { createNotification } = require('./notificationController');
+  await createNotification(
+    vendor._id,
+    "vendor",
+    action === "verify" ? "KYC Approved!" : "KYC Rejected",
+    action === "verify" 
+      ? "Congratulations! Your profile has been approved. You are now active on Nexora." 
+      : `Your KYC profile has been rejected. Reason: ${reviewNote || "Information mismatch."}`,
+    "approval",
+    { vendorId: vendor._id }
+  );
 
   res.status(200).json({
     success: true,
@@ -312,6 +328,15 @@ const getCategoryById = asyncHandler(async (req, res) => {
 // @access  Private (admin)
 const addService = asyncHandler(async (req, res) => {
   const service = await Service.create(req.body);
+
+  const { broadcastToAll } = require('./notificationController');
+  await broadcastToAll(
+    "New Service Available!",
+    `A new service "${service.name}" has been launched on Nexora! Check it out.`,
+    "system",
+    { serviceId: service._id }
+  );
+
   res.status(201).json({ success: true, service });
 });
 
@@ -668,7 +693,16 @@ const updateVendorAvailabilityByAdmin = asyncHandler(async (req, res) => {
   res.json({ success: true, message: "Vendor availability and service areas updated successfully.", vendor: partner });
 });
 
+const getPendingCounts = asyncHandler(async (req, res) => {
+  const [pendingKycCount, pendingServiceCount] = await Promise.all([
+    ServicePartner.countDocuments({ kycStatus: "PENDING_ADMIN_APPROVAL" }),
+    Service.countDocuments({ approvalStatus: "PENDING", isDeleted: false }),
+  ]);
+  res.json({ success: true, pendingKycCount, pendingServiceCount });
+});
+
 module.exports = {
+  getPendingCounts,
   loginAdmin,
   listVendors,
   listUsers,

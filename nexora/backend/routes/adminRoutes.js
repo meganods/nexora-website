@@ -1,5 +1,6 @@
 const express = require("express");
 const {
+  getPendingCounts,
   loginAdmin,
   listVendors,
   listUsers,
@@ -61,6 +62,7 @@ router.patch("/users/:id/toggle", protect, authorize("super_admin", "admin"), to
 
 // ─── Metrics ──────────────────────────────────────────────────────────────────
 router.get("/metrics", protect, authorize("super_admin", "admin"), getDashboardMetrics);
+router.get("/dashboard/pending-counts", protect, authorize("super_admin", "admin", "support"), getPendingCounts);
 
 // ─── Categories ──────────────────────────────────────────────────────────────────────
 router.get("/categories", protect, authorize("super_admin", "admin", "support"), getCategories);

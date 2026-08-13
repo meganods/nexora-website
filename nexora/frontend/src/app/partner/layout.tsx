@@ -110,10 +110,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gold/15 flex items-center justify-between">
           <Link href="/" className="font-serif text-xl font-bold tracking-tight text-white">Nexora</Link>
-          <div className="flex items-center gap-2">
-            <NotificationBell tokenKey="nexora_token" theme="dark" />
-            <span className="text-[10px] uppercase font-bold text-gold bg-gold/10 border border-gold/25 px-2.5 py-0.5 rounded-full">Service Partner</span>
-          </div>
+          <span className="text-[10px] uppercase font-bold text-gold bg-gold/10 border border-gold/25 px-2.5 py-0.5 rounded-full">Service Partner</span>
         </div>
 
         {/* Nav Links */}
@@ -154,10 +151,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           </button>
           <Link href="/" className="font-serif text-lg font-bold text-white">Nexora</Link>
         </div>
-        <div className="flex items-center gap-2">
-          <NotificationBell tokenKey="nexora_token" theme="dark" />
-          <span className="text-[9px] uppercase font-bold text-gold bg-gold/10 border border-gold/25 px-2 py-0.5 rounded-full">Service Partner</span>
-        </div>
+        <span className="text-[9px] uppercase font-bold text-gold bg-gold/10 border border-gold/25 px-2 py-0.5 rounded-full">Service Partner</span>
       </header>
 
       {/* --- MOBILE DRAWER BACKDROP --- */}

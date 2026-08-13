@@ -11,7 +11,20 @@ const applyCampaignDiscounts = require('../utils/campaignHelper');
 router.get('/categories', async (req, res) => {
   try {
     const categories = await Category.find({ isActive: true }).sort({ displayOrder: 1, createdAt: 1 });
-    res.json(categories);
+    const categoriesWithServices = await Promise.all(categories.map(async (cat) => {
+      const services = await Service.find({ 
+        categoryId: cat._id, 
+        isActive: true, 
+        approvalStatus: 'APPROVED', 
+        isDeleted: false,
+        parentId: null
+      }).sort({ displayOrder: 1, name: 1 });
+      
+      const catObj = cat.toObject();
+      catObj.services = services;
+      return catObj;
+    }));
+    res.json(categoriesWithServices);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching categories' });
   }

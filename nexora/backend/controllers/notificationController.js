@@ -106,10 +106,31 @@ const broadcastNotification = asyncHandler(async (req, res) => {
   res.json({ success: true, message: `Broadcast sent to ${docs.length} ${recipientType}s.` });
 });
 
+const broadcastToAll = async (title, body, type = "system", metadata = {}) => {
+  try {
+    const User = require("../models/User");
+    const ServicePartner = require("../models/ServicePartner");
+    const [users, vendors] = await Promise.all([
+      User.find({ isActive: true }).select("_id").lean(),
+      ServicePartner.find({ isActive: true }).select("_id").lean()
+    ]);
+    const docs = [
+      ...users.map(u => ({ recipientId: u._id, recipientType: "user", title, body, type, metadata })),
+      ...vendors.map(v => ({ recipientId: v._id, recipientType: "vendor", title, body, type, metadata }))
+    ];
+    if (docs.length > 0) {
+      await Notification.insertMany(docs, { ordered: false });
+    }
+  } catch (err) {
+    console.error("[Notification] Broadcast all failed:", err.message);
+  }
+};
+
 module.exports = {
   createNotification,
   getNotifications,
   markOneRead,
   markAllRead,
   broadcastNotification,
+  broadcastToAll,
 };

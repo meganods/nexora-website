@@ -184,10 +184,13 @@ export default function Navbar() {
         </div>
 
         {/* Mobile hamburger */}
-        <button onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden p-2 rounded-full hover:bg-beige transition-colors text-foreground flex-shrink-0">
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="md:hidden flex items-center gap-2 flex-shrink-0">
+          {user && <NotificationBell tokenKey="nexora_token" theme="light" />}
+          <button onClick={() => setMobileOpen(!mobileOpen)}
+            className="p-2 rounded-full hover:bg-beige transition-colors text-foreground">
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu drawer */}

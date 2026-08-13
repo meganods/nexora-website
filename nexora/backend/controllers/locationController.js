@@ -224,6 +224,15 @@ exports.createArea = async (req, res) => {
     const { cityId, name, isActive, latitude, longitude, displayOrder, slug } = req.body;
     const area = new Area({ cityId, name, isActive, latitude, longitude, displayOrder, slug });
     await area.save();
+
+    const { broadcastToAll } = require('./notificationController');
+    await broadcastToAll(
+      "New Service Area Added!",
+      `Nexora has launched services in a new area: ${name}!`,
+      "system",
+      { areaId: area._id }
+    );
+
     res.status(201).json({ success: true, data: area });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });

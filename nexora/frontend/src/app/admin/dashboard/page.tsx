@@ -489,6 +489,31 @@ function AdminDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'metrics');
+  const [counts, setCounts] = useState({ pendingKycCount: 0, pendingServiceCount: 0 });
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const token = localStorage.getItem('admin_token');
+        if (!token) return;
+        const { data } = await api.get('/admin/dashboard/pending-counts', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (data?.success) {
+          setCounts({
+            pendingKycCount: data.pendingKycCount || 0,
+            pendingServiceCount: data.pendingServiceCount || 0,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch pending counts:", err);
+      }
+    };
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   const [metrics, setMetrics] = useState({ revenue: 0, commission: 0, activeBookings: 0, verifiedPartners: 0, totalUsers: 0, totalServices: 0, totalBookings: 0 });
   const [locationMetrics, setLocationMetrics] = useState<any>(null);
   const [pendingVendors, setPendingVendors] = useState<any[]>([]);
@@ -1035,6 +1060,16 @@ function AdminDashboardContent() {
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs sm:text-sm font-medium transition-all text-left ${isActive ? 'bg-[#1D3B31] text-white shadow-lg border border-gold/40' : 'bg-transparent text-white/70 hover:text-white hover:bg-white/5'}`}>
                     <Icon className="w-4 h-4 flex-shrink-0" />
                     <span>{tab.label}</span>
+                    {tab.id === 'verification' && counts.pendingKycCount > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-5 text-center animate-pulse">
+                        {counts.pendingKycCount}
+                      </span>
+                    )}
+                    {tab.id === 'service_approvals' && counts.pendingServiceCount > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-5 text-center animate-pulse">
+                        {counts.pendingServiceCount}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -1051,12 +1086,9 @@ function AdminDashboardContent() {
 
       {/* Desktop Sidebar (Always Visible on Large Screens) */}
       <aside className="hidden md:flex md:w-64 bg-primary text-white flex-shrink-0 flex-col border-r-4 border-gold h-full overflow-hidden">
-        <div className="p-6 border-b border-white/10 flex-shrink-0 flex items-center justify-between">
-          <div>
-            <h1 className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-white">Nexora Admin</h1>
-            <p className="text-white/60 text-xs mt-1">Command &amp; Control Center</p>
-          </div>
-          <NotificationBell tokenKey="admin_token" theme="dark" />
+        <div className="p-6 border-b border-white/10 flex-shrink-0">
+          <h1 className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-white">Nexora Admin</h1>
+          <p className="text-white/60 text-xs mt-1">Command &amp; Control Center</p>
         </div>
         <nav className="flex-grow p-4 space-y-1 overflow-y-auto scrollbar-none">
           {TABS.map(tab => {
@@ -1073,6 +1105,16 @@ function AdminDashboardContent() {
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs sm:text-sm font-medium transition-all text-left ${isActive ? 'bg-[#1D3B31] text-white shadow-lg border border-gold/40' : 'bg-transparent text-white/70 hover:text-white hover:bg-white/5'}`}>
                 <Icon className="w-4 h-4 flex-shrink-0" />
                 <span>{tab.label}</span>
+                {tab.id === 'verification' && counts.pendingKycCount > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-5 text-center animate-pulse">
+                    {counts.pendingKycCount}
+                  </span>
+                )}
+                {tab.id === 'service_approvals' && counts.pendingServiceCount > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-5 text-center animate-pulse">
+                    {counts.pendingServiceCount}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -1092,7 +1134,10 @@ function AdminDashboardContent() {
             <h2 className="font-serif text-2xl sm:text-3xl font-bold text-primary capitalize">{TABS.find(t => t.id === activeTab)?.label}</h2>
             <p className="text-foreground/55 text-xs sm:text-sm mt-0.5">Nexora platform management</p>
           </div>
-          <div className="bg-white px-4 py-2 rounded-2xl shadow-sm border border-gold/20 text-xs font-semibold text-primary">Server: Connected</div>
+          <div className="flex items-center gap-3">
+            <div className="bg-white px-4 py-2 rounded-2xl shadow-sm border border-gold/20 text-xs font-semibold text-primary">Server: Connected</div>
+            <NotificationBell tokenKey="admin_token" theme="light" />
+          </div>
         </div>
 
         {/* ── TAB: Overview ── */}

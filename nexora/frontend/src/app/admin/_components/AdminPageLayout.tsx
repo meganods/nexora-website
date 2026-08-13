@@ -1,11 +1,12 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   ShoppingBag, Tag, CheckCircle2, Package, ListCollapse, Gift, BookOpen, Users, UserCheck, ShieldCheck, Percent, Star, CalendarDays, Megaphone, Zap, Wallet, Bell, TrendingUp, Settings2, ArrowLeft, Menu, MapPin
 } from 'lucide-react';
-import { useState } from 'react';
+import api from '@/lib/api';
+import NotificationBell from '@/components/NotificationBell';
 
 interface AdminPageLayoutProps {
   title: string;
@@ -51,6 +52,30 @@ export default function AdminPageLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [counts, setCounts] = useState({ pendingKycCount: 0, pendingServiceCount: 0 });
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const token = localStorage.getItem('admin_token');
+        if (!token) return;
+        const { data } = await api.get('/admin/dashboard/pending-counts', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (data?.success) {
+          setCounts({
+            pendingKycCount: data.pendingKycCount || 0,
+            pendingServiceCount: data.pendingServiceCount || 0,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch pending counts:", err);
+      }
+    };
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   let activeTab = 'metrics';
   if (pathname?.includes('/admin/categories')) activeTab = 'categories';
@@ -111,6 +136,16 @@ export default function AdminPageLayout({
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs sm:text-sm font-medium transition-all text-left ${isActive ? 'bg-[#1D3B31] text-white shadow-lg border border-gold/40' : 'bg-transparent text-white/70 hover:text-white hover:bg-white/5'}`}>
                     <Icon className="w-4 h-4 flex-shrink-0" />
                     <span>{tab.label}</span>
+                    {tab.id === 'verification' && counts.pendingKycCount > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-5 text-center animate-pulse">
+                        {counts.pendingKycCount}
+                      </span>
+                    )}
+                    {tab.id === 'service_approvals' && counts.pendingServiceCount > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-5 text-center animate-pulse">
+                        {counts.pendingServiceCount}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -146,6 +181,16 @@ export default function AdminPageLayout({
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs sm:text-sm font-medium transition-all text-left ${isActive ? 'bg-[#1D3B31] text-white shadow-lg border border-gold/40' : 'bg-transparent text-white/70 hover:text-white hover:bg-white/5'}`}>
                 <Icon className="w-4 h-4 flex-shrink-0" />
                 <span>{tab.label}</span>
+                {tab.id === 'verification' && counts.pendingKycCount > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-5 text-center animate-pulse">
+                    {counts.pendingKycCount}
+                  </span>
+                )}
+                {tab.id === 'service_approvals' && counts.pendingServiceCount > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-5 text-center animate-pulse">
+                    {counts.pendingServiceCount}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -170,9 +215,14 @@ export default function AdminPageLayout({
         </button>
 
         {/* Page heading */}
-        <div className="mb-8">
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#0F3D30]">{title}</h1>
-          {subtitle && <p className="text-sm text-foreground/55 mt-1">{subtitle}</p>}
+        <div className="mb-8 flex justify-between items-center border-b border-gold/10 pb-4">
+          <div>
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#0F3D30]">{title}</h1>
+            {subtitle && <p className="text-sm text-foreground/55 mt-1">{subtitle}</p>}
+          </div>
+          <div className="flex items-center gap-4">
+            <NotificationBell tokenKey="admin_token" theme="light" />
+          </div>
         </div>
 
         {children}

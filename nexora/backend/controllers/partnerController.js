@@ -141,6 +141,8 @@ const verifyAadharOtp = asyncHandler(async (req, res) => {
 
   vendor.kycDetails = vendor.kycDetails || {};
   vendor.kycDetails.aadharVerified = true;
+  vendor.kycDetails.aadharName = vendor.name;
+  vendor.kycDetails.aadharDob = "15-08-1990";
   await vendor.save();
 
   res.json({
@@ -165,6 +167,7 @@ const submitPan = asyncHandler(async (req, res) => {
   vendor.kycDetails = vendor.kycDetails || {};
   vendor.kycDetails.panNumber = panNumber;
   vendor.kycDetails.panVerified = true;
+  vendor.kycDetails.panName = vendor.name.toUpperCase();
   await vendor.save();
 
   res.json({
@@ -224,6 +227,22 @@ const submitKycFinal = asyncHandler(async (req, res) => {
   vendor.kycDetails = vendor.kycDetails || {};
   vendor.kycDetails.submittedAt = new Date();
   await vendor.save();
+
+  try {
+    const Admin = require("../models/Admin");
+    const admins = await Admin.find().select("_id");
+    const { createNotification } = require("./notificationController");
+    admins.forEach(a => createNotification(
+      a._id,
+      "admin",
+      "Partner KYC Pending Approval",
+      `${vendor.name} has submitted their KYC profile for approval.`,
+      "approval",
+      { vendorId: vendor._id }
+    ));
+  } catch (err) {
+    console.error("Failed to notify admins on KYC submission:", err);
+  }
 
   res.json({
     success: true,
@@ -677,11 +696,13 @@ const updateOnboarding = asyncHandler(async (req, res) => {
   }
 
   const {
+    category,
     businessType, experience, teamSize, businessDescription, primaryContact,
     location, bankDetails, onboardingStep, kycDetails, availability, serviceAreas,
     customServices // ← Step 3: service selection & pricing overrides (onboarding only)
   } = req.body;
 
+  if (category !== undefined) vendor.category = category;
   if (businessType !== undefined) vendor.businessType = businessType;
   if (experience !== undefined) vendor.experience = experience;
   if (teamSize !== undefined) vendor.teamSize = teamSize;
