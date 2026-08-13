@@ -33,6 +33,18 @@ export default function EditCategoryPage() {
     displayOrder: 0,
     platformFeePercentage: 10,
     isActive: true,
+    seoTitle: '',
+    seoDescription: '',
+    seoKeywords: '',
+    popular: false,
+    featured: false,
+    bannerImageUrl: '',
+    totalBookings: 0,
+    whyChooseRaw: '[]',
+    benefitsRaw: '[]',
+    howItWorksRaw: '[]',
+    beforeAfterGalleryRaw: '[]',
+    faqsRaw: '[]',
   });
 
   useEffect(() => {
@@ -50,6 +62,18 @@ export default function EditCategoryPage() {
           displayOrder: cat.displayOrder || 0,
           platformFeePercentage: cat.platformFeePercentage ?? 10,
           isActive: cat.isActive !== false,
+          seoTitle: cat.seoTitle || '',
+          seoDescription: cat.seoDescription || '',
+          seoKeywords: cat.seoKeywords || '',
+          popular: !!cat.popular,
+          featured: !!cat.featured,
+          bannerImageUrl: cat.bannerImageUrl || '',
+          totalBookings: cat.totalBookings || 0,
+          whyChooseRaw: JSON.stringify(cat.whyChoose || [], null, 2),
+          benefitsRaw: JSON.stringify(cat.benefits || [], null, 2),
+          howItWorksRaw: JSON.stringify(cat.howItWorks || [], null, 2),
+          beforeAfterGalleryRaw: JSON.stringify(cat.beforeAfterGallery || [], null, 2),
+          faqsRaw: JSON.stringify(cat.faqs || [], null, 2),
         });
       } catch (err) {
         setError('Failed to load category. It may not exist.');
@@ -70,6 +94,12 @@ export default function EditCategoryPage() {
         slug: form.slug || autoSlug(form.name),
         platformFeePercentage: Number(form.platformFeePercentage),
         displayOrder: Number(form.displayOrder),
+        totalBookings: Number(form.totalBookings),
+        whyChoose: JSON.parse(form.whyChooseRaw || '[]'),
+        benefits: JSON.parse(form.benefitsRaw || '[]'),
+        howItWorks: JSON.parse(form.howItWorksRaw || '[]'),
+        beforeAfterGallery: JSON.parse(form.beforeAfterGalleryRaw || '[]'),
+        faqs: JSON.parse(form.faqsRaw || '[]'),
       };
       await api.put(`/admin/categories/${id}`, payload);
       setSuccess('Category updated successfully!');
@@ -167,13 +197,87 @@ export default function EditCategoryPage() {
             folder="nexora/categories"
           />
 
-          <button
-            type="button"
-            onClick={() => setForm(p => ({ ...p, isActive: !p.isActive }))}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${form.isActive ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}
-          >
-            {form.isActive ? '✓ Active' : '✗ Inactive'}
-          </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[#C3AB84]/20">
+            <div>
+              <label className={lbl}>Hero Banner Image URL</label>
+              <input value={form.bannerImageUrl} onChange={e => setForm(p => ({ ...p, bannerImageUrl: e.target.value }))} className={inp} placeholder="https://example.com/banner.jpg" />
+            </div>
+            <div>
+              <label className={lbl}>Total Bookings Count</label>
+              <input type="number" value={form.totalBookings} onChange={e => setForm(p => ({ ...p, totalBookings: Number(e.target.value) }))} className={inp} />
+            </div>
+            <div>
+              <label className={lbl}>SEO Title</label>
+              <input value={form.seoTitle} onChange={e => setForm(p => ({ ...p, seoTitle: e.target.value }))} className={inp} placeholder="Meta Title" />
+            </div>
+            <div>
+              <label className={lbl}>SEO Keywords</label>
+              <input value={form.seoKeywords} onChange={e => setForm(p => ({ ...p, seoKeywords: e.target.value }))} className={inp} placeholder="home cleaning, sofa clean, best service" />
+            </div>
+          </div>
+
+          <div>
+            <label className={lbl}>SEO Description</label>
+            <textarea rows={2} value={form.seoDescription} onChange={e => setForm(p => ({ ...p, seoDescription: e.target.value }))} className={`${inp} resize-none`} placeholder="Meta Description text" />
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={() => setForm(p => ({ ...p, popular: !p.popular }))}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${form.popular ? 'bg-gold/20 text-[#0F3D30] border-gold/40' : 'bg-gray-100 text-gray-500 border-gray-200'}`}
+            >
+              {form.popular ? '✓ Popular Category' : '✗ Standard Category'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm(p => ({ ...p, featured: !p.featured }))}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${form.featured ? 'bg-gold/20 text-[#0F3D30] border-gold/40' : 'bg-gray-100 text-gray-500 border-gray-200'}`}
+            >
+              {form.featured ? '✓ Featured Category' : '✗ Standard Category'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm(p => ({ ...p, isActive: !p.isActive }))}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${form.isActive ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}
+            >
+              {form.isActive ? '✓ Active' : '✗ Inactive'}
+            </button>
+          </div>
+
+          <div className="pt-6 border-t border-[#C3AB84]/20 space-y-4">
+            <h3 className="font-serif text-md font-bold text-[#0F3D30]">Category Content Sections (JSON Lists)</h3>
+            
+            <div>
+              <label className={lbl}>Why Choose Us (JSON Array)</label>
+              <p className="text-[10px] text-foreground/45 mb-1">Format: [ &#123; "title": "...", "desc": "..." &#125; ]</p>
+              <textarea rows={4} value={form.whyChooseRaw} onChange={e => setForm(p => ({ ...p, whyChooseRaw: e.target.value }))} className="w-full font-mono text-xs border border-[#C3AB84]/30 rounded-2xl px-4 py-3 bg-[#F8F4EE] focus:outline-none" />
+            </div>
+
+            <div>
+              <label className={lbl}>Benefits (JSON Array)</label>
+              <p className="text-[10px] text-foreground/45 mb-1">Format: [ &#123; "title": "...", "desc": "..." &#125; ]</p>
+              <textarea rows={4} value={form.benefitsRaw} onChange={e => setForm(p => ({ ...p, benefitsRaw: e.target.value }))} className="w-full font-mono text-xs border border-[#C3AB84]/30 rounded-2xl px-4 py-3 bg-[#F8F4EE] focus:outline-none" />
+            </div>
+
+            <div>
+              <label className={lbl}>How It Works Steps (JSON Array)</label>
+              <p className="text-[10px] text-foreground/45 mb-1">Format: [ &#123; "title": "...", "desc": "..." &#125; ]</p>
+              <textarea rows={4} value={form.howItWorksRaw} onChange={e => setForm(p => ({ ...p, howItWorksRaw: e.target.value }))} className="w-full font-mono text-xs border border-[#C3AB84]/30 rounded-2xl px-4 py-3 bg-[#F8F4EE] focus:outline-none" />
+            </div>
+
+            <div>
+              <label className={lbl}>Before / After Gallery (JSON Array)</label>
+              <p className="text-[10px] text-foreground/45 mb-1">Format: [ &#123; "beforeUrl": "...", "afterUrl": "..." &#125; ]</p>
+              <textarea rows={4} value={form.beforeAfterGalleryRaw} onChange={e => setForm(p => ({ ...p, beforeAfterGalleryRaw: e.target.value }))} className="w-full font-mono text-xs border border-[#C3AB84]/30 rounded-2xl px-4 py-3 bg-[#F8F4EE] focus:outline-none" />
+            </div>
+
+            <div>
+              <label className={lbl}>FAQs (JSON Array)</label>
+              <p className="text-[10px] text-foreground/45 mb-1">Format: [ &#123; "question": "...", "answer": "..." &#125; ]</p>
+              <textarea rows={4} value={form.faqsRaw} onChange={e => setForm(p => ({ ...p, faqsRaw: e.target.value }))} className="w-full font-mono text-xs border border-[#C3AB84]/30 rounded-2xl px-4 py-3 bg-[#F8F4EE] focus:outline-none" />
+            </div>
+          </div>
         </div>
 
         {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-2xl">{error}</p>}

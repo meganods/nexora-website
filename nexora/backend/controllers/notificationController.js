@@ -126,6 +126,24 @@ const broadcastToAll = async (title, body, type = "system", metadata = {}) => {
   }
 };
 
+const deleteNotification = asyncHandler(async (req, res) => {
+  const userId = req.user.id || req.user._id;
+  const { role } = req.user;
+  const recipientType = role === "user" ? "user" : role === "vendor" ? "vendor" : "admin";
+
+  const notif = await Notification.findOneAndDelete({
+    _id: req.params.id,
+    recipientId: userId,
+    recipientType
+  });
+
+  if (!notif) {
+    return res.status(404).json({ success: false, message: "Notification not found." });
+  }
+
+  res.json({ success: true, message: "Notification deleted successfully." });
+});
+
 module.exports = {
   createNotification,
   getNotifications,
@@ -133,4 +151,5 @@ module.exports = {
   markAllRead,
   broadcastNotification,
   broadcastToAll,
+  deleteNotification,
 };

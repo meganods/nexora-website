@@ -47,6 +47,16 @@ export default function EditServicePage() {
     discountPercentage: 0, displayOrder: 0,
     isActive: true, isFeatured: false, isPopular: false, isMostBooked: false,
     parentId: '',
+    trending: false, newArrival: false, totalBookings: 0,
+    bannerImageUrl: '', warrantyInfo: '',
+    whatsNotIncludedRaw: '[]',
+    processStepsRaw: '[]',
+    safetyMeasuresRaw: '[]',
+    faqsRaw: '[]',
+    relatedServicesRaw: '[]',
+    recommendedServicesRaw: '[]',
+    addonsRaw: '[]',
+    seoTitle: '', seoDescription: '', seoKeywords: '',
   });
 
   useEffect(() => {
@@ -74,6 +84,21 @@ export default function EditServicePage() {
           isPopular: svc.isPopular || false,
           isMostBooked: svc.isMostBooked || false,
           parentId: svc.parentId || '',
+          trending: !!svc.trending,
+          newArrival: !!svc.newArrival,
+          totalBookings: svc.totalBookings || 0,
+          bannerImageUrl: svc.bannerImageUrl || '',
+          warrantyInfo: svc.warrantyInfo || '',
+          whatsNotIncludedRaw: JSON.stringify(svc.whatsNotIncluded || [], null, 2),
+          processStepsRaw: JSON.stringify(svc.processSteps || [], null, 2),
+          safetyMeasuresRaw: JSON.stringify(svc.safetyMeasures || [], null, 2),
+          faqsRaw: JSON.stringify(svc.faqs || [], null, 2),
+          relatedServicesRaw: JSON.stringify(svc.relatedServices || [], null, 2),
+          recommendedServicesRaw: JSON.stringify(svc.recommendedServices || [], null, 2),
+          addonsRaw: JSON.stringify(svc.addons || [], null, 2),
+          seoTitle: svc.seoTitle || '',
+          seoDescription: svc.seoDescription || '',
+          seoKeywords: svc.seoKeywords || '',
         });
       } catch (err) {
         setError('Failed to load service.');
@@ -96,7 +121,15 @@ export default function EditServicePage() {
         estimatedDurationMins: Number(form.estimatedDurationMins),
         discountPercentage: Number(form.discountPercentage),
         displayOrder: Number(form.displayOrder),
+        totalBookings: Number(form.totalBookings),
         inclusions: form.inclusions.split('\n').map((s: string) => s.trim()).filter(Boolean),
+        whatsNotIncluded: JSON.parse(form.whatsNotIncludedRaw || '[]'),
+        processSteps: JSON.parse(form.processStepsRaw || '[]'),
+        safetyMeasures: JSON.parse(form.safetyMeasuresRaw || '[]'),
+        faqs: JSON.parse(form.faqsRaw || '[]'),
+        relatedServices: JSON.parse(form.relatedServicesRaw || '[]'),
+        recommendedServices: JSON.parse(form.recommendedServicesRaw || '[]'),
+        addons: JSON.parse(form.addonsRaw || '[]'),
       };
       await api.put(`/admin/services/${id}`, payload);
       setSuccess('Service updated successfully!');
@@ -280,6 +313,91 @@ export default function EditServicePage() {
                 <span className="text-xs font-semibold">{label}</span>
               </label>
             ))}
+            <label className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${form.trending ? 'border-[#0F3D30] bg-[#0F3D30]/5 text-[#0F3D30]' : 'border-[#C3AB84]/20 text-foreground/60'}`}>
+              <input type="checkbox" checked={form.trending} onChange={e => setForm(p => ({ ...p, trending: e.target.checked }))} className="hidden" />
+              {form.trending ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+              <span className="text-xs font-semibold font-serif">Trending</span>
+            </label>
+            <label className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${form.newArrival ? 'border-[#0F3D30] bg-[#0F3D30]/5 text-[#0F3D30]' : 'border-[#C3AB84]/20 text-foreground/60'}`}>
+              <input type="checkbox" checked={form.newArrival} onChange={e => setForm(p => ({ ...p, newArrival: e.target.checked }))} className="hidden" />
+              {form.newArrival ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+              <span className="text-xs font-semibold font-serif">New Arrival</span>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[#C3AB84]/20">
+            <div>
+              <label className={lbl}>Hero Banner Image URL</label>
+              <input value={form.bannerImageUrl} onChange={e => setForm(p => ({ ...p, bannerImageUrl: e.target.value }))} className={inp} placeholder="https://example.com/banner.jpg" />
+            </div>
+            <div>
+              <label className={lbl}>Total Bookings Count</label>
+              <input type="number" value={form.totalBookings} onChange={e => setForm(p => ({ ...p, totalBookings: Number(e.target.value) }))} className={inp} />
+            </div>
+            <div>
+              <label className={lbl}>SEO Title</label>
+              <input value={form.seoTitle} onChange={e => setForm(p => ({ ...p, seoTitle: e.target.value }))} className={inp} />
+            </div>
+            <div>
+              <label className={lbl}>SEO Keywords</label>
+              <input value={form.seoKeywords} onChange={e => setForm(p => ({ ...p, seoKeywords: e.target.value }))} className={inp} />
+            </div>
+          </div>
+
+          <div>
+            <label className={lbl}>SEO Description</label>
+            <textarea rows={2} value={form.seoDescription} onChange={e => setForm(p => ({ ...p, seoDescription: e.target.value }))} className={`${inp} resize-none`} />
+          </div>
+
+          <div>
+            <label className={lbl}>Service Warranty Information</label>
+            <input value={form.warrantyInfo} onChange={e => setForm(p => ({ ...p, warrantyInfo: e.target.value }))} className={inp} placeholder="e.g. 30 Days Free Warranty" />
+          </div>
+
+          <div className="pt-6 border-t border-[#C3AB84]/20 space-y-4">
+            <h3 className="font-serif text-md font-bold text-[#0F3D30]">Service Content Sections (JSON Lists)</h3>
+            
+            <div>
+              <label className={lbl}>Exclusions / What's NOT Included (JSON String Array)</label>
+              <p className="text-[10px] text-foreground/45 mb-1">Format: [ "Damage parts replacement cost", "Post-cleaning waste removal" ]</p>
+              <textarea rows={3} value={form.whatsNotIncludedRaw} onChange={e => setForm(p => ({ ...p, whatsNotIncludedRaw: e.target.value }))} className="w-full font-mono text-xs border border-[#C3AB84]/30 rounded-2xl px-4 py-3 bg-[#F8F4EE] focus:outline-none" />
+            </div>
+
+            <div>
+              <label className={lbl}>Process Steps (JSON Object Array)</label>
+              <p className="text-[10px] text-foreground/45 mb-1">Format: [ &#123; "title": "Inspection", "desc": "We inspect..." &#125; ]</p>
+              <textarea rows={4} value={form.processStepsRaw} onChange={e => setForm(p => ({ ...p, processStepsRaw: e.target.value }))} className="w-full font-mono text-xs border border-[#C3AB84]/30 rounded-2xl px-4 py-3 bg-[#F8F4EE] focus:outline-none" />
+            </div>
+
+            <div>
+              <label className={lbl}>Safety Measures (JSON String Array)</label>
+              <p className="text-[10px] text-foreground/45 mb-1">Format: [ "Masks and gloves worn", "Sanitized equipment used" ]</p>
+              <textarea rows={3} value={form.safetyMeasuresRaw} onChange={e => setForm(p => ({ ...p, safetyMeasuresRaw: e.target.value }))} className="w-full font-mono text-xs border border-[#C3AB84]/30 rounded-2xl px-4 py-3 bg-[#F8F4EE] focus:outline-none" />
+            </div>
+
+            <div>
+              <label className={lbl}>FAQs (JSON Object Array)</label>
+              <p className="text-[10px] text-foreground/45 mb-1">Format: [ &#123; "question": "...", "answer": "..." &#125; ]</p>
+              <textarea rows={4} value={form.faqsRaw} onChange={e => setForm(p => ({ ...p, faqsRaw: e.target.value }))} className="w-full font-mono text-xs border border-[#C3AB84]/30 rounded-2xl px-4 py-3 bg-[#F8F4EE] focus:outline-none" />
+            </div>
+
+            <div>
+              <label className={lbl}>Related Services (JSON Mongo ID Array)</label>
+              <p className="text-[10px] text-foreground/45 mb-1">Format: [ "ObjectId1", "ObjectId2" ]</p>
+              <textarea rows={2} value={form.relatedServicesRaw} onChange={e => setForm(p => ({ ...p, relatedServicesRaw: e.target.value }))} className="w-full font-mono text-xs border border-[#C3AB84]/30 rounded-2xl px-4 py-3 bg-[#F8F4EE] focus:outline-none" />
+            </div>
+
+            <div>
+              <label className={lbl}>Recommended Services (JSON Mongo ID Array)</label>
+              <p className="text-[10px] text-foreground/45 mb-1">Format: [ "ObjectId1", "ObjectId2" ]</p>
+              <textarea rows={2} value={form.recommendedServicesRaw} onChange={e => setForm(p => ({ ...p, recommendedServicesRaw: e.target.value }))} className="w-full font-mono text-xs border border-[#C3AB84]/30 rounded-2xl px-4 py-3 bg-[#F8F4EE] focus:outline-none" />
+            </div>
+
+            <div>
+              <label className={lbl}>Add-On Services (JSON Array)</label>
+              <p className="text-[10px] text-foreground/45 mb-1">Format: [ &#123; "name": "Shoulder Massage", "description": "15 min massage", "price": 199 &#125; ]</p>
+              <textarea rows={4} value={form.addonsRaw} onChange={e => setForm(p => ({ ...p, addonsRaw: e.target.value }))} className="w-full font-mono text-xs border border-[#C3AB84]/30 rounded-2xl px-4 py-3 bg-[#F8F4EE] focus:outline-none" />
+            </div>
           </div>
         </div>
         {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-2xl">{error}</p>}

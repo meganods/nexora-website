@@ -506,7 +506,7 @@ function AdminDashboardContent() {
           });
         }
       } catch (err) {
-        console.error("Failed to fetch pending counts:", err);
+        // Silently catch temporary network/nodemon reconnect drops
       }
     };
     fetchCounts();

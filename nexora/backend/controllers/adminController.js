@@ -2,6 +2,9 @@ const Admin = require("../models/Admin");
 const User = require("../models/User");
 const ServicePartner = require("../models/ServicePartner");
 const AdminSettings = require("../models/AdminSettings");
+const Review = require("../models/Review");
+const SupportTicket = require("../models/SupportTicket");
+const { createNotification } = require("./notificationController");
 const generateToken = require("../utils/generateToken");
 const asyncHandler = require("../utils/asyncHandler");
 const { findBestPartner, runBatchAutoAssign } = require("../services/assignmentEngine");
@@ -727,4 +730,158 @@ module.exports = {
   triggerBatchAssign,
   assignSingleBooking,
   previewAssignment,
+};
+
+// ─── Support Tickets (Admin) ──────────────────────────────────────────────────
+const listSupportTickets = asyncHandler(async (req, res) => {
+  const { status } = req.query;
+  const filter = {};
+  if (status) filter.status = status;
+
+  const tickets = await SupportTicket.find(filter)
+    .populate("userId", "name email phone")
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  res.json({ success: true, data: tickets });
+});
+
+const getSupportTicketDetails = asyncHandler(async (req, res) => {
+  const ticket = await SupportTicket.findById(req.params.id)
+    .populate("userId", "name email phone")
+    .lean();
+
+  if (!ticket) return res.status(404).json({ success: false, message: "Ticket not found." });
+  res.json({ success: true, data: ticket });
+});
+
+const replyToSupportTicketByAdmin = asyncHandler(async (req, res) => {
+  const { message, attachments, status } = req.body;
+  const ticket = await SupportTicket.findById(req.params.id);
+
+  if (!ticket) return res.status(404).json({ success: false, message: "Ticket not found." });
+
+  ticket.messages.push({
+    senderType: "admin",
+    senderId: req.user._id || req.user.id,
+    message,
+    attachments: attachments || []
+  });
+
+  if (status) {
+    ticket.status = status;
+  } else {
+    ticket.status = "IN_PROGRESS";
+  }
+
+  await ticket.save();
+
+  // Notify customer
+  createNotification(
+    ticket.userId,
+    "user",
+    "Support Ticket Update",
+    `Support team has replied to ticket #${ticket._id}.`,
+    "system",
+    { ticketId: ticket._id }
+  );
+
+  res.json({ success: true, message: "Reply sent successfully", ticket });
+});
+
+// ─── Reviews Approvals (Admin) ─────────────────────────────────────────────────
+const getPendingReviews = asyncHandler(async (req, res) => {
+  const reviews = await Review.find({ approvalStatus: "PENDING" })
+    .populate("userId", "name email")
+    .populate("vendorId", "name")
+    .populate("serviceId", "name")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  res.json({ success: true, data: reviews });
+});
+
+const reviewUserReview = asyncHandler(async (req, res) => {
+  const { action } = req.body; // "approve" | "reject"
+  const review = await Review.findById(req.params.id);
+
+  if (!review) return res.status(404).json({ success: false, message: "Review not found." });
+
+  review.approvalStatus = action === "approve" ? "APPROVED" : "REJECTED";
+  review.approvedBy = req.user._id || req.user.id;
+  review.approvedAt = new Date();
+  await review.save();
+
+  if (action === "approve") {
+    // Recalculate average rating for the service
+    const ServiceModel = require("../models/Service");
+    const service = await ServiceModel.findById(review.serviceId);
+    if (service) {
+      const allApprovedReviews = await Review.find({ serviceId: service._id, approvalStatus: "APPROVED" });
+      const totalRatingsSum = allApprovedReviews.reduce((sum, r) => sum + r.rating, 0);
+      const count = allApprovedReviews.length;
+      
+      service.reviewCount = count;
+      service.rating = count > 0 ? Number((totalRatingsSum / count).toFixed(1)) : 4.5;
+      await service.save();
+    }
+    
+    // Also recalculate for the Service Partner/Vendor
+    const ServicePartnerModel = require("../models/ServicePartner");
+    const partner = await ServicePartnerModel.findById(review.vendorId);
+    if (partner) {
+      const partnerApprovedReviews = await Review.find({ vendorId: partner._id, approvalStatus: "APPROVED" });
+      const totalPartnerRatingsSum = partnerApprovedReviews.reduce((sum, r) => sum + r.rating, 0);
+      const partnerCount = partnerApprovedReviews.length;
+      
+      partner.reviewCount = partnerCount;
+      partner.rating = partnerCount > 0 ? Number((totalPartnerRatingsSum / partnerCount).toFixed(1)) : 4.5;
+      await partner.save();
+    }
+
+    // Notify vendor
+    createNotification(
+      review.vendorId,
+      "vendor",
+      "New Review Approved",
+      `A new customer review has been approved and published for your profile.`,
+      "system",
+      { reviewId: review._id }
+    );
+  }
+
+  res.json({ success: true, message: `Review ${action}d successfully.`, review });
+});
+
+module.exports = {
+  getPendingCounts,
+  loginAdmin,
+  listVendors,
+  listUsers,
+  verifyVendorKyc,
+  getDashboardMetrics,
+  updateVendorAvailabilityByAdmin,
+  addCategory,
+  getCategories,
+  getCategoryById,
+  updateCategory,
+  deleteCategory,
+  addService,
+  listServices,
+  updateService,
+  deleteService,
+  reviewPartnerService,
+  listAllBookings,
+  adminCancelBooking,
+  toggleUserStatus,
+  getSettings,
+  updateSettings,
+  triggerBatchAssign,
+  assignSingleBooking,
+  previewAssignment,
+  listSupportTickets,
+  getSupportTicketDetails,
+  replyToSupportTicketByAdmin,
+  getPendingReviews,
+  reviewUserReview,
 };

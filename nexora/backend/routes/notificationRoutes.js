@@ -4,6 +4,7 @@ const {
   markOneRead,
   markAllRead,
   broadcastNotification,
+  deleteNotification,
 } = require("../controllers/notificationController");
 const { protect, authorize } = require("../middlewares/auth");
 
@@ -25,5 +26,7 @@ router.post(
   authorize("super_admin", "admin"),
   broadcastNotification
 );
+
+router.delete("/:id", protect, deleteNotification);
 
 module.exports = router;

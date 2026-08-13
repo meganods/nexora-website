@@ -152,11 +152,17 @@ const getProfile = asyncHandler(async (req, res) => {
 // @route   PUT /api/user/profile
 // @access  Private (user)
 const updateProfile = asyncHandler(async (req, res) => {
-  const { name, email } = req.body;
-  const user = req.user.account;
+  const { name, email, phone, profilePhoto, password } = req.body;
+  
+  // Fetch user document directly to ensure pre-save hook runs on user password modify
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
   if (name !== undefined) user.name = name;
   if (email !== undefined) user.email = email;
+  if (phone !== undefined) user.phone = phone;
+  if (profilePhoto !== undefined) user.profilePhoto = profilePhoto;
+  if (password !== undefined && password.trim() !== "") user.password = password;
 
   await user.save();
 

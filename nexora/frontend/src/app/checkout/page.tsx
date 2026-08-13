@@ -214,6 +214,7 @@ function CheckoutForm() {
       address: activeAddr,
       scheduledDate: date,
       scheduledSlot: finalSlotString,
+      addons: parsedAddons,
     };
 
     if (service?.isPackage) {
@@ -324,11 +325,19 @@ function CheckoutForm() {
     );
   }
 
+  const addonsParam = searchParams.get('addons') || '';
+  const parsedAddons = addonsParam ? addonsParam.split(',').map(item => {
+    const parts = item.split(':');
+    return { name: decodeURIComponent(parts[0]), price: Number(parts[1] || 0) };
+  }) : [];
+  const addonsPriceTotal = parsedAddons.reduce((sum, a) => sum + a.price, 0);
+
   let basePrice = service?.basePrice || 0;
   if (service?.discountPercentage > 0) {
     basePrice = Math.round(basePrice * (1 - service.discountPercentage / 100));
   }
-  const total = Math.max(0, basePrice + platformFee - appliedDiscount);
+  const subtotal = basePrice + addonsPriceTotal;
+  const total = Math.max(0, subtotal + platformFee - appliedDiscount);
 
   return (
     <div className="min-h-screen bg-cream overflow-x-hidden">
@@ -599,6 +608,17 @@ function CheckoutForm() {
                   ) : (
                     <p className="text-xs text-foreground/60 mt-1">1 session</p>
                   )}
+                  {parsedAddons.length > 0 && (
+                    <div className="mt-2 pl-2 border-l border-gold/30 space-y-1">
+                      <span className="block text-[9px] uppercase font-bold text-foreground/45">Add-ons:</span>
+                      {parsedAddons.map((addon, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-[10px] text-foreground/65">
+                          <span>+ {addon.name}</span>
+                          <span>₹{addon.price}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <span className="font-serif font-bold text-primary text-sm">₹{basePrice}</span>
               </div>
@@ -631,7 +651,7 @@ function CheckoutForm() {
               <div className="space-y-2.5 text-xs text-foreground/75">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>₹{basePrice}</span>
+                  <span>₹{subtotal}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Platform Fee</span>

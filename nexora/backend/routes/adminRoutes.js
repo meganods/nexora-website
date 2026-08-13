@@ -25,6 +25,11 @@ const {
   triggerBatchAssign,
   assignSingleBooking,
   previewAssignment,
+  listSupportTickets,
+  getSupportTicketDetails,
+  replyToSupportTicketByAdmin,
+  getPendingReviews,
+  reviewUserReview,
 } = require("../controllers/adminController");
 
 const {
@@ -169,5 +174,14 @@ router.put("/settings", protect, authorize("super_admin", "admin"), updateSettin
 router.post("/assign/run", protect, authorize("super_admin", "admin"), triggerBatchAssign);
 router.post("/assign/:bookingId", protect, authorize("super_admin", "admin"), assignSingleBooking);
 router.get("/assign/:bookingId/preview", protect, authorize("super_admin", "admin"), previewAssignment);
+
+// ─── Support Tickets (Admin) ──────────────────────────────────────────────────
+router.get("/tickets", protect, authorize("super_admin", "admin", "support"), listSupportTickets);
+router.get("/tickets/:id", protect, authorize("super_admin", "admin", "support"), getSupportTicketDetails);
+router.post("/tickets/:id/reply", protect, authorize("super_admin", "admin"), replyToSupportTicketByAdmin);
+
+// ─── Reviews Approvals (Admin) ─────────────────────────────────────────────────
+router.get("/reviews/pending", protect, authorize("super_admin", "admin", "support"), getPendingReviews);
+router.patch("/reviews/:id/review", protect, authorize("super_admin", "admin"), reviewUserReview);
 
 module.exports = router;

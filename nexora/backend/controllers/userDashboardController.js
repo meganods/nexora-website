@@ -1,0 +1,286 @@
+const User = require("../models/User");
+const Booking = require("../models/Booking");
+const Coupon = require("../models/Coupon");
+const Review = require("../models/Review");
+const SupportTicket = require("../models/SupportTicket");
+const ServicePartner = require("../models/ServicePartner");
+const asyncHandler = require("../utils/asyncHandler");
+const { createNotification } = require("./notificationController");
+const mongoose = require("mongoose");
+
+// ─── Analytics / Overview stats ────────────────────────────────────────────────
+exports.getDashboardOverview = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  const [activeBookingsCount, completedBookingsCount, cancelledBookingsCount, addressesCount, availableCouponsCount, recentBookings, recentNotifications] = await Promise.all([
+    Booking.countDocuments({ customerId: userId, status: { $in: ["REQUESTED", "ASSIGNED", "PARTNER_ACCEPTED", "ON_THE_WAY", "ARRIVED", "OTP_VERIFICATION", "IN_PROGRESS"] } }),
+    Booking.countDocuments({ customerId: userId, status: "COMPLETED" }),
+    Booking.countDocuments({ customerId: userId, status: "CANCELLED" }),
+    User.findById(userId).then(u => u?.addresses?.length || 0),
+    Coupon.countDocuments({ isActive: true }),
+    Booking.find({ customerId: userId })
+      .populate("serviceId", "name basePrice")
+      .populate("vendorId", "name phone")
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean(),
+    require("../models/Notification").find({ recipientId: userId, recipientType: "user" })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean()
+  ]);
+
+  // Aggregate total savings (difference between basePrice/original and finalPrice paid, or flat savings)
+  const savingsAggregate = await Booking.aggregate([
+    { $match: { customerId: new mongoose.Types.ObjectId(userId), status: "COMPLETED" } },
+    { $group: { _id: null, totalSavings: { $sum: "$discountAmount" } } }
+  ]);
+  const totalSavings = savingsAggregate[0]?.totalSavings || 0;
+
+  res.json({
+    success: true,
+    data: {
+      stats: {
+        activeBookings: activeBookingsCount,
+        completedBookings: completedBookingsCount,
+        cancelledBookings: cancelledBookingsCount,
+        savedAddresses: addressesCount,
+        availableCoupons: availableCouponsCount,
+        totalSavings
+      },
+      recentBookings,
+      recentNotifications
+    }
+  });
+});
+
+// ─── Booking List ──────────────────────────────────────────────────────────────
+exports.getUserBookings = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { type = "active", page = 1, limit = 10, status, categoryId } = req.query;
+
+  const filter = { customerId: userId };
+
+  if (type === "active") {
+    filter.status = { $in: ["PENDING_PAYMENT", "REQUESTED", "ASSIGNED", "PARTNER_ACCEPTED", "ON_THE_WAY", "ARRIVED", "OTP_VERIFICATION", "IN_PROGRESS"] };
+  } else if (type === "history") {
+    filter.status = { $in: ["COMPLETED", "CANCELLED"] };
+  }
+
+  if (status && status !== "ALL") {
+    filter.status = status;
+  }
+
+  const pageNum = Math.max(1, parseInt(page, 10));
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+  const skip = (pageNum - 1) * limitNum;
+
+  const total = await Booking.countDocuments(filter);
+  const bookings = await Booking.find(filter)
+    .populate("serviceId", "name basePrice duration image")
+    .populate("vendorId", "name phone profilePhoto rating")
+    .populate("packageId", "name basePrice")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limitNum)
+    .lean();
+
+  res.json({
+    success: true,
+    total,
+    pages: Math.ceil(total / limitNum),
+    page: pageNum,
+    data: bookings
+  });
+});
+
+// ─── Address CRUD ──────────────────────────────────────────────────────────────
+exports.addAddress = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { label, fullName, phone, houseNo, street, landmark, countryId, stateId, cityId, areaId, pincodeId, city, state, pincode, isDefault } = req.body;
+
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+  if (isDefault) {
+    user.addresses.forEach(addr => { addr.isDefault = false; });
+  }
+
+  const newAddress = {
+    label: label || "Home",
+    fullName,
+    phone,
+    houseNo,
+    street,
+    landmark,
+    countryId,
+    stateId,
+    cityId,
+    areaId,
+    pincodeId,
+    city,
+    state,
+    pincode,
+    isDefault: !!isDefault || user.addresses.length === 0
+  };
+
+  user.addresses.push(newAddress);
+  await user.save();
+
+  res.status(201).json({ success: true, message: "Address added successfully", data: user.addresses });
+});
+
+exports.updateAddress = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { addressId } = req.params;
+  const updates = req.body;
+
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+  const addr = user.addresses.id(addressId);
+  if (!addr) return res.status(404).json({ success: false, message: "Address not found" });
+
+  if (updates.isDefault) {
+    user.addresses.forEach(a => { a.isDefault = false; });
+  }
+
+  Object.assign(addr, updates);
+  await user.save();
+
+  res.json({ success: true, message: "Address updated successfully", data: user.addresses });
+});
+
+exports.deleteAddress = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { addressId } = req.params;
+
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+  user.addresses.pull({ _id: addressId });
+  await user.save();
+
+  res.json({ success: true, message: "Address deleted successfully", data: user.addresses });
+});
+
+// ─── Reviews & Ratings ──────────────────────────────────────────────────────────
+exports.submitReview = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { bookingId, rating, reviewText, images } = req.body;
+
+  const booking = await Booking.findOne({ _id: bookingId, customerId: userId });
+  if (!booking) return res.status(404).json({ success: false, message: "Booking not found." });
+
+  if (booking.status !== "COMPLETED") {
+    return res.status(400).json({ success: false, message: "You can only review completed bookings." });
+  }
+
+  const existingReview = await Review.findOne({ bookingId });
+  if (existingReview) {
+    return res.status(400).json({ success: false, message: "You have already reviewed this booking." });
+  }
+
+  const review = await Review.create({
+    bookingId,
+    userId,
+    vendorId: booking.vendorId,
+    serviceId: booking.serviceId,
+    categoryId: booking.categoryId,
+    rating,
+    reviewText,
+    images: images || [],
+    approvalStatus: "PENDING"
+  });
+
+  // Notify admins of new review pending approval
+  const Admin = require("../models/Admin");
+  const admins = await Admin.find().select("_id");
+  admins.forEach(a => createNotification(
+    a._id,
+    "admin",
+    "New Review Pending Approval",
+    `A new review has been submitted for booking ${bookingId} and is pending approval.`,
+    "approval",
+    { reviewId: review._id }
+  ));
+
+  res.status(201).json({ success: true, message: "Review submitted successfully! Awaiting admin approval.", review });
+});
+
+// ─── Support Tickets ───────────────────────────────────────────────────────────
+exports.createSupportTicket = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { subject, message, attachments } = req.body;
+
+  const ticket = await SupportTicket.create({
+    userId,
+    subject,
+    status: "OPEN",
+    messages: [
+      {
+        senderType: "user",
+        senderId: userId,
+        message,
+        attachments: attachments || []
+      }
+    ]
+  });
+
+  // Notify admins
+  const Admin = require("../models/Admin");
+  const admins = await Admin.find().select("_id");
+  admins.forEach(a => createNotification(
+    a._id,
+    "admin",
+    "New Support Ticket Created",
+    `Ticket #${ticket._id}: "${subject}" has been opened.`,
+    "system",
+    { ticketId: ticket._id }
+  ));
+
+  res.status(201).json({ success: true, message: "Support ticket created successfully", ticket });
+});
+
+exports.listTickets = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const tickets = await SupportTicket.find({ userId }).sort({ updatedAt: -1 }).lean();
+  res.json({ success: true, data: tickets });
+});
+
+exports.getTicketDetails = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const ticket = await SupportTicket.findOne({ _id: req.params.ticketId, userId }).lean();
+  if (!ticket) return res.status(404).json({ success: false, message: "Ticket not found." });
+  res.json({ success: true, data: ticket });
+});
+
+exports.replyToTicket = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { message, attachments } = req.body;
+
+  const ticket = await SupportTicket.findOne({ _id: req.params.ticketId, userId });
+  if (!ticket) return res.status(404).json({ success: false, message: "Ticket not found." });
+
+  ticket.messages.push({
+    senderType: "user",
+    senderId: userId,
+    message,
+    attachments: attachments || []
+  });
+  ticket.status = "OPEN"; // Reset status to open when customer replies
+  await ticket.save();
+
+  res.json({ success: true, message: "Reply added successfully", ticket });
+});
+
+exports.getUserReviews = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const reviews = await Review.find({ userId })
+    .populate("serviceId", "name")
+    .populate("vendorId", "name")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  res.json({ success: true, data: reviews });
+});

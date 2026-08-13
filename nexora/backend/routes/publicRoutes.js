@@ -30,6 +30,46 @@ router.get('/categories', async (req, res) => {
   }
 });
 
+router.get('/categories/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    let category;
+    
+    const query = slug.match(/^[a-f\d]{24}$/i) ? { _id: slug } : { slug };
+    category = await Category.findOne({ ...query, isActive: true });
+    
+    if (!category) return res.status(404).json({ message: 'Category not found' });
+
+    // Fetch associated services
+    const services = await Service.find({
+      categoryId: category._id,
+      isActive: true,
+      approvalStatus: 'APPROVED',
+      isDeleted: false,
+      parentId: null
+    }).sort({ displayOrder: 1, name: 1 });
+
+    const discountedServices = await applyCampaignDiscounts(services);
+
+    // Fetch approved reviews for this category
+    const Review = require('../models/Review');
+    const reviews = await Review.find({ categoryId: category._id, approvalStatus: 'APPROVED' })
+      .populate('userId', 'name profilePhoto')
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    const catObj = category.toObject();
+    catObj.services = discountedServices;
+    catObj.reviews = reviews;
+
+    res.json(catObj);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching category details' });
+  }
+});
+
 router.get('/services', async (req, res) => {
   try {
     const { categoryId, isPopular, isFeatured, isMostBooked, hasDiscount, q, limit, page } = req.query;
@@ -69,12 +109,14 @@ router.get('/services/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
     let service;
+    
     // Try by slug first, then by _id
-    if (slug.match(/^[a-f\d]{24}$/i)) {
-      service = await Service.findOne({ _id: slug, isActive: true, approvalStatus: 'APPROVED', isDeleted: false }).populate('categoryId');
-    } else {
-      service = await Service.findOne({ slug, isActive: true, approvalStatus: 'APPROVED', isDeleted: false }).populate('categoryId');
-    }
+    const query = slug.match(/^[a-f\d]{24}$/i) ? { _id: slug } : { slug };
+    service = await Service.findOne({ ...query, isActive: true, approvalStatus: 'APPROVED', isDeleted: false })
+      .populate('categoryId')
+      .populate('relatedServices')
+      .populate('recommendedServices');
+
     if (!service) return res.status(404).json({ message: 'Service not found' });
     
     // Fetch associated sub-services
@@ -89,8 +131,18 @@ router.get('/services/:slug', async (req, res) => {
     const serviceObj = discounted.toObject ? discounted.toObject() : discounted;
     serviceObj.subServices = subServices;
 
+    // Fetch approved reviews for this service
+    const Review = require('../models/Review');
+    const reviews = await Review.find({ serviceId: service._id, approvalStatus: 'APPROVED' })
+      .populate('userId', 'name profilePhoto')
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    serviceObj.reviews = reviews;
+
     res.json(serviceObj);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Error fetching service' });
   }
 });
@@ -254,5 +306,16 @@ router.get('/campaigns', getActiveCampaigns);
 // ─── Best Deals ────────────────────────────────────────────────────────────
 router.get('/deals', getPublicDeals);
 router.get('/deals/:slug', getPublicDealBySlug);
+
+// ─── Coupons ────────────────────────────────────────────────────────────────
+router.get('/coupons', async (req, res) => {
+  try {
+    const Coupon = require("../models/Coupon");
+    const coupons = await Coupon.find({ isActive: true }).sort({ createdAt: -1 }).lean();
+    res.json({ success: true, data: coupons });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 module.exports = router;

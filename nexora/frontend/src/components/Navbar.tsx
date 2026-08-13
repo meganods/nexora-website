@@ -95,7 +95,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="w-full bg-cream border-b border-gold/20 relative z-50">
+    <header className="sticky top-0 w-full bg-cream border-b border-gold/20 z-50">
       <div className="container mx-auto flex h-16 sm:h-20 items-center justify-between px-4 sm:px-8 lg:px-12 gap-4">
 
         {/* Logo */}

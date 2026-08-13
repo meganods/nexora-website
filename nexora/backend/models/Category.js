@@ -23,7 +23,34 @@ const categorySchema = new mongoose.Schema({
   platformFeePercentage: {
     type: Number,
     default: 10
-  }
+  },
+  seoTitle: { type: String, default: "" },
+  seoDescription: { type: String, default: "" },
+  seoKeywords: { type: String, default: "" },
+  popular: { type: Boolean, default: false },
+  featured: { type: Boolean, default: false },
+  bannerImageUrl: { type: String, default: null },
+  totalBookings: { type: Number, default: 0 },
+  whyChoose: [{
+    title: { type: String, required: true },
+    desc: { type: String, required: true }
+  }],
+  benefits: [{
+    title: { type: String, required: true },
+    desc: { type: String, required: true }
+  }],
+  howItWorks: [{
+    title: { type: String, required: true },
+    desc: { type: String, required: true }
+  }],
+  beforeAfterGallery: [{
+    beforeUrl: { type: String, required: true },
+    afterUrl: { type: String, required: true }
+  }],
+  faqs: [{
+    question: { type: String, required: true },
+    answer: { type: String, required: true }
+  }]
 }, { timestamps: true });
 
 // Auto-generate slug from name if not provided

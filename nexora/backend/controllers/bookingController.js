@@ -15,7 +15,7 @@ cf.XEnvironment = process.env.CASHFREE_ENV === 'PRODUCTION'
 
 exports.createOrder = async (req, res) => {
   try {
-    const { serviceId, packageId, address, scheduledDate, scheduledSlot, couponCode } = req.body;
+    const { serviceId, packageId, address, scheduledDate, scheduledSlot, couponCode, addons } = req.body;
 
     if (!req.user?.userId) {
       return res.status(401).json({ message: 'Authentication required. Please login to book a service.' });
@@ -110,7 +110,8 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    const totalAmount = Math.max(0, basePrice + platformFee - discountAmount);
+    const addonsPriceTotal = addons && Array.isArray(addons) ? addons.reduce((sum, a) => sum + Number(a.price), 0) : 0;
+    const totalAmount = Math.max(0, basePrice + addonsPriceTotal + platformFee - discountAmount);
     const orderId = `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
     const request = {
@@ -194,6 +195,7 @@ exports.createOrder = async (req, res) => {
       cityId,
       areaId,
       pincodeId,
+      addons: addons || [],
       paymentDetails: {
         cashfreeOrderId: orderId,
         cashfreePaymentSessionId: paymentSessionId,
