@@ -1,0 +1,192 @@
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { Check, Loader2, AlertTriangle } from 'lucide-react';
+import AdminPageLayout from '../../../_components/AdminPageLayout';
+import api from '@/lib/api';
+
+const inp = 'w-full border border-[#C3AB84]/30 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#0F3D30] bg-[#F8F4EE] transition-colors';
+const lbl = 'block text-xs font-semibold text-foreground/60 mb-1.5 uppercase tracking-wider';
+
+export default function EditCouponPage() {
+  const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const [form, setForm] = useState({
+    code: '', 
+    description: '',
+    discountType: 'PERCENTAGE', 
+    discountValue: '',
+    maxDiscountAmount: '',
+    minOrderValue: '', 
+    usageLimit: '', 
+    perUserLimit: '1',
+    startDate: '',
+    endDate: '',
+    isFirstTimeOnly: false,
+    isActive: true,
+  });
+
+  useEffect(() => {
+    const fetchCoupon = async () => {
+      try {
+        const { data } = await api.get(`/admin/coupons/${id}`);
+        const c = data.coupon || data;
+        setForm({
+          code: c.code || '',
+          description: c.description || '',
+          discountType: c.discountType || 'PERCENTAGE',
+          discountValue: String(c.discountValue || ''),
+          maxDiscountAmount: c.maxDiscountAmount ? String(c.maxDiscountAmount) : '',
+          minOrderValue: c.minOrderValue ? String(c.minOrderValue) : '',
+          usageLimit: c.usageLimit ? String(c.usageLimit) : '',
+          perUserLimit: c.perUserLimit ? String(c.perUserLimit) : '1',
+          startDate: c.startDate ? new Date(c.startDate).toISOString().split('T')[0] : '',
+          endDate: c.endDate ? new Date(c.endDate).toISOString().split('T')[0] : '',
+          isFirstTimeOnly: c.isFirstTimeOnly === true,
+          isActive: c.isActive !== false,
+        });
+      } catch {
+        setError('Failed to load coupon.');
+      } finally { setLoading(false); }
+    };
+    if (id) fetchCoupon();
+  }, [id]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.code.trim()) { setError('Coupon code is required.'); return; }
+    if (!form.discountValue) { setError('Discount value is required.'); return; }
+    setSaving(true); setError(''); setSuccess('');
+    
+    try {
+      const payload = {
+        ...form,
+        code: form.code.toUpperCase().trim(),
+        discountValue: Number(form.discountValue),
+        maxDiscountAmount: form.maxDiscountAmount ? Number(form.maxDiscountAmount) : null,
+        minOrderValue: form.minOrderValue ? Number(form.minOrderValue) : 0,
+        usageLimit: form.usageLimit ? Number(form.usageLimit) : null,
+        perUserLimit: form.perUserLimit ? Number(form.perUserLimit) : 1,
+        startDate: form.startDate ? new Date(form.startDate) : new Date(),
+        endDate: form.endDate ? new Date(form.endDate) : null,
+      };
+
+      await api.put(`/admin/coupons/${id}`, payload);
+      setSuccess('Coupon updated successfully!');
+      setTimeout(() => router.push('/admin/dashboard?tab=coupons'), 1200);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to update coupon.');
+    } finally { setSaving(false); }
+  };
+
+  if (loading) {
+    return (
+      <AdminPageLayout title="Edit Coupon" backHref="/admin/dashboard?tab=coupons" backLabel="Back to Coupons">
+        <div className="flex items-center justify-center py-24"><Loader2 className="w-8 h-8 animate-spin text-[#0F3D30]" /></div>
+      </AdminPageLayout>
+    );
+  }
+
+  return (
+    <AdminPageLayout title={`Edit Coupon: ${form.code}`} subtitle="Update coupon code settings" backHref="/admin/dashboard?tab=coupons" backLabel="Back to Coupons">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white rounded-3xl border border-[#C3AB84]/20 shadow-sm p-6 space-y-5">
+          <h2 className="font-serif text-lg font-bold text-[#0F3D30]">Coupon Details</h2>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label className={lbl}>Coupon Code *</label>
+              <input required value={form.code} onChange={e => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))} className={`${inp} font-mono tracking-widest`} />
+            </div>
+            <div>
+              <label className={lbl}>Description</label>
+              <input value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} className={inp} placeholder="Brief description..." />
+            </div>
+            
+            <div>
+              <label className={lbl}>Discount Type *</label>
+              <select value={form.discountType} onChange={e => setForm(p => ({ ...p, discountType: e.target.value }))} className={inp}>
+                <option value="PERCENTAGE">Percentage (%)</option>
+                <option value="FIXED">Flat Amount (₹)</option>
+              </select>
+            </div>
+            <div>
+              <label className={lbl}>Discount Value *</label>
+              <input required type="number" min={0} value={form.discountValue} onChange={e => setForm(p => ({ ...p, discountValue: e.target.value }))} className={inp} />
+            </div>
+
+            <div>
+              <label className={lbl}>Max Discount (₹) [For %]</label>
+              <input type="number" min={0} value={form.maxDiscountAmount} onChange={e => setForm(p => ({ ...p, maxDiscountAmount: e.target.value }))} className={inp} placeholder="Leave blank for no cap" />
+            </div>
+            <div>
+              <label className={lbl}>Min Order Value (₹)</label>
+              <input type="number" min={0} value={form.minOrderValue} onChange={e => setForm(p => ({ ...p, minOrderValue: e.target.value }))} className={inp} />
+            </div>
+
+            <div>
+              <label className={lbl}>Max Total Uses</label>
+              <input type="number" min={1} value={form.usageLimit} onChange={e => setForm(p => ({ ...p, usageLimit: e.target.value }))} className={inp} placeholder="Unlimited if blank" />
+            </div>
+            <div>
+              <label className={lbl}>Uses Per User</label>
+              <input type="number" min={1} value={form.perUserLimit} onChange={e => setForm(p => ({ ...p, perUserLimit: e.target.value }))} className={inp} />
+            </div>
+
+            <div>
+              <label className={lbl}>Start Date</label>
+              <input type="date" value={form.startDate} onChange={e => setForm(p => ({ ...p, startDate: e.target.value }))} className={inp} />
+            </div>
+            <div>
+              <label className={lbl}>End Date</label>
+              <input type="date" value={form.endDate} onChange={e => setForm(p => ({ ...p, endDate: e.target.value }))} className={inp} placeholder="No expiry if blank" />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-8 pt-2">
+            <label className={`flex items-center gap-3 cursor-pointer`}>
+              <div className={`w-10 h-6 rounded-full transition-colors relative ${form.isFirstTimeOnly ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.isFirstTimeOnly ? 'translate-x-5' : 'translate-x-1'}`} />
+              </div>
+              <span className="text-sm font-semibold text-foreground/70">1st Time Users Only</span>
+              <input type="checkbox" checked={form.isFirstTimeOnly} onChange={e => setForm(p => ({ ...p, isFirstTimeOnly: e.target.checked }))} className="hidden" />
+            </label>
+
+            <label className={`flex items-center gap-3 cursor-pointer`}>
+              <div className={`w-10 h-6 rounded-full transition-colors relative ${form.isActive ? 'bg-[#0F3D30]' : 'bg-gray-200'}`}>
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.isActive ? 'translate-x-5' : 'translate-x-1'}`} />
+              </div>
+              <span className="text-sm font-semibold text-foreground/70">{form.isActive ? 'Active' : 'Inactive'}</span>
+              <input type="checkbox" checked={form.isActive} onChange={e => setForm(p => ({ ...p, isActive: e.target.checked }))} className="hidden" />
+            </label>
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex gap-2 items-center">
+            <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+            <p className="text-sm text-red-700 font-bold">{error}</p>
+          </div>
+        )}
+        
+        {success && <p className="text-sm text-green-700 bg-green-50 border border-green-200 px-4 py-3 rounded-2xl font-bold">✓ {success}</p>}
+        
+        <div className="flex gap-3">
+          <button type="submit" disabled={saving} className="flex items-center gap-2 px-8 py-3 bg-[#0F3D30] text-white rounded-full font-semibold text-sm hover:bg-[#0F3D30]/90 disabled:opacity-60 transition-colors shadow-sm">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+          <button type="button" onClick={() => router.push('/admin/dashboard?tab=coupons')} className="px-8 py-3 border border-[#C3AB84]/40 text-foreground/70 rounded-full font-semibold text-sm hover:bg-[#F8F4EE] transition-colors">Cancel</button>
+        </div>
+      </form>
+    </AdminPageLayout>
+  );
+}
