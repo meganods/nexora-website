@@ -31,9 +31,9 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
 
   const checkAuthAndStatus = async () => {
     const token = localStorage.getItem('nexora_token');
-    const role = localStorage.getItem('nexora_role');
 
-    if (!token || role !== 'vendor') {
+    // Only pre-check token presence; role validation is done by the API
+    if (!token) {
       router.replace('/partner/login');
       return;
     }
@@ -110,7 +110,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
       <aside className="hidden md:flex flex-col w-64 bg-[#1D3B31] text-white fixed h-screen top-0 left-0 border-r border-gold/10 z-30 select-none">
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gold/15 flex items-center justify-between">
-          <Link href="/" className="font-serif text-xl font-bold tracking-tight text-white">Nexora</Link>
+          <span className="font-serif text-xl font-bold tracking-tight text-white">Nexora</span>
           <span className="text-[10px] uppercase font-bold text-gold bg-gold/10 border border-gold/25 px-2.5 py-0.5 rounded-full">Service Partner</span>
         </div>
 
@@ -150,7 +150,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           <button onClick={() => setMobileMenuOpen(true)} className="p-1 hover:text-gold transition-colors">
             <Menu className="w-6 h-6" />
           </button>
-          <Link href="/" className="font-serif text-lg font-bold text-white">Nexora</Link>
+          <span className="font-serif text-lg font-bold text-white">Nexora</span>
         </div>
         <span className="text-[9px] uppercase font-bold text-gold bg-gold/10 border border-gold/25 px-2 py-0.5 rounded-full">Service Partner</span>
       </header>
