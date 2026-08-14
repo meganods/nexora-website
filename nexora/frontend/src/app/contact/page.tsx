@@ -1,9 +1,29 @@
 "use client";
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { Mail, Phone, MapPin, MessageSquare } from 'lucide-react';
+import { Mail, Phone, MapPin, MessageSquare, Loader2 } from 'lucide-react';
+import api from '@/lib/api';
+import { toast } from 'react-hot-toast';
 
 export default function ContactPage() {
+  const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.post('/public/contact', formData);
+      toast.success('Message sent! We\'ll get back to you within 24 hours.');
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to send message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-cream">
       <div className="bg-primary text-white pt-12 pb-20 px-4">
@@ -34,14 +54,15 @@ export default function ContactPage() {
 
         <div className="bg-white rounded-3xl p-8 border border-gold/20 shadow-sm">
           <h2 className="font-serif text-xl font-bold text-primary mb-6">Send a Message</h2>
-          <form className="space-y-4" onSubmit={e => { e.preventDefault(); alert('Message sent! We\'ll get back to you within 24 hours.'); }}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <input type="text" placeholder="Your Name" required className="w-full px-4 py-3 bg-cream border border-gold/25 rounded-2xl text-sm focus:outline-none focus:border-primary transition-colors" />
-              <input type="email" placeholder="Your Email" required className="w-full px-4 py-3 bg-cream border border-gold/25 rounded-2xl text-sm focus:outline-none focus:border-primary transition-colors" />
+              <input type="text" placeholder="Your Name" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-3 bg-cream border border-gold/25 rounded-2xl text-sm focus:outline-none focus:border-primary transition-colors" />
+              <input type="email" placeholder="Your Email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-3 bg-cream border border-gold/25 rounded-2xl text-sm focus:outline-none focus:border-primary transition-colors" />
             </div>
-            <input type="text" placeholder="Subject" className="w-full px-4 py-3 bg-cream border border-gold/25 rounded-2xl text-sm focus:outline-none focus:border-primary transition-colors" />
-            <textarea rows={5} placeholder="Your message..." required className="w-full px-4 py-3 bg-cream border border-gold/25 rounded-2xl text-sm focus:outline-none focus:border-primary transition-colors resize-none" />
-            <button type="submit" className="px-8 py-3.5 bg-primary text-white font-bold rounded-full hover:bg-primary/90 transition-all text-sm">
+            <input type="text" placeholder="Subject" required value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} className="w-full px-4 py-3 bg-cream border border-gold/25 rounded-2xl text-sm focus:outline-none focus:border-primary transition-colors" />
+            <textarea rows={5} placeholder="Your message..." required value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} className="w-full px-4 py-3 bg-cream border border-gold/25 rounded-2xl text-sm focus:outline-none focus:border-primary transition-colors resize-none" />
+            <button type="submit" disabled={loading} className="px-8 py-3.5 bg-primary text-white font-bold rounded-full hover:bg-primary/90 transition-all text-sm flex items-center justify-center gap-2">
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               Send Message
             </button>
           </form>

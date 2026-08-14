@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Bell, Check, CheckCheck, BookOpen, ShieldCheck, IndianRupee, Megaphone, X, Loader2 } from "lucide-react";
+import { Bell, Check, CheckCheck, BookOpen, ShieldCheck, IndianRupee, Megaphone, X, Loader2, Trash2 } from "lucide-react";
 import api from "@/lib/api";
 import { useRouter } from "next/navigation";
 
@@ -143,6 +143,24 @@ export default function NotificationBell({ tokenKey, theme = "dark", userRole = 
     setMarkingAll(false);
   };
 
+  // ── Delete single notification ────────────────────────────────────────────
+  const deleteOneNotification = async (id: string) => {
+    const token = getToken();
+    if (!token) return;
+    try {
+      await api.delete(`/notifications/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications((prev) => {
+        const removed = prev.find(n => n._id === id);
+        if (removed && !removed.isRead) {
+          setUnread((c) => Math.max(0, c - 1));
+        }
+        return prev.filter(n => n._id !== id);
+      });
+    } catch {}
+  };
+
   // ── Toggle panel (fetch fresh on open) ────────────────────────────────────
   const handleBellClick = async () => {
     if (!open) {
@@ -258,15 +276,24 @@ export default function NotificationBell({ tokenKey, theme = "dark", userRole = 
                           <p className={`text-xs font-bold leading-tight ${n.isRead ? "text-foreground/75" : "text-primary"}`}>
                             {n.title}
                           </p>
-                          {!n.isRead && (
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {!n.isRead && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); markOneRead(n._id); }}
+                                className="flex-shrink-0 p-1 rounded hover:bg-primary/10 transition-colors"
+                                title="Mark as read"
+                              >
+                                <Check className="w-3.5 h-3.5 text-primary" />
+                              </button>
+                            )}
                             <button
-                              onClick={(e) => { e.stopPropagation(); markOneRead(n._id); }}
-                              className="opacity-0 group-hover:opacity-100 flex-shrink-0 p-0.5 rounded hover:bg-primary/10 transition-all"
-                              title="Mark as read"
+                              onClick={(e) => { e.stopPropagation(); deleteOneNotification(n._id); }}
+                              className="flex-shrink-0 p-1 rounded hover:bg-red-500/10 transition-colors"
+                              title="Delete notification"
                             >
-                              <Check className="w-3 h-3 text-primary" />
+                              <Trash2 className="w-3.5 h-3.5 text-red-500" />
                             </button>
-                          )}
+                          </div>
                         </div>
                         <p className="text-[11px] text-foreground/55 mt-0.5 leading-snug line-clamp-2">
                           {n.body}
@@ -293,10 +320,14 @@ export default function NotificationBell({ tokenKey, theme = "dark", userRole = 
             </p>
             <button onClick={() => { 
                 setOpen(false); 
-                // Always trust the explicit userRole prop or fallback to theme check.
+                // Trust explicit userRole prop or fallback to token/role checks in storage
+                const isAdmin = userRole === 'admin' || (typeof window !== 'undefined' && localStorage.getItem('admin_token') !== null);
                 const isVendor = userRole === 'vendor' || (typeof window !== 'undefined' && localStorage.getItem('nexora_role') === 'vendor');
-                if (isVendor) {
-                  router.push('/partner/bookings'); // As requested: redirect to active booking page
+                
+                if (isAdmin) {
+                  router.push('/admin/dashboard?tab=notifications'); // Redirect to admin notification tab
+                } else if (isVendor) {
+                  router.push('/partner/bookings'); // As requested: vendor redirects to active booking
                 } else {
                   router.push('/profile/notifications'); // Customer notification page
                 }

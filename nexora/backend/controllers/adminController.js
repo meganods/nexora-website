@@ -406,40 +406,82 @@ const assignSingleBooking = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'Cannot assign a completed or cancelled booking.' });
   }
 
+  const oldVendorId = booking.vendorId;
   const vendorId = req.body.vendorId || req.body.partnerId;
+
+  let assignedPartner = null;
 
   if (vendorId) {
     // Manual specific vendor assignment
     const partner = await ServicePartner.findById(vendorId);
     if (!partner) return res.status(404).json({ success: false, message: 'Vendor not found' });
 
-    await Booking.findByIdAndUpdate(booking._id, {
-      vendorId: partner._id,
-      status: 'ASSIGNED',
-    });
+    booking.vendorId = partner._id;
+    booking.status = 'ASSIGNED';
+    booking.tripLocation = {
+      coordinates: null,
+      address: 'New partner assigned',
+      etaMins: null,
+      lastUpdated: new Date()
+    };
+    await booking.save();
+    assignedPartner = partner;
+  } else {
+    // Fallback to running auto-assign engine for this single booking
+    const best = await findBestPartner(booking);
+    if (!best) return res.status(404).json({ success: false, message: 'No eligible partner found near the booking location.' });
 
-    return res.json({
-      success: true,
-      message: `Booking manually assigned to ${partner.name}.`,
-      partner: { id: partner._id, name: partner.name, phone: partner.phone },
-    });
+    booking.vendorId = best.partner._id;
+    booking.status = 'ASSIGNED';
+    booking.tripLocation = {
+      coordinates: null,
+      address: 'New partner assigned',
+      etaMins: null,
+      lastUpdated: new Date()
+    };
+    await booking.save();
+    assignedPartner = best.partner;
   }
 
-  // Fallback to running auto-assign engine for this single booking
-  const best = await findBestPartner(booking);
-  if (!best) return res.status(404).json({ success: false, message: 'No eligible partner found near the booking location.' });
+  // ── Send notifications for Assignment / Reassignment ──
+  const isReassigned = oldVendorId && oldVendorId.toString() !== assignedPartner._id.toString();
 
-  await Booking.findByIdAndUpdate(booking._id, {
-    vendorId: best.partner._id,
-    status: 'ASSIGNED',
-  });
+  // 1. Notify Customer
+  if (booking.customerId) {
+    createNotification(
+      booking.customerId, 'user',
+      isReassigned ? 'Service Partner Reassigned 🔄' : 'Service Partner Assigned 💼',
+      isReassigned 
+        ? `Your service partner has been updated to ${assignedPartner.name}.` 
+        : `Your service partner ${assignedPartner.name} has been assigned to your booking.`,
+      'booking', { bookingId: booking._id }
+    );
+  }
+
+  // 2. Notify Old Partner (if reassigned)
+  if (isReassigned) {
+    createNotification(
+      oldVendorId, 'vendor',
+      'Booking Cancelled ❌',
+      `Your assignment for booking ID ${booking._id} has been cancelled.`,
+      'system', { bookingId: booking._id }
+    );
+  }
+
+  // 3. Notify New Partner
+  createNotification(
+    assignedPartner._id, 'vendor',
+    'New Booking Assigned 💼',
+    `You have been assigned a new booking (ID: ${booking._id}). Please check your job details.`,
+    'booking', { bookingId: booking._id }
+  );
 
   res.json({
     success: true,
-    message: `Booking assigned to ${best.partner.name} (score: ${best.score}).`,
-    partner: { id: best.partner._id, name: best.partner.name, phone: best.partner.phone },
-    score: best.score,
-    breakdown: best.breakdown,
+    message: isReassigned 
+      ? `Booking manually reassigned to ${assignedPartner.name}.` 
+      : `Booking manually assigned to ${assignedPartner.name}.`,
+    partner: { id: assignedPartner._id, name: assignedPartner.name, phone: assignedPartner.phone },
   });
 });
 
@@ -968,6 +1010,33 @@ const deleteVendorReply = asyncHandler(async (req, res) => {
   res.json({ success: true, message: "Vendor reply deleted successfully.", review });
 });
 
+// @desc    List Contact Messages
+// @route   GET /api/admin/contact-messages
+// @access  Private (admin roles)
+const getContactMessages = asyncHandler(async (req, res) => {
+  const ContactMessage = require("../models/ContactMessage");
+  const messages = await ContactMessage.find().sort({ createdAt: -1 });
+  res.status(200).json({ success: true, messages });
+});
+
+// @desc    Update Contact Message Status
+// @route   PUT /api/admin/contact-messages/:id/status
+// @access  Private (admin roles)
+const updateContactMessageStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  const ContactMessage = require("../models/ContactMessage");
+
+  const message = await ContactMessage.findById(req.params.id);
+  if (!message) {
+    return res.status(404).json({ success: false, message: "Message not found" });
+  }
+
+  message.status = status;
+  await message.save();
+
+  res.status(200).json({ success: true, message: "Status updated successfully", data: message });
+});
+
 module.exports = {
   getPendingCounts,
   loginAdmin,
@@ -1005,5 +1074,7 @@ module.exports = {
   getPendingReviews,
   reviewUserReview,
   deleteVendorReply,
+  getContactMessages,
+  updateContactMessageStatus,
 };
 

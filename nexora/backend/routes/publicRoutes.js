@@ -24,6 +24,22 @@ router.get('/categories', async (req, res) => {
   }
 });
 
+// ─── Contact Us ───────────────────────────────────────────────────────────────
+router.post('/contact', async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+    const ContactMessage = require('../models/ContactMessage');
+    await ContactMessage.create({ name, email, subject, message });
+    res.status(201).json({ success: true, message: 'Message sent successfully' });
+  } catch (error) {
+    console.error('Contact submit error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 router.get('/categories/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
