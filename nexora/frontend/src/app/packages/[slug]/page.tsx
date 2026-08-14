@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Clock, CheckCircle2, IndianRupee, ArrowLeft, ArrowRight,
   ShieldCheck, ChevronDown, ChevronUp, Star, Zap, Package,
-  Sparkles, BadgeCheck, CalendarCheck
+  Sparkles, BadgeCheck, CalendarCheck, Loader2
 } from 'lucide-react';
+import api from '@/lib/api';
 
 // ─── Shared Package Registry ──────────────────────────────────────────────────
 // Mirrors the PACKAGES_DATA in page.tsx. In a production app, this would be
@@ -185,19 +186,68 @@ export default function PackageDetailPage() {
   const router = useRouter();
   const slug = params?.slug as string;
 
-  const pkg = PACKAGES_DATA.find((p) => p.slug === slug);
+  const [pkg, setPkg] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!pkg) {
+  useEffect(() => {
+    const fetchPackage = async () => {
+      setLoading(true);
+      try {
+        const { data } = await api.get(`/public/packages/${slug}`);
+        if (data?.success && data.package) {
+          const p = data.package;
+          setPkg({
+            id: p._id,
+            slug: p.slug,
+            name: p.name,
+            tagline: p.description || 'Exclusive premium home care package.',
+            description: p.description || 'Exclusive premium home care package.',
+            includedServices: (p.includedServices || []).map((s: any) => s.name),
+            price: p.basePrice,
+            originalPrice: Math.round(p.basePrice * 1.25),
+            savings: p.discountPercentage > 0 ? `${p.discountPercentage}% OFF` : 'Save with Package',
+            badge: (p.categoryIds || []).map((c: any) => c.name).join(', ') || 'Package',
+            badgeColor: 'bg-primary text-white',
+            duration: `${(p.includedServices || []).reduce((acc: number, curr: any) => acc + (curr.estimatedDurationMins || 45), 0)} mins total`,
+            imageUrl: p.imageUrl || 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80',
+            benefits: p.benefits || [
+              'Standard verified home execution by top experts',
+              'All equipment and standard materials included',
+              'Verified & background-checked professionals only'
+            ],
+            inclusions: (p.includedServices || []).map((s: any) => ({
+              service: s.name,
+              tasks: s.inclusions || ['Standard inspection and servicing', 'Repairs and installation help']
+            })),
+            faqs: [
+              { q: 'How long does the service take?', a: 'It varies depending on the number of services. Typically takes 2-4 hours.' },
+              { q: 'Can I customize the package?', a: 'These are pre-bundled packages. For individual needs, please browse individual services.' }
+            ],
+            terms: 'Package is valid for 30 days from date of booking.',
+            rating: p.rating || 4.8,
+            reviewCount: p.reviewCount || 150,
+            gradient: 'from-primary to-primary/80',
+          });
+          return;
+        }
+      } catch (err) {
+        console.warn("Package not found in MongoDB, trying local registry fallback.");
+      }
+
+      // Fallback to local PACKAGES_DATA registry
+      const local = PACKAGES_DATA.find((p) => p.slug === slug);
+      setPkg(local || null);
+    };
+
+    if (slug) {
+      fetchPackage().finally(() => setLoading(false));
+    }
+  }, [slug]);
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-beige px-4">
-        <Package className="w-16 h-16 text-primary/30" />
-        <h1 className="font-serif text-2xl font-bold text-primary">Package Not Found</h1>
-        <p className="text-foreground/55 text-sm text-center max-w-sm">
-          The package you are looking for does not exist or may have been removed.
-        </p>
-        <Link href="/" className="mt-2 px-6 py-3 bg-primary text-white font-bold rounded-full text-sm hover:bg-primary/90 transition-colors">
-          Back to Home
-        </Link>
+      <div className="min-h-screen flex items-center justify-center bg-beige">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
       </div>
     );
   }
@@ -260,7 +310,7 @@ export default function PackageDetailPage() {
             <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gold/10">
               <h2 className="font-serif text-xl font-bold text-primary mb-4">What's Included</h2>
               <ul className="space-y-3">
-                {pkg.benefits.map((b, i) => (
+                {pkg.benefits.map((b: any, i: number) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-foreground/70">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                     <span>{b}</span>
@@ -273,14 +323,14 @@ export default function PackageDetailPage() {
             <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gold/10">
               <h2 className="font-serif text-xl font-bold text-primary mb-5">Service Breakdown</h2>
               <div className="space-y-6">
-                {pkg.inclusions.map((inc, i) => (
+                {pkg.inclusions.map((inc: any, i: number) => (
                   <div key={i}>
                     <h3 className="text-sm font-bold text-primary/80 uppercase tracking-wide mb-2 flex items-center gap-2">
                       <Zap className="w-4 h-4 text-gold" />
                       {inc.service}
                     </h3>
                     <ul className="space-y-1.5 pl-6">
-                      {inc.tasks.map((task, j) => (
+                      {inc.tasks.map((task: any, j: number) => (
                         <li key={j} className="flex items-start gap-2 text-xs text-foreground/60">
                           <span className="w-1.5 h-1.5 rounded-full bg-gold mt-1.5 flex-shrink-0" />
                           {task}
@@ -296,7 +346,7 @@ export default function PackageDetailPage() {
             <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gold/10">
               <h2 className="font-serif text-xl font-bold text-primary mb-4">Frequently Asked Questions</h2>
               <div>
-                {pkg.faqs.map((faq, i) => (
+                {pkg.faqs.map((faq: any, i: number) => (
                   <FAQItem key={i} q={faq.q} a={faq.a} />
                 ))}
               </div>
@@ -330,7 +380,7 @@ export default function PackageDetailPage() {
 
                 {/* Included services pills */}
                 <div className="flex flex-wrap gap-1.5 mb-5">
-                  {pkg.includedServices.map((s, i) => (
+                  {pkg.includedServices.map((s: any, i: number) => (
                     <span key={i} className="text-[10px] font-semibold bg-beige border border-gold/20 text-primary/80 px-2 py-0.5 rounded-full">
                       {s}
                     </span>
