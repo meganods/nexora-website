@@ -601,10 +601,10 @@ const CATEGORIES_SERVICES_MAP = [
     desc: 'Certified repair professionals for switch replacements, tap fixes and piping leaks.',
     link: '/services?category=Electrician%20%26%20Plumbing',
     services: [
-      { name: 'Electrician Visit', slug: 'electrician-visit', description: 'Standard visit for checking switch, socket or MCB wiring faults.', basePrice: 99, rating: 4.7, reviewCount: 2000, categoryId: { name: 'Electrician & Plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=500&q=80' },
-      { name: 'Switch & Socket Repair', slug: 'switch-socket-repair', description: 'Faulty switch, board regulator and socket replacement.', basePrice: 199, rating: 4.7, reviewCount: 265, categoryId: { name: 'Electrician & Plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=500&q=80' },
-      { name: 'Fan Repair', slug: 'fan-installation', description: 'Ceiling/exhaust fan copper winding repair or mounting.', basePrice: 299, rating: 4.8, reviewCount: 387, categoryId: { name: 'Electrician & Plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=500&q=80' },
-      { name: 'Light Installation', slug: 'light-installation', description: 'Mounting of fancy pendant lights, tube lights or spotlights.', basePrice: 249, rating: 4.8, reviewCount: 289, categoryId: { name: 'Electrician & Plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=500&q=80' },
+      { name: 'Electrician Visit', slug: 'electrician-visit', description: 'Standard visit for checking switch, socket or MCB wiring faults.', basePrice: 99, rating: 4.7, reviewCount: 2000, categoryId: { name: 'Electrician & Plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80' },
+      { name: 'Switch & Socket Repair', slug: 'switch-socket-repair', description: 'Faulty switch, board regulator and socket replacement.', basePrice: 199, rating: 4.7, reviewCount: 265, categoryId: { name: 'Electrician & Plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80' },
+      { name: 'Fan Repair', slug: 'fan-installation', description: 'Ceiling/exhaust fan copper winding repair or mounting.', basePrice: 299, rating: 4.8, reviewCount: 387, categoryId: { name: 'Electrician & Plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80' },
+      { name: 'Light Installation', slug: 'light-installation', description: 'Mounting of fancy pendant lights, tube lights or spotlights.', basePrice: 249, rating: 4.8, reviewCount: 289, categoryId: { name: 'Electrician & Plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80' },
       { name: 'Tap Repair', slug: 'tap-repair', description: 'Fixing leaking kitchen or bathroom mixer taps.', basePrice: 199, rating: 4.7, reviewCount: 312, categoryId: { name: 'Electrician & Plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=500&q=80' },
       { name: 'Pipe Leakage', slug: 'pipe-leakage-repair', description: 'Pressure test leak search and sealing repairs.', basePrice: 599, rating: 4.5, reviewCount: 134, categoryId: { name: 'Electrician & Plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=500&q=80' }
     ]
@@ -746,7 +746,8 @@ export default function Home() {
     setWishlist(updated);
     localStorage.setItem('user_wishlist', JSON.stringify(updated));
 
-    if (!user) {
+    const role = typeof window !== 'undefined' ? localStorage.getItem('nexora_role') : '';
+    if (!user || role !== 'user') {
       toast.success(isAdded ? `${serviceName} added to wishlist (offline)` : `${serviceName} removed from wishlist (offline)`);
       return;
     }
@@ -852,7 +853,7 @@ export default function Home() {
           { _id: 'ac-service', name: 'AC Service', slug: 'ac-service', description: 'Expert diagnosis and split AC service.', basePrice: 299, estimatedDuration: '60 mins', rating: 4.8, reviewCount: 2500, categoryId: { name: 'AC & Appliance Repair', slug: 'ac-appliance' }, imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=500&q=80' },
           { _id: 'bathroom-cleaning', name: 'Bathroom Cleaning', slug: 'bathroom-cleaning', description: 'Deep scrubbing and toilet sanitisation.', basePrice: 399, estimatedDuration: '60 mins', rating: 4.9, reviewCount: 3000, categoryId: { name: 'Cleaning & Pest Control', slug: 'cleaning-pest' }, imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=500&q=80' },
           { _id: 'womens-haircut', name: "Women's Haircut", slug: 'womens-haircut', description: 'Professional haircut with blow-dry styling.', basePrice: 299, estimatedDuration: '60 mins', rating: 4.8, reviewCount: 1800, categoryId: { name: 'Salon for Women', slug: 'salon-women' }, imageUrl: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=500&q=80' },
-          { _id: 'electrician-visit', name: 'Electrician Visit', slug: 'electrician-visit', description: 'Switch, socket, MCB wiring repairs.', basePrice: 99, estimatedDuration: '30 mins', rating: 4.7, reviewCount: 2000, categoryId: { name: 'Electrician & Plumbing', slug: 'electrician-plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=500&q=80' },
+          { _id: 'electrician-visit', name: 'Electrician Visit', slug: 'electrician-visit', description: 'Switch, socket, MCB wiring repairs.', basePrice: 99, estimatedDuration: '30 mins', rating: 4.7, reviewCount: 2000, categoryId: { name: 'Electrician & Plumbing', slug: 'electrician-plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80' },
           { _id: 'sofa-cleaning', name: 'Sofa Cleaning', slug: 'sofa-cleaning', description: 'Deep wet & dry fabric cleaning.', basePrice: 499, estimatedDuration: '90 mins', rating: 4.8, reviewCount: 850, categoryId: { name: 'Cleaning & Pest Control', slug: 'cleaning-pest' }, imageUrl: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=500&q=80' },
           { _id: 'ro-service', name: 'RO Service', slug: 'ro-service', description: 'Water filter check and servicing.', basePrice: 299, estimatedDuration: '45 mins', rating: 4.7, reviewCount: 650, categoryId: { name: 'Water Purifier Service', slug: 'water-purifier' }, imageUrl: 'https://images.unsplash.com/photo-1585832770485-e68a5dbfad52?auto=format&fit=crop&w=500&q=80' }
         ];
@@ -864,7 +865,7 @@ export default function Home() {
         { _id: 'ac-service', name: 'AC Service', slug: 'ac-service', description: 'Expert diagnosis and split AC service.', basePrice: 299, estimatedDuration: '60 mins', rating: 4.8, reviewCount: 2500, categoryId: { name: 'AC & Appliance Repair', slug: 'ac-appliance' }, imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=500&q=80' },
         { _id: 'bathroom-cleaning', name: 'Bathroom Cleaning', slug: 'bathroom-cleaning', description: 'Deep scrubbing and toilet sanitisation.', basePrice: 399, estimatedDuration: '60 mins', rating: 4.9, reviewCount: 3000, categoryId: { name: 'Cleaning & Pest Control', slug: 'cleaning-pest' }, imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=500&q=80' },
         { _id: 'womens-haircut', name: "Women's Haircut", slug: 'womens-haircut', description: 'Professional haircut with blow-dry styling.', basePrice: 299, estimatedDuration: '60 mins', rating: 4.8, reviewCount: 1800, categoryId: { name: 'Salon for Women', slug: 'salon-women' }, imageUrl: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=500&q=80' },
-        { _id: 'electrician-visit', name: 'Electrician Visit', slug: 'electrician-visit', description: 'Switch, socket, MCB wiring repairs.', basePrice: 99, estimatedDuration: '30 mins', rating: 4.7, reviewCount: 2000, categoryId: { name: 'Electrician & Plumbing', slug: 'electrician-plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=500&q=80' },
+        { _id: 'electrician-visit', name: 'Electrician Visit', slug: 'electrician-visit', description: 'Switch, socket, MCB wiring repairs.', basePrice: 99, estimatedDuration: '30 mins', rating: 4.7, reviewCount: 2000, categoryId: { name: 'Electrician & Plumbing', slug: 'electrician-plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80' },
         { _id: 'sofa-cleaning', name: 'Sofa Cleaning', slug: 'sofa-cleaning', description: 'Deep wet & dry fabric cleaning.', basePrice: 499, estimatedDuration: '90 mins', rating: 4.8, reviewCount: 850, categoryId: { name: 'Cleaning & Pest Control', slug: 'cleaning-pest' }, imageUrl: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=500&q=80' },
         { _id: 'ro-service', name: 'RO Service', slug: 'ro-service', description: 'Water filter check and servicing.', basePrice: 299, estimatedDuration: '45 mins', rating: 4.7, reviewCount: 650, categoryId: { name: 'Water Purifier Service', slug: 'water-purifier' }, imageUrl: 'https://images.unsplash.com/photo-1585832770485-e68a5dbfad52?auto=format&fit=crop&w=500&q=80' }
       ]);
@@ -1056,7 +1057,7 @@ export default function Home() {
       discount: '20% OFF',
       rating: 4.7,
       reviewCount: 2000,
-      imageUrl: 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=500&q=80'
+      imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80'
     },
     {
       name: 'Plumber',

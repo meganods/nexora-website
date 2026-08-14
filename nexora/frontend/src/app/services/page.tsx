@@ -29,7 +29,7 @@ const getFallbackServiceImage = (categoryName: string = '', serviceName: string 
     return 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=600&q=80';
   }
   if (cat.includes('ac') || name.includes('air conditioner') || name.includes('ac service') || name.includes('gas refill')) {
-    return 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=600&q=80';
+    return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=600&q=80';
   }
   if (cat.includes('electric') || name.includes('wire') || name.includes('switch') || name.includes('fan')) {
     return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80';
@@ -46,7 +46,7 @@ const getFallbackServiceImage = (categoryName: string = '', serviceName: string 
   if (cat.includes('ro') || name.includes('water purifier') || name.includes('filter') || name.includes('purifier')) {
     return 'https://images.unsplash.com/photo-1585832770485-e289c02d9048?auto=format&fit=crop&w=600&q=80';
   }
-  return 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=600&q=80'; // fallback technician
+  return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=600&q=80'; // fallback technician
 };
 
 function ServicesList() {
@@ -190,6 +190,11 @@ function ServicesList() {
     }
     setWishlist(updated);
     localStorage.setItem('user_wishlist', JSON.stringify(updated));
+    const role = typeof window !== 'undefined' ? localStorage.getItem('nexora_role') : '';
+    if (role !== 'user') {
+      toast.success(isAdded ? `${serviceName} added to wishlist (offline)` : `${serviceName} removed from wishlist (offline)`);
+      return;
+    }
 
     try {
       await api.post('/user/dashboard/wishlist/toggle', { serviceId: id });

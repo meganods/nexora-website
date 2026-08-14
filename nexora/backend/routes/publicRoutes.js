@@ -133,71 +133,6 @@ router.get('/services', async (req, res) => {
   }
 });
 
-// Single service by slug or MongoDB ObjectId
-
-router.get('/services/:slug', async (req, res) => {
-  try {
-    const { slug } = req.params;
-    let service;
-    
-    // Try by slug first, then by _id
-    const query = slug.match(/^[a-f\d]{24}$/i) ? { _id: slug } : { slug };
-    service = await Service.findOne({ ...query, isActive: true, approvalStatus: 'APPROVED', isDeleted: false })
-      .populate('categoryId')
-      .populate('relatedServices')
-      .populate('recommendedServices')
-      .populate('vendorId', 'name category rating totalCompletedJobs location.city experience profilePictureUrl kycDetails.businessName');
-
-    if (!service) return res.status(404).json({ message: 'Service not found' });
-    
-    // Fetch associated sub-services
-    const subServices = await Service.find({
-      parentId: service._id,
-      isActive: true,
-      approvalStatus: 'APPROVED',
-      isDeleted: false
-    }).sort({ displayOrder: 1, createdAt: 1 });
-
-    const discounted = await applyCampaignDiscounts(service);
-    const serviceObj = discounted.toObject ? discounted.toObject() : discounted;
-    serviceObj.subServices = subServices;
-
-    // Resolve professional/vendor details (fallback if null)
-    let vendor = service.vendorId;
-    if (!vendor) {
-      const Category = require('../models/Category');
-      const cat = await Category.findById(service.categoryId);
-      if (cat) {
-        vendor = await ServicePartner.findOne({
-          category: { $regex: new RegExp(`^${cat.name}$`, 'i') },
-          kycStatus: 'APPROVED',
-          isActive: true
-        }).select('name category rating totalCompletedJobs location.city experience profilePictureUrl kycDetails.businessName');
-      }
-      if (!vendor) {
-        vendor = await ServicePartner.findOne({
-          kycStatus: 'APPROVED',
-          isActive: true
-        }).select('name category rating totalCompletedJobs location.city experience profilePictureUrl kycDetails.businessName');
-      }
-    }
-    serviceObj.vendor = vendor;
-
-    // Fetch approved reviews for this service
-    const Review = require('../models/Review');
-    const reviews = await Review.find({ serviceId: service._id, approvalStatus: 'APPROVED' })
-      .populate('userId', 'name profilePhoto')
-      .sort({ createdAt: -1 })
-      .lean();
-    
-    serviceObj.reviews = reviews;
-
-    res.json(serviceObj);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error fetching service' });
-  }
-});
 
 router.get('/services/autocomplete', async (req, res) => {
   try {
@@ -510,6 +445,71 @@ router.get('/services/most-booked', async (req, res) => {
   }
 });
 
+
+// Single service by slug or MongoDB ObjectId (moved here to avoid intercepting specific routes)
+router.get('/services/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    let service;
+    
+    // Try by slug first, then by _id
+    const query = slug.match(/^[a-f\d]{24}$/i) ? { _id: slug } : { slug };
+    service = await Service.findOne({ ...query, isActive: true, approvalStatus: 'APPROVED', isDeleted: false })
+      .populate('categoryId')
+      .populate('relatedServices')
+      .populate('recommendedServices')
+      .populate('vendorId', 'name category rating totalCompletedJobs location.city experience profilePictureUrl kycDetails.businessName');
+
+    if (!service) return res.status(404).json({ message: 'Service not found' });
+    
+    // Fetch associated sub-services
+    const subServices = await Service.find({
+      parentId: service._id,
+      isActive: true,
+      approvalStatus: 'APPROVED',
+      isDeleted: false
+    }).sort({ displayOrder: 1, createdAt: 1 });
+
+    const discounted = await applyCampaignDiscounts(service);
+    const serviceObj = discounted.toObject ? discounted.toObject() : discounted;
+    serviceObj.subServices = subServices;
+
+    // Resolve professional/vendor details (fallback if null)
+    let vendor = service.vendorId;
+    if (!vendor) {
+      const Category = require('../models/Category');
+      const cat = await Category.findById(service.categoryId);
+      if (cat) {
+        vendor = await ServicePartner.findOne({
+          category: { $regex: new RegExp(`^${cat.name}$`, 'i') },
+          kycStatus: 'APPROVED',
+          isActive: true
+        }).select('name category rating totalCompletedJobs location.city experience profilePictureUrl kycDetails.businessName');
+      }
+      if (!vendor) {
+        vendor = await ServicePartner.findOne({
+          kycStatus: 'APPROVED',
+          isActive: true
+        }).select('name category rating totalCompletedJobs location.city experience profilePictureUrl kycDetails.businessName');
+      }
+    }
+    serviceObj.vendor = vendor;
+
+    // Fetch approved reviews for this service
+    const Review = require('../models/Review');
+    const reviews = await Review.find({ serviceId: service._id, approvalStatus: 'APPROVED' })
+      .populate('userId', 'name profilePhoto')
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    serviceObj.reviews = reviews;
+
+    res.json(serviceObj);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching service' });
+  }
+});
 
 // ─── Packages ─────────────────────────────────────────────────────────────────
 router.get('/packages', getPublicPackages);

@@ -60,7 +60,7 @@ export default function Navbar() {
     // Recent searches (logged-in only)
     if (user) {
       try {
-        const { data } = await api.get('/user/search-history');
+        const { data } = await api.get('/user/dashboard/search-history');
         if (data?.success) setRecentSearches(data.data.map((h: any) => h.query));
       } catch { /* silent */ }
     }
@@ -121,19 +121,19 @@ export default function Navbar() {
     setSearchQuery('');
     // Persist to MongoDB for logged-in users (fire-and-forget)
     if (user) {
-      api.post('/user/search-history', { query: queryStr.trim() }).catch(() => {});
+      api.post('/user/dashboard/search-history', { query: queryStr.trim() }).catch(() => {});
     }
     router.push(`/services?q=${encodeURIComponent(queryStr.trim())}&city=${encodeURIComponent(selectedCity)}`);
   };
 
   const removeRecentSearch = async (q: string) => {
     setRecentSearches(prev => prev.filter(r => r !== q));
-    if (user) api.delete('/user/search-history', { data: { query: q } }).catch(() => {});
+    if (user) api.delete('/user/dashboard/search-history', { data: { query: q } }).catch(() => {});
   };
 
   const clearAllRecent = async () => {
     setRecentSearches([]);
-    if (user) api.delete('/user/search-history').catch(() => {});
+    if (user) api.delete('/user/dashboard/search-history').catch(() => {});
   };
 
   // ─── Build flat list for keyboard nav ──────────────────────────────────────
