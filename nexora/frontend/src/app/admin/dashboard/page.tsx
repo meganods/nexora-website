@@ -11,7 +11,7 @@ import {
   Edit2, Trash2, Plus, Search, ChevronLeft, ChevronRight,
   UserCheck, BookOpen, Tag, Image as ImageIcon, Clock, Star,
   Gift, Megaphone, Percent, CalendarDays, ToggleLeft, ToggleRight, Link as LinkIcon,
-  Wallet, Bell, TrendingUp, ListCollapse, Menu, Eye, Globe, Map, MapPin, Hash, Building, LifeBuoy, Receipt, MessageSquare
+  Wallet, Bell, TrendingUp, ListCollapse, Menu, Eye, Globe, Map, MapPin, Hash, Building, LifeBuoy, Receipt, MessageSquare, LogOut
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
@@ -1409,11 +1409,19 @@ function AdminDashboardContent() {
                 );
               })}
             </nav>
-            <div className="p-4 border-t border-white/10 bg-black/10 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-xs text-white/80 font-medium">Active: Super Admin</span>
-              </div>
+            <div className="p-4 border-t border-white/10 flex-shrink-0">
+              <button
+                onClick={() => {
+                  localStorage.removeItem('admin_token');
+                  localStorage.removeItem('nexora_token');
+                  localStorage.removeItem('nexora_role');
+                  router.push('/admin/login');
+                }}
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-xs sm:text-sm font-bold text-red-400 bg-red-400/10 hover:bg-red-400/20 transition-all"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Log Out</span>
+              </button>
             </div>
           </aside>
         </>
@@ -1454,11 +1462,19 @@ function AdminDashboardContent() {
             );
           })}
         </nav>
-        <div className="mt-auto p-4 border-t border-white/10 bg-black/10 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs text-white/80 font-medium">Active: Super Admin</span>
-          </div>
+        <div className="mt-auto p-4 border-t border-white/10 flex-shrink-0">
+          <button
+            onClick={() => {
+              localStorage.removeItem('admin_token');
+              localStorage.removeItem('nexora_token');
+              localStorage.removeItem('nexora_role');
+              router.push('/admin/login');
+            }}
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-xs sm:text-sm font-bold text-red-400 bg-red-400/10 hover:bg-red-400/20 transition-all"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Log Out</span>
+          </button>
         </div>
       </aside>
 

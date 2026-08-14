@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
-  ShoppingBag, Tag, CheckCircle2, Package, ListCollapse, Gift, BookOpen, Users, UserCheck, ShieldCheck, Percent, Star, CalendarDays, Megaphone, Zap, Wallet, Bell, TrendingUp, Settings2, ArrowLeft, Menu, MapPin
+  ShoppingBag, Tag, CheckCircle2, Package, ListCollapse, Gift, BookOpen, Users, UserCheck, ShieldCheck, Percent, Star, CalendarDays, Megaphone, Zap, Wallet, Bell, TrendingUp, Settings2, ArrowLeft, Menu, MapPin, LogOut
 } from 'lucide-react';
 import api from '@/lib/api';
 import NotificationBell from '@/components/NotificationBell';
@@ -150,11 +150,19 @@ export default function AdminPageLayout({
                 );
               })}
             </nav>
-            <div className="p-4 border-t border-white/10 bg-black/10 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-xs text-white/80 font-medium">Active: Super Admin</span>
-              </div>
+            <div className="p-4 border-t border-white/10 flex-shrink-0">
+              <button
+                onClick={() => {
+                  localStorage.removeItem('admin_token');
+                  localStorage.removeItem('nexora_token');
+                  localStorage.removeItem('nexora_role');
+                  router.push('/admin/login');
+                }}
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-xs sm:text-sm font-bold text-red-400 bg-red-400/10 hover:bg-red-400/20 transition-all"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Log Out</span>
+              </button>
             </div>
           </aside>
         </>
@@ -195,11 +203,19 @@ export default function AdminPageLayout({
             );
           })}
         </nav>
-        <div className="mt-auto p-4 border-t border-white/10 bg-black/10 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs text-white/80 font-medium">Active: Super Admin</span>
-          </div>
+        <div className="mt-auto p-4 border-t border-white/10 flex-shrink-0">
+          <button
+            onClick={() => {
+              localStorage.removeItem('admin_token');
+              localStorage.removeItem('nexora_token');
+              localStorage.removeItem('nexora_role');
+              router.push('/admin/login');
+            }}
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-xs sm:text-sm font-bold text-red-400 bg-red-400/10 hover:bg-red-400/20 transition-all"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Log Out</span>
+          </button>
         </div>
       </aside>
 
