@@ -42,28 +42,28 @@ const DEFAULT_SETTINGS: Settings = {
 
 const WEIGHT_LABELS: Record<keyof Weights, string> = {
   categoryMatch: 'Category Match',
-  location:      'Location / Proximity',
-  availability:  'Availability (Online)',
-  workload:      'Workload (Fewer = Better)',
-  rating:        'Partner Rating',
+  location: 'Location / Proximity',
+  availability: 'Availability (Online)',
+  workload: 'Workload (Fewer = Better)',
+  rating: 'Partner Rating',
 };
 
 const WEIGHT_COLORS: Record<keyof Weights, string> = {
   categoryMatch: '#0F3D30',
-  location:      '#C3AB84',
-  availability:  '#22c55e',
-  workload:      '#6366f1',
-  rating:        '#f59e0b',
+  location: '#C3AB84',
+  availability: '#22c55e',
+  workload: '#6366f1',
+  rating: '#f59e0b',
 };
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING_PAYMENT: 'bg-gray-100 text-gray-600',
-  REQUESTED:       'bg-blue-100 text-blue-700',
-  ASSIGNED:        'bg-purple-100 text-purple-700',
-  ARRIVED:         'bg-indigo-100 text-indigo-700',
-  IN_PROGRESS:     'bg-amber-100 text-amber-700',
-  COMPLETED:       'bg-green-100 text-green-700',
-  CANCELLED:       'bg-red-100 text-red-600',
+  REQUESTED: 'bg-blue-100 text-blue-700',
+  ASSIGNED: 'bg-purple-100 text-purple-700',
+  ARRIVED: 'bg-indigo-100 text-indigo-700',
+  IN_PROGRESS: 'bg-amber-100 text-amber-700',
+  COMPLETED: 'bg-green-100 text-green-700',
+  CANCELLED: 'bg-red-100 text-red-600',
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -276,7 +276,7 @@ function AssignPartnerModal({ booking, onClose, onSaved }: { booking: any; onClo
     }
   };
 
-  const filteredPartners = allPartners.filter(p => 
+  const filteredPartners = allPartners.filter(p =>
     p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.phone?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -314,7 +314,7 @@ function AssignPartnerModal({ booking, onClose, onSaved }: { booking: any; onClo
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-sm text-primary">{c.partner.name}</span>
-                            <span className="text-[10px] bg-gold/10 text-gold px-2 py-0.5 rounded-full font-bold font-mono">Rank #{i+1}</span>
+                            <span className="text-[10px] bg-gold/10 text-gold px-2 py-0.5 rounded-full font-bold font-mono">Rank #{i + 1}</span>
                           </div>
                           <p className="text-xs text-foreground/50 mt-0.5">{c.partner.phone} · {c.partner.category}</p>
                           <div className="flex flex-wrap gap-2 mt-2">
@@ -345,11 +345,11 @@ function AssignPartnerModal({ booking, onClose, onSaved }: { booking: any; onClo
             <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground/60">Manual Partner Assignment</h3>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
-              <input 
-                value={searchQuery} 
+              <input
+                value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search all approved vendors by name/email/phone..."
-                className="w-full pl-9 pr-4 py-2 border border-gold/30 rounded-2xl text-xs focus:outline-none focus:border-primary bg-white" 
+                className="w-full pl-9 pr-4 py-2 border border-gold/30 rounded-2xl text-xs focus:outline-none focus:border-primary bg-white"
               />
             </div>
 
@@ -379,17 +379,17 @@ function AssignPartnerModal({ booking, onClose, onSaved }: { booking: any; onClo
         </div>
 
         <div className="flex gap-3 p-6 border-t border-gold/10 bg-cream/10 rounded-b-3xl justify-between items-center">
-          <button 
-            type="button" 
+          <button
+            type="button"
             disabled={assigning || loading}
             onClick={() => handleAssign('', true)}
             className="flex items-center gap-1.5 px-4 py-2 bg-gold text-white rounded-full text-xs font-bold hover:bg-gold/90 transition-all disabled:opacity-50"
           >
             <Zap className="w-3.5 h-3.5" /> Auto-Assign Recommended
           </button>
-          <button 
-            type="button" 
-            onClick={onClose} 
+          <button
+            type="button"
+            onClick={onClose}
             className="px-5 py-2 border border-gold/30 text-foreground/70 rounded-full font-semibold text-xs hover:bg-cream"
           >
             Close
@@ -567,7 +567,6 @@ function AdminDashboardContent() {
   const [localSettings, setLocalSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [settingsSaving, setSettingsSaving] = useState(false);
-  const [settingsMsg, setSettingsMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
   // Services sub-tab
   const [servicesSubTab, setServicesSubTab] = useState<'all' | 'pending'>('all');
@@ -925,9 +924,9 @@ function AdminDashboardContent() {
     }
   };
 
-  useEffect(() => { 
+  useEffect(() => {
     if (activeTab === 'services' || activeTab === 'sub_services' || activeTab === 'service_approvals') {
-      fetchServices(); 
+      fetchServices();
     }
   }, [activeTab, servicesPage, serviceCatFilter, servicesSubTab]);
   useEffect(() => { if (activeTab === 'bookings') fetchBookings(); }, [activeTab, bookingsPage, bookingStatusFilter, bookingServiceFilter, bookingDateFilter]);
@@ -1054,7 +1053,7 @@ function AdminDashboardContent() {
       const params = new URLSearchParams({ page: String(servicesPage), limit: '15' });
       if (serviceCatFilter) params.set('categoryId', serviceCatFilter);
       if (serviceSearch) params.set('q', serviceSearch);
-      
+
       if (activeTab === 'service_approvals') {
         params.set('approvalStatus', 'PENDING_APPROVAL');
         params.set('createdByPartnerId', 'partner');
@@ -1065,7 +1064,7 @@ function AdminDashboardContent() {
         params.set('hasParent', 'false');
         params.set('approvalStatus', 'APPROVED');
       }
-      
+
       const { data } = await api.get(`/admin/services?${params}`);
       setServices(data.services || []);
       setServicesTotal(data.total || 0);
@@ -1203,16 +1202,16 @@ function AdminDashboardContent() {
 
   const handleSaveSettings = async () => {
     if (Math.abs(weightsSum - 100) > 0.01) {
-      setSettingsMsg({ type: 'err', text: `Weights must sum to 100 (currently ${weightsSum}).` });
+      toast.error(`Weights must sum to 100 (currently ${weightsSum}).`);
       return;
     }
-    setSettingsSaving(true); setSettingsMsg(null);
+    setSettingsSaving(true);
     try {
       await api.put('/admin/settings', localSettings);
-      setSettingsMsg({ type: 'ok', text: 'Settings saved successfully.' });
+      toast.success('Settings saved successfully.');
       fetchSettings();
     } catch (err: any) {
-      setSettingsMsg({ type: 'err', text: err.response?.data?.message || 'Save failed.' });
+      toast.error(err.response?.data?.message || 'Save failed.');
     } finally { setSettingsSaving(false); }
   };
 
@@ -1228,31 +1227,31 @@ function AdminDashboardContent() {
   };
 
   const TABS = [
-    { id: 'metrics',            label: 'Overview',              icon: ShoppingBag },
-    { id: 'locations',          label: 'Locations',             icon: MapPin },
-    { id: 'categories',         label: 'Service Categories',    icon: Tag },
-    { id: 'service_approvals',   label: 'Service Approvals',    icon: CheckCircle2 },
-    { id: 'services',           label: 'Services',              icon: Package },
-    { id: 'sub_services',       label: 'Sub Services',          icon: ListCollapse },
-    { id: 'packages',           label: 'Packages',              icon: Gift },
-    { id: 'bookings',           label: 'Bookings',              icon: BookOpen },
-    { id: 'users',              label: 'Customers',             icon: Users },
-    { id: 'partners',           label: 'Service Partners',      icon: UserCheck },
-    { id: 'verification',       label: 'Partner KYC',           icon: ShieldCheck },
-    { id: 'coupons',            label: 'Coupons',               icon: Percent },
-    { id: 'offers',             label: 'Offers',                icon: Star },
-    { id: 'campaigns',          label: 'Sale Campaigns',        icon: CalendarDays },
-    { id: 'deals',              label: 'Best Deals',            icon: Tag },
-    { id: 'banners',            label: 'Banners',               icon: Megaphone },
-    { id: 'reviews',            label: 'Reviews & Ratings',     icon: Star },
-    { id: 'assignment',         label: 'Auto Assign Engine',    icon: Zap },
-    { id: 'wallet',             label: 'Wallet & Payouts',      icon: Wallet },
-    { id: 'payout_logs',        label: 'Payout Logs',           icon: Receipt },
-    { id: 'notifications',      label: 'Notifications',         icon: Bell },
-    { id: 'support_tickets',    label: 'Support Tickets',       icon: LifeBuoy },
-    { id: 'contact_messages',   label: 'Contact Messages',      icon: MessageSquare },
-    { id: 'reports',            label: 'Reports & Analytics',   icon: TrendingUp },
-    { id: 'settings',           label: 'Settings',              icon: Settings2 },
+    { id: 'metrics', label: 'Overview', icon: ShoppingBag },
+    { id: 'locations', label: 'Locations', icon: MapPin },
+    { id: 'categories', label: 'Service Categories', icon: Tag },
+    { id: 'service_approvals', label: 'Service Approvals', icon: CheckCircle2 },
+    { id: 'services', label: 'Services', icon: Package },
+    { id: 'sub_services', label: 'Sub Services', icon: ListCollapse },
+    { id: 'packages', label: 'Packages', icon: Gift },
+    { id: 'bookings', label: 'Bookings', icon: BookOpen },
+    { id: 'users', label: 'Customers', icon: Users },
+    { id: 'partners', label: 'Service Partners', icon: UserCheck },
+    { id: 'verification', label: 'Partner KYC', icon: ShieldCheck },
+    { id: 'coupons', label: 'Coupons', icon: Percent },
+    { id: 'offers', label: 'Offers', icon: Star },
+    { id: 'campaigns', label: 'Sale Campaigns', icon: CalendarDays },
+    { id: 'deals', label: 'Best Deals', icon: Tag },
+    { id: 'banners', label: 'Banners', icon: Megaphone },
+    { id: 'reviews', label: 'Reviews & Ratings', icon: Star },
+    { id: 'assignment', label: 'Auto Assign Engine', icon: Zap },
+    { id: 'wallet', label: 'Wallet & Payouts', icon: Wallet },
+    { id: 'payout_logs', label: 'Payout Logs', icon: Receipt },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'support_tickets', label: 'Support Tickets', icon: LifeBuoy },
+    { id: 'contact_messages', label: 'Contact Messages', icon: MessageSquare },
+    { id: 'reports', label: 'Reports & Analytics', icon: TrendingUp },
+    { id: 'settings', label: 'Settings', icon: Settings2 },
   ];
 
   const PaginationBar = ({ page, total, limit, onPage }: { page: number; total: number; limit: number; onPage: (p: number) => void }) => {
@@ -1909,7 +1908,7 @@ function AdminDashboardContent() {
                             </div>
                           </td>
                           <td className="p-4 text-foreground/70">{svc.categoryId?.name || '—'}</td>
-                          
+
                           <td className="p-4 font-semibold text-primary">₹{svc.basePrice}</td>
                           <td className="p-4 text-foreground/60">{svc.estimatedDurationMins} min</td>
 
@@ -1993,17 +1992,17 @@ function AdminDashboardContent() {
                           </td>
                           <td className="p-4">
                             <div className="flex items-center justify-end gap-2">
-                              <button onClick={async () => { 
-                                await api.patch(`/admin/services/${svc._id}/review`, { action: 'approve' }); 
-                                fetchServices(); 
+                              <button onClick={async () => {
+                                await api.patch(`/admin/services/${svc._id}/review`, { action: 'approve' });
+                                fetchServices();
                               }} className="px-3 py-1 bg-green-500 text-white rounded-full text-[10px] font-bold hover:bg-green-600 transition-colors">
                                 Approve
                               </button>
-                              <button onClick={async () => { 
-                                const r = prompt('Enter rejection reason:'); 
+                              <button onClick={async () => {
+                                const r = prompt('Enter rejection reason:');
                                 if (r !== null) {
-                                  await api.patch(`/admin/services/${svc._id}/review`, { action: 'reject', rejectionReason: r }); 
-                                  fetchServices(); 
+                                  await api.patch(`/admin/services/${svc._id}/review`, { action: 'reject', rejectionReason: r });
+                                  fetchServices();
                                 }
                               }} className="px-3 py-1 bg-red-500 text-white rounded-full text-[10px] font-bold hover:bg-red-600 transition-colors">
                                 Reject
@@ -2339,9 +2338,9 @@ function AdminDashboardContent() {
                   >
                     <span>
                       {partnerKycFilter === 'ALL' ? 'All KYC Statuses'
-                       : partnerKycFilter === 'APPROVED' ? 'Approved KYC'
-                       : partnerKycFilter === 'PENDING_ADMIN_APPROVAL' ? 'Pending KYC'
-                       : 'Rejected KYC'}
+                        : partnerKycFilter === 'APPROVED' ? 'Approved KYC'
+                          : partnerKycFilter === 'PENDING_ADMIN_APPROVAL' ? 'Pending KYC'
+                            : 'Rejected KYC'}
                     </span>
                     <ChevronDown className="w-4 h-4 text-foreground/55 flex-shrink-0" />
                   </button>
@@ -2494,7 +2493,7 @@ function AdminDashboardContent() {
                           <td className="p-4 text-foreground/60">{new Date(vendor.kycDetails?.submittedAt || vendor.createdAt).toLocaleDateString()}</td>
                           <td className="p-4">
                             <div className="flex items-center justify-end gap-2">
-                              <button 
+                              <button
                                 onClick={() => setSelectedReviewVendor(vendor)}
                                 className="px-3 py-1.5 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-bold rounded-xl transition-all"
                               >
@@ -2591,29 +2590,29 @@ function AdminDashboardContent() {
                   </div>
 
                   <div className="flex flex-wrap gap-2.5 pt-6 border-t border-gray-100 justify-end">
-                    <button 
+                    <button
                       onClick={() => setSelectedReviewVendor(null)}
                       className="px-5 py-2 border border-gold/30 hover:bg-cream/45 text-xs font-bold rounded-full text-foreground/60 transition-all"
                     >
                       Close
                     </button>
-                    <Link 
+                    <Link
                       href={`/partner/${selectedReviewVendor._id}`}
                       target="_blank"
                       className="px-5 py-2 border border-[#0F3D30]/20 hover:bg-[#FAF6F0] text-xs font-bold rounded-full text-[#0F3D30] transition-all inline-flex items-center"
                     >
                       Public Profile Preview
                     </Link>
-                    <button 
+                    <button
                       onClick={() => {
                         const reason = prompt('Rejection reason (shown to partner):');
                         if (reason !== null) {
                           api.patch(`/admin/vendors/${selectedReviewVendor._id}/verify`, { action: 'reject', reviewNote: reason })
-                            .then(() => { 
-                              alert('Partner rejected'); 
+                            .then(() => {
+                              alert('Partner rejected');
                               setSelectedReviewVendor(null);
-                              fetchPendingVendors(); 
-                              fetchMetrics(); 
+                              fetchPendingVendors();
+                              fetchMetrics();
                             })
                             .catch(() => alert('Rejection failed'));
                         }
@@ -2622,7 +2621,7 @@ function AdminDashboardContent() {
                     >
                       Reject Application
                     </button>
-                    <button 
+                    <button
                       onClick={() => {
                         handleVerify(selectedReviewVendor._id, 'verify').then(() => {
                           setSelectedReviewVendor(null);
@@ -2777,8 +2776,8 @@ function AdminDashboardContent() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-bold text-foreground/60 uppercase tracking-wider">Date Period:</span>
-                  <select 
-                    value={reportDateFilter} 
+                  <select
+                    value={reportDateFilter}
                     onChange={e => setReportDateFilter(e.target.value)}
                     className="border border-[#C3AB84]/30 rounded-2xl px-4 py-2 text-xs font-bold bg-[#F8F4EE] focus:outline-none focus:border-[#0F3D30]"
                   >
@@ -2807,7 +2806,7 @@ function AdminDashboardContent() {
                     <DashboardKPICard label="Total Bookings" value={String(filteredBookings.length)} icon={BookOpen} bg="bg-emerald-100" text="text-emerald-700" />
                   </div>
 
-                  <DashboardCharts 
+                  <DashboardCharts
                     revenueData={chartRevenueData}
                     bookingData={chartBookingData}
                     categoryData={categoryData.length > 0 ? categoryData : undefined}
@@ -2892,44 +2891,44 @@ function AdminDashboardContent() {
             </div>
             <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
               {packagesLoading ? <div className="p-12 text-center"><Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" /></div>
-              : packages.length === 0 ? <div className="p-12 text-center text-foreground/40"><Gift className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No packages yet. Click &quot;Add Package&quot; to create one.</p></div>
-              : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead><tr className="border-b border-gold/10 bg-cream/50">
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Package</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Price</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Services</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
-                      <th className="text-right px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
-                    </tr></thead>
-                    <tbody>{packages.map((pkg: any) => (
-                      <tr key={pkg._id} className="border-b border-gold/5 hover:bg-cream/30 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            {pkg.imageUrl && <img src={pkg.imageUrl} alt={pkg.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />}
-                            <div><p className="font-semibold text-primary">{pkg.name}</p><p className="text-xs text-foreground/50">{pkg.slug}</p></div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 font-bold text-primary">₹{pkg.basePrice}{pkg.discountPercentage > 0 && <span className="ml-1 text-xs text-emerald-600">-{pkg.discountPercentage}%</span>}</td>
-                        <td className="px-6 py-4 text-foreground/60 text-xs">{pkg.includedServices?.length || pkg.inclusions?.length || 0} included</td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${pkg.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{pkg.isActive ? 'Active' : 'Inactive'}</span>
-                            {pkg.isFeatured && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Featured</span>}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 justify-end">
-                            <button onClick={() => router.push(`/admin/packages/${pkg._id}/edit`)} className="p-2 rounded-xl bg-cream hover:bg-beige transition-colors"><Edit2 className="w-4 h-4 text-primary" /></button>
-                            <button onClick={() => handleDeleteGeneric('/admin/packages', pkg._id, pkg.name, fetchPackages)} className="p-2 rounded-xl bg-red-50 hover:bg-red-100 transition-colors"><Trash2 className="w-4 h-4 text-red-500" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}</tbody>
-                  </table>
-                </div>
-              )}
+                : packages.length === 0 ? <div className="p-12 text-center text-foreground/40"><Gift className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No packages yet. Click &quot;Add Package&quot; to create one.</p></div>
+                  : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead><tr className="border-b border-gold/10 bg-cream/50">
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Package</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Price</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Services</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
+                          <th className="text-right px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
+                        </tr></thead>
+                        <tbody>{packages.map((pkg: any) => (
+                          <tr key={pkg._id} className="border-b border-gold/5 hover:bg-cream/30 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                {pkg.imageUrl && <img src={pkg.imageUrl} alt={pkg.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />}
+                                <div><p className="font-semibold text-primary">{pkg.name}</p><p className="text-xs text-foreground/50">{pkg.slug}</p></div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 font-bold text-primary">₹{pkg.basePrice}{pkg.discountPercentage > 0 && <span className="ml-1 text-xs text-emerald-600">-{pkg.discountPercentage}%</span>}</td>
+                            <td className="px-6 py-4 text-foreground/60 text-xs">{pkg.includedServices?.length || pkg.inclusions?.length || 0} included</td>
+                            <td className="px-6 py-4">
+                              <div className="flex flex-wrap gap-1">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${pkg.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{pkg.isActive ? 'Active' : 'Inactive'}</span>
+                                {pkg.isFeatured && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Featured</span>}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2 justify-end">
+                                <button onClick={() => router.push(`/admin/packages/${pkg._id}/edit`)} className="p-2 rounded-xl bg-cream hover:bg-beige transition-colors"><Edit2 className="w-4 h-4 text-primary" /></button>
+                                <button onClick={() => handleDeleteGeneric('/admin/packages', pkg._id, pkg.name, fetchPackages)} className="p-2 rounded-xl bg-red-50 hover:bg-red-100 transition-colors"><Trash2 className="w-4 h-4 text-red-500" /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                    </div>
+                  )}
             </div>
           </div>
         )}
@@ -2945,59 +2944,59 @@ function AdminDashboardContent() {
             </div>
             <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
               {couponsLoading ? <div className="p-12 text-center"><Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" /></div>
-              : coupons.length === 0 ? <div className="p-12 text-center text-foreground/40"><Percent className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No coupons yet.</p></div>
-              : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead><tr className="border-b border-gold/10 bg-cream/50">
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Code</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Discount</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Used / Limit</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Expiry</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
-                      <th className="text-right px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
-                    </tr></thead>
-                    <tbody>{coupons.map((c: any) => (
-                      <tr key={c._id} className="border-b border-gold/5 hover:bg-cream/30 transition-colors">
-                        <td className="px-6 py-4">
-                          <p className="font-mono font-bold text-primary text-base">{c.code}</p>
-                          {c.vendorId && <p className="text-[10px] text-purple-600 font-semibold">By: {c.vendorId.name || c.vendorId.businessName || 'Vendor'}</p>}
-                        </td>
-                        <td className="px-6 py-4">{c.discountType === 'PERCENTAGE' ? `${c.discountValue}%` : `₹${c.discountValue}`}{c.maxDiscountAmount && <span className="text-xs text-foreground/50 ml-1">(max ₹{c.maxDiscountAmount})</span>}</td>
-                        <td className="px-6 py-4">{c.totalUsed} / {c.usageLimit ?? '∞'}</td>
-                        <td className="px-6 py-4 text-xs text-foreground/60">{c.endDate ? new Date(c.endDate).toLocaleDateString('en-IN') : 'Never'}</td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col gap-1">
-                            <div className="flex flex-wrap gap-1">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${c.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{c.isActive ? 'Active' : 'Off'}</span>
-                              {c.isFirstTimeOnly && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">1st-Time</span>}
-                            </div>
-                            {c.vendorId && (
-                              <div className="flex flex-wrap gap-1 items-center mt-1">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${c.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-700' : c.approvalStatus === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}`}>
-                                  {c.approvalStatus || 'PENDING'}
-                                </span>
-                                {c.approvalStatus === 'PENDING' && (
-                                  <div className="flex gap-1 ml-1">
-                                    <button onClick={async () => { await api.patch(`/admin/coupons/${c._id}/review`, { action: 'approve' }); fetchCoupons(); }} className="text-[10px] px-2 py-0.5 bg-green-500 text-white rounded-full font-bold hover:bg-green-600">Approve</button>
-                                    <button onClick={async () => { const r = prompt('Rejection reason?'); if (r !== null) { await api.patch(`/admin/coupons/${c._id}/review`, { action: 'reject', rejectionReason: r }); fetchCoupons(); } }} className="text-[10px] px-2 py-0.5 bg-red-500 text-white rounded-full font-bold hover:bg-red-600">Reject</button>
+                : coupons.length === 0 ? <div className="p-12 text-center text-foreground/40"><Percent className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No coupons yet.</p></div>
+                  : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead><tr className="border-b border-gold/10 bg-cream/50">
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Code</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Discount</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Used / Limit</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Expiry</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
+                          <th className="text-right px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
+                        </tr></thead>
+                        <tbody>{coupons.map((c: any) => (
+                          <tr key={c._id} className="border-b border-gold/5 hover:bg-cream/30 transition-colors">
+                            <td className="px-6 py-4">
+                              <p className="font-mono font-bold text-primary text-base">{c.code}</p>
+                              {c.vendorId && <p className="text-[10px] text-purple-600 font-semibold">By: {c.vendorId.name || c.vendorId.businessName || 'Vendor'}</p>}
+                            </td>
+                            <td className="px-6 py-4">{c.discountType === 'PERCENTAGE' ? `${c.discountValue}%` : `₹${c.discountValue}`}{c.maxDiscountAmount && <span className="text-xs text-foreground/50 ml-1">(max ₹{c.maxDiscountAmount})</span>}</td>
+                            <td className="px-6 py-4">{c.totalUsed} / {c.usageLimit ?? '∞'}</td>
+                            <td className="px-6 py-4 text-xs text-foreground/60">{c.endDate ? new Date(c.endDate).toLocaleDateString('en-IN') : 'Never'}</td>
+                            <td className="px-6 py-4">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex flex-wrap gap-1">
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${c.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{c.isActive ? 'Active' : 'Off'}</span>
+                                  {c.isFirstTimeOnly && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">1st-Time</span>}
+                                </div>
+                                {c.vendorId && (
+                                  <div className="flex flex-wrap gap-1 items-center mt-1">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${c.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-700' : c.approvalStatus === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}`}>
+                                      {c.approvalStatus || 'PENDING'}
+                                    </span>
+                                    {c.approvalStatus === 'PENDING' && (
+                                      <div className="flex gap-1 ml-1">
+                                        <button onClick={async () => { await api.patch(`/admin/coupons/${c._id}/review`, { action: 'approve' }); fetchCoupons(); }} className="text-[10px] px-2 py-0.5 bg-green-500 text-white rounded-full font-bold hover:bg-green-600">Approve</button>
+                                        <button onClick={async () => { const r = prompt('Rejection reason?'); if (r !== null) { await api.patch(`/admin/coupons/${c._id}/review`, { action: 'reject', rejectionReason: r }); fetchCoupons(); } }} className="text-[10px] px-2 py-0.5 bg-red-500 text-white rounded-full font-bold hover:bg-red-600">Reject</button>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                               </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 justify-end">
-                            <button onClick={() => router.push(`/admin/coupons/${c._id}/edit`)} className="p-2 rounded-xl bg-cream hover:bg-beige"><Edit2 className="w-4 h-4 text-primary" /></button>
-                            <button onClick={() => handleDeleteGeneric('/admin/coupons', c._id, c.code, fetchCoupons)} className="p-2 rounded-xl bg-red-50 hover:bg-red-100"><Trash2 className="w-4 h-4 text-red-500" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}</tbody>
-                  </table>
-                </div>
-              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2 justify-end">
+                                <button onClick={() => router.push(`/admin/coupons/${c._id}/edit`)} className="p-2 rounded-xl bg-cream hover:bg-beige"><Edit2 className="w-4 h-4 text-primary" /></button>
+                                <button onClick={() => handleDeleteGeneric('/admin/coupons', c._id, c.code, fetchCoupons)} className="p-2 rounded-xl bg-red-50 hover:bg-red-100"><Trash2 className="w-4 h-4 text-red-500" /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                    </div>
+                  )}
             </div>
           </div>
         )}
@@ -3013,47 +3012,47 @@ function AdminDashboardContent() {
             </div>
             <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
               {bannersLoading ? <div className="p-12 text-center"><Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" /></div>
-              : banners.length === 0 ? <div className="p-12 text-center text-foreground/40"><Megaphone className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No banners yet.</p></div>
-              : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead><tr className="border-b border-gold/10 bg-cream/50">
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Banner</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">CTA</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Position</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Validity</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Order</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
-                      <th className="text-right px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
-                    </tr></thead>
-                    <tbody>{banners.map((b: any) => (
-                      <tr key={b._id} className="border-b border-gold/5 hover:bg-cream/30 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            {b.imageUrl && <img src={b.imageUrl} alt={b.title} className="w-14 h-9 rounded-lg object-cover flex-shrink-0" />}
-                            <div><p className="font-semibold text-primary">{b.title}</p><p className="text-xs text-foreground/50">{b.subtitle}</p></div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-xs text-foreground/70">{b.ctaText} → {b.ctaRoute}</td>
-                        <td className="px-6 py-4">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${b.position === 'PROMO_CARD' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                            {b.position === 'PROMO_CARD' ? 'Promo Card' : 'Carousel'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-xs text-foreground/60">{new Date(b.startDate).toLocaleDateString('en-IN')} – {b.endDate ? new Date(b.endDate).toLocaleDateString('en-IN') : '∞'}</td>
-                        <td className="px-6 py-4 text-center font-bold">{b.displayOrder}</td>
-                        <td className="px-6 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${b.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{b.isActive ? 'Active' : 'Off'}</span></td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 justify-end">
-                            <button onClick={() => router.push(`/admin/banners/${b._id}/edit`)} className="p-2 rounded-xl bg-cream hover:bg-beige"><Edit2 className="w-4 h-4 text-primary" /></button>
-                            <button onClick={() => handleDeleteGeneric('/admin/banners', b._id, b.title, fetchBanners)} className="p-2 rounded-xl bg-red-50 hover:bg-red-100"><Trash2 className="w-4 h-4 text-red-500" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}</tbody>
-                  </table>
-                </div>
-              )}
+                : banners.length === 0 ? <div className="p-12 text-center text-foreground/40"><Megaphone className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No banners yet.</p></div>
+                  : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead><tr className="border-b border-gold/10 bg-cream/50">
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Banner</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">CTA</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Position</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Validity</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Order</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
+                          <th className="text-right px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
+                        </tr></thead>
+                        <tbody>{banners.map((b: any) => (
+                          <tr key={b._id} className="border-b border-gold/5 hover:bg-cream/30 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                {b.imageUrl && <img src={b.imageUrl} alt={b.title} className="w-14 h-9 rounded-lg object-cover flex-shrink-0" />}
+                                <div><p className="font-semibold text-primary">{b.title}</p><p className="text-xs text-foreground/50">{b.subtitle}</p></div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-xs text-foreground/70">{b.ctaText} → {b.ctaRoute}</td>
+                            <td className="px-6 py-4">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${b.position === 'PROMO_CARD' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                {b.position === 'PROMO_CARD' ? 'Promo Card' : 'Carousel'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-xs text-foreground/60">{new Date(b.startDate).toLocaleDateString('en-IN')} – {b.endDate ? new Date(b.endDate).toLocaleDateString('en-IN') : '∞'}</td>
+                            <td className="px-6 py-4 text-center font-bold">{b.displayOrder}</td>
+                            <td className="px-6 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${b.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{b.isActive ? 'Active' : 'Off'}</span></td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2 justify-end">
+                                <button onClick={() => router.push(`/admin/banners/${b._id}/edit`)} className="p-2 rounded-xl bg-cream hover:bg-beige"><Edit2 className="w-4 h-4 text-primary" /></button>
+                                <button onClick={() => handleDeleteGeneric('/admin/banners', b._id, b.title, fetchBanners)} className="p-2 rounded-xl bg-red-50 hover:bg-red-100"><Trash2 className="w-4 h-4 text-red-500" /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                    </div>
+                  )}
             </div>
           </div>
         )}
@@ -3069,50 +3068,50 @@ function AdminDashboardContent() {
             </div>
             <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
               {offersLoading ? <div className="p-12 text-center"><Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" /></div>
-              : offers.length === 0 ? <div className="p-12 text-center text-foreground/40"><Star className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No offers yet.</p></div>
-              : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead><tr className="border-b border-gold/10 bg-cream/50">
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Offer</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Discount</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Source</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Approval</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
-                      <th className="text-right px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
-                    </tr></thead>
-                    <tbody>{offers.map((o: any) => (
-                      <tr key={o._id} className="border-b border-gold/5 hover:bg-cream/30 transition-colors">
-                        <td className="px-6 py-4">
-                          <p className="font-semibold text-primary">{o.title}</p>
-                          {o.vendorId && <p className="text-[10px] text-purple-600 font-semibold">By: {o.vendorId.name || o.vendorId.businessName || 'Vendor'}</p>}
-                          <p className="text-xs text-foreground/50 line-clamp-1">{o.description}</p>
-                        </td>
-                        <td className="px-6 py-4">{o.discountType === 'PERCENTAGE' ? `${o.discountValue}%` : `₹${o.discountValue}`}</td>
-                        <td className="px-6 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${o.source === 'ADMIN' ? 'bg-primary/10 text-primary' : 'bg-purple-100 text-purple-700'}`}>{o.source}</span></td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${o.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-700' : o.approvalStatus === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}`}>{o.approvalStatus}</span>
-                            {o.source === 'VENDOR' && o.approvalStatus === 'PENDING' && (
-                              <div className="flex gap-1">
-                                <button onClick={async () => { await api.post(`/admin/offers/${o._id}/review`, { action: 'approve' }); fetchOffers(); }} className="text-[10px] px-2 py-0.5 bg-green-500 text-white rounded-full font-bold hover:bg-green-600">Approve</button>
-                                <button onClick={async () => { const r = prompt('Rejection reason?'); if (r !== null) { await api.post(`/admin/offers/${o._id}/review`, { action: 'reject', rejectionReason: r }); fetchOffers(); } }} className="text-[10px] px-2 py-0.5 bg-red-500 text-white rounded-full font-bold hover:bg-red-600">Reject</button>
+                : offers.length === 0 ? <div className="p-12 text-center text-foreground/40"><Star className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No offers yet.</p></div>
+                  : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead><tr className="border-b border-gold/10 bg-cream/50">
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Offer</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Discount</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Source</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Approval</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
+                          <th className="text-right px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
+                        </tr></thead>
+                        <tbody>{offers.map((o: any) => (
+                          <tr key={o._id} className="border-b border-gold/5 hover:bg-cream/30 transition-colors">
+                            <td className="px-6 py-4">
+                              <p className="font-semibold text-primary">{o.title}</p>
+                              {o.vendorId && <p className="text-[10px] text-purple-600 font-semibold">By: {o.vendorId.name || o.vendorId.businessName || 'Vendor'}</p>}
+                              <p className="text-xs text-foreground/50 line-clamp-1">{o.description}</p>
+                            </td>
+                            <td className="px-6 py-4">{o.discountType === 'PERCENTAGE' ? `${o.discountValue}%` : `₹${o.discountValue}`}</td>
+                            <td className="px-6 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${o.source === 'ADMIN' ? 'bg-primary/10 text-primary' : 'bg-purple-100 text-purple-700'}`}>{o.source}</span></td>
+                            <td className="px-6 py-4">
+                              <div className="flex flex-wrap gap-1">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${o.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-700' : o.approvalStatus === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}`}>{o.approvalStatus}</span>
+                                {o.source === 'VENDOR' && o.approvalStatus === 'PENDING' && (
+                                  <div className="flex gap-1">
+                                    <button onClick={async () => { await api.post(`/admin/offers/${o._id}/review`, { action: 'approve' }); fetchOffers(); }} className="text-[10px] px-2 py-0.5 bg-green-500 text-white rounded-full font-bold hover:bg-green-600">Approve</button>
+                                    <button onClick={async () => { const r = prompt('Rejection reason?'); if (r !== null) { await api.post(`/admin/offers/${o._id}/review`, { action: 'reject', rejectionReason: r }); fetchOffers(); } }} className="text-[10px] px-2 py-0.5 bg-red-500 text-white rounded-full font-bold hover:bg-red-600">Reject</button>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${o.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{o.isActive ? 'Active' : 'Off'}</span></td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 justify-end">
-                            <button onClick={() => router.push(`/admin/offers/${o._id}/edit`)} className="p-2 rounded-xl bg-cream hover:bg-beige"><Edit2 className="w-4 h-4 text-primary" /></button>
-                            <button onClick={() => handleDeleteGeneric('/admin/offers', o._id, o.title, fetchOffers)} className="p-2 rounded-xl bg-red-50 hover:bg-red-100"><Trash2 className="w-4 h-4 text-red-500" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}</tbody>
-                  </table>
-                </div>
-              )}
+                            </td>
+                            <td className="px-6 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${o.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{o.isActive ? 'Active' : 'Off'}</span></td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2 justify-end">
+                                <button onClick={() => router.push(`/admin/offers/${o._id}/edit`)} className="p-2 rounded-xl bg-cream hover:bg-beige"><Edit2 className="w-4 h-4 text-primary" /></button>
+                                <button onClick={() => handleDeleteGeneric('/admin/offers', o._id, o.title, fetchOffers)} className="p-2 rounded-xl bg-red-50 hover:bg-red-100"><Trash2 className="w-4 h-4 text-red-500" /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                    </div>
+                  )}
             </div>
           </div>
         )}
@@ -3128,42 +3127,42 @@ function AdminDashboardContent() {
             </div>
             <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
               {campaignsLoading ? <div className="p-12 text-center"><Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" /></div>
-              : campaigns.length === 0 ? <div className="p-12 text-center text-foreground/40"><CalendarDays className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No campaigns yet.</p></div>
-              : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead><tr className="border-b border-gold/10 bg-cream/50">
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Campaign</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Discount</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Period</th>
-                      <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
-                      <th className="text-right px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
-                    </tr></thead>
-                    <tbody>{campaigns.map((c: any) => {
-                      const now = Date.now();
-                      const isRunning = c.isActive && new Date(c.startDate).getTime() <= now && new Date(c.endDate).getTime() >= now;
-                      return (
-                        <tr key={c._id} className="border-b border-gold/5 hover:bg-cream/30 transition-colors">
-                          <td className="px-6 py-4"><p className="font-semibold text-primary">{c.name}</p><p className="text-xs text-foreground/50 line-clamp-1">{c.description}</p></td>
-                          <td className="px-6 py-4 font-bold text-emerald-600">{c.discountPercentage}% OFF</td>
-                          <td className="px-6 py-4 text-xs text-foreground/60">{new Date(c.startDate).toLocaleDateString('en-IN')} – {new Date(c.endDate).toLocaleDateString('en-IN')}</td>
-                          <td className="px-6 py-4">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isRunning ? 'bg-green-100 text-green-700' : c.isActive ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
-                              {isRunning ? '🟢 Running' : c.isActive ? 'Scheduled' : 'Inactive'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2 justify-end">
-                              <button onClick={() => router.push(`/admin/sale-campaigns/${c._id}/edit`)} className="p-2 rounded-xl bg-cream hover:bg-beige"><Edit2 className="w-4 h-4 text-primary" /></button>
-                              <button onClick={() => handleDeleteGeneric('/admin/sale-campaigns', c._id, c.name, fetchCampaigns)} className="p-2 rounded-xl bg-red-50 hover:bg-red-100"><Trash2 className="w-4 h-4 text-red-500" /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}</tbody>
-                  </table>
-                </div>
-              )}
+                : campaigns.length === 0 ? <div className="p-12 text-center text-foreground/40"><CalendarDays className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No campaigns yet.</p></div>
+                  : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead><tr className="border-b border-gold/10 bg-cream/50">
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Campaign</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Discount</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Period</th>
+                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
+                          <th className="text-right px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
+                        </tr></thead>
+                        <tbody>{campaigns.map((c: any) => {
+                          const now = Date.now();
+                          const isRunning = c.isActive && new Date(c.startDate).getTime() <= now && new Date(c.endDate).getTime() >= now;
+                          return (
+                            <tr key={c._id} className="border-b border-gold/5 hover:bg-cream/30 transition-colors">
+                              <td className="px-6 py-4"><p className="font-semibold text-primary">{c.name}</p><p className="text-xs text-foreground/50 line-clamp-1">{c.description}</p></td>
+                              <td className="px-6 py-4 font-bold text-emerald-600">{c.discountPercentage}% OFF</td>
+                              <td className="px-6 py-4 text-xs text-foreground/60">{new Date(c.startDate).toLocaleDateString('en-IN')} – {new Date(c.endDate).toLocaleDateString('en-IN')}</td>
+                              <td className="px-6 py-4">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isRunning ? 'bg-green-100 text-green-700' : c.isActive ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
+                                  {isRunning ? '🟢 Running' : c.isActive ? 'Scheduled' : 'Inactive'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-2 justify-end">
+                                  <button onClick={() => router.push(`/admin/sale-campaigns/${c._id}/edit`)} className="p-2 rounded-xl bg-cream hover:bg-beige"><Edit2 className="w-4 h-4 text-primary" /></button>
+                                  <button onClick={() => handleDeleteGeneric('/admin/sale-campaigns', c._id, c.name, fetchCampaigns)} className="p-2 rounded-xl bg-red-50 hover:bg-red-100"><Trash2 className="w-4 h-4 text-red-500" /></button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}</tbody>
+                      </table>
+                    </div>
+                  )}
             </div>
           </div>
         )}
@@ -3239,78 +3238,78 @@ function AdminDashboardContent() {
 
             <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
               {dealsLoading ? <div className="p-12 text-center"><Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" /></div>
-              : deals.length === 0 ? <div className="p-12 text-center text-foreground/40"><Tag className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No deals found. Click "Add Deal" to create the first one.</p></div>
-              : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead><tr className="border-b border-gold/10 bg-cream/50">
-                      <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Deal</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Type</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Price</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Discount</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Approval</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
-                      <th className="text-right px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
-                    </tr></thead>
-                    <tbody>{deals.map((d: any) => {
-                      const isExpired = d.endDate && new Date(d.endDate) < new Date();
-                      return (
-                        <tr key={d._id} className="border-b border-gold/5 hover:bg-cream/30 transition-colors">
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-3">
-                              {d.imageUrl && <img src={d.imageUrl} alt={d.title} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />}
-                              <div className="min-w-0">
-                                <p className="font-semibold text-primary truncate max-w-[180px]">{d.title}</p>
-                                <p className="text-xs text-foreground/50 truncate max-w-[180px]">{d.serviceId?.name || d.packageId?.name || '—'}</p>
-                                {d.isFeatured && <span className="text-[10px] bg-gold/20 text-gold font-bold px-2 py-0.5 rounded-full">★ Featured</span>}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${d.dealType === 'SERVICE' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>{d.dealType}</span></td>
-                          <td className="px-4 py-4">
-                            <p className="text-xs text-foreground/50 line-through">₹{d.originalPrice?.toLocaleString('en-IN')}</p>
-                            <p className="font-bold text-emerald-600">₹{d.finalPrice?.toLocaleString('en-IN')}</p>
-                          </td>
-                          <td className="px-4 py-4 font-semibold text-red-500">{d.discountType === 'PERCENTAGE' ? `${d.discountValue}% OFF` : `₹${d.discountValue} OFF`}</td>
-                          <td className="px-4 py-4">
-                            <div className="flex flex-col gap-1">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-fit ${d.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-700' : d.approvalStatus === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}`}>{d.approvalStatus}</span>
-                              {d.vendorId && d.approvalStatus === 'PENDING' && (
-                                <div className="flex gap-1">
-                                  <button onClick={async () => { await api.patch(`/admin/deals/${d._id}/review`, { action: 'approve' }); fetchDeals(); }} className="text-[10px] px-2 py-0.5 bg-green-500 text-white rounded-full font-bold hover:bg-green-600">Approve</button>
-                                  <button onClick={async () => { const r = prompt('Rejection reason?'); if (r !== null) { await api.patch(`/admin/deals/${d._id}/review`, { action: 'reject', rejectionReason: r }); fetchDeals(); } }} className="text-[10px] px-2 py-0.5 bg-red-500 text-white rounded-full font-bold hover:bg-red-600">Reject</button>
+                : deals.length === 0 ? <div className="p-12 text-center text-foreground/40"><Tag className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No deals found. Click "Add Deal" to create the first one.</p></div>
+                  : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead><tr className="border-b border-gold/10 bg-cream/50">
+                          <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Deal</th>
+                          <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Type</th>
+                          <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Price</th>
+                          <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Discount</th>
+                          <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Approval</th>
+                          <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
+                          <th className="text-right px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
+                        </tr></thead>
+                        <tbody>{deals.map((d: any) => {
+                          const isExpired = d.endDate && new Date(d.endDate) < new Date();
+                          return (
+                            <tr key={d._id} className="border-b border-gold/5 hover:bg-cream/30 transition-colors">
+                              <td className="px-4 py-4">
+                                <div className="flex items-center gap-3">
+                                  {d.imageUrl && <img src={d.imageUrl} alt={d.title} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />}
+                                  <div className="min-w-0">
+                                    <p className="font-semibold text-primary truncate max-w-[180px]">{d.title}</p>
+                                    <p className="text-xs text-foreground/50 truncate max-w-[180px]">{d.serviceId?.name || d.packageId?.name || '—'}</p>
+                                    {d.isFeatured && <span className="text-[10px] bg-gold/20 text-gold font-bold px-2 py-0.5 rounded-full">★ Featured</span>}
+                                  </div>
                                 </div>
-                              )}
-                              {d.rejectionReason && <p className="text-[10px] text-red-500 italic">{d.rejectionReason}</p>}
-                            </div>
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="flex flex-col gap-1">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-fit ${d.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{d.isActive ? 'Active' : 'Inactive'}</span>
-                              {isExpired && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full w-fit bg-orange-100 text-orange-600">Expired</span>}
-                            </div>
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-1 justify-end">
-                              <button onClick={() => setSelectedViewDeal(d)} className="p-1.5 rounded-xl bg-blue-50 hover:bg-blue-100" title="View Deal Details">
-                                <Eye className="w-4 h-4 text-blue-600" />
-                              </button>
-                              <button onClick={async () => { await api.patch(`/admin/deals/${d._id}/status`, { isActive: !d.isActive }); fetchDeals(); }} className={`p-1.5 rounded-xl ${d.isActive ? 'bg-amber-50 hover:bg-amber-100' : 'bg-green-50 hover:bg-green-100'}`} title={d.isActive ? 'Deactivate' : 'Activate'}>
-                                {d.isActive ? <ToggleRight className="w-4 h-4 text-amber-500" /> : <ToggleLeft className="w-4 h-4 text-green-600" />}
-                              </button>
-                              <button onClick={async () => { await api.patch(`/admin/deals/${d._id}/featured`, { isFeatured: !d.isFeatured }); fetchDeals(); }} className={`p-1.5 rounded-xl ${d.isFeatured ? 'bg-gold/20 hover:bg-gold/30' : 'bg-cream hover:bg-beige'}`} title={d.isFeatured ? 'Remove Featured' : 'Mark Featured'}>
-                                <Star className={`w-4 h-4 ${d.isFeatured ? 'text-gold fill-gold' : 'text-foreground/40'}`} />
-                              </button>
-                              <button onClick={() => router.push(`/admin/deals/${d._id}/edit`)} className="p-1.5 rounded-xl bg-cream hover:bg-beige"><Edit2 className="w-4 h-4 text-primary" /></button>
-                              <button onClick={() => handleDeleteGeneric('/admin/deals', d._id, d.title, fetchDeals)} className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100"><Trash2 className="w-4 h-4 text-red-500" /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}</tbody>
-                  </table>
-                </div>
-              )}
+                              </td>
+                              <td className="px-4 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${d.dealType === 'SERVICE' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>{d.dealType}</span></td>
+                              <td className="px-4 py-4">
+                                <p className="text-xs text-foreground/50 line-through">₹{d.originalPrice?.toLocaleString('en-IN')}</p>
+                                <p className="font-bold text-emerald-600">₹{d.finalPrice?.toLocaleString('en-IN')}</p>
+                              </td>
+                              <td className="px-4 py-4 font-semibold text-red-500">{d.discountType === 'PERCENTAGE' ? `${d.discountValue}% OFF` : `₹${d.discountValue} OFF`}</td>
+                              <td className="px-4 py-4">
+                                <div className="flex flex-col gap-1">
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-fit ${d.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-700' : d.approvalStatus === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}`}>{d.approvalStatus}</span>
+                                  {d.vendorId && d.approvalStatus === 'PENDING' && (
+                                    <div className="flex gap-1">
+                                      <button onClick={async () => { await api.patch(`/admin/deals/${d._id}/review`, { action: 'approve' }); fetchDeals(); }} className="text-[10px] px-2 py-0.5 bg-green-500 text-white rounded-full font-bold hover:bg-green-600">Approve</button>
+                                      <button onClick={async () => { const r = prompt('Rejection reason?'); if (r !== null) { await api.patch(`/admin/deals/${d._id}/review`, { action: 'reject', rejectionReason: r }); fetchDeals(); } }} className="text-[10px] px-2 py-0.5 bg-red-500 text-white rounded-full font-bold hover:bg-red-600">Reject</button>
+                                    </div>
+                                  )}
+                                  {d.rejectionReason && <p className="text-[10px] text-red-500 italic">{d.rejectionReason}</p>}
+                                </div>
+                              </td>
+                              <td className="px-4 py-4">
+                                <div className="flex flex-col gap-1">
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-fit ${d.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{d.isActive ? 'Active' : 'Inactive'}</span>
+                                  {isExpired && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full w-fit bg-orange-100 text-orange-600">Expired</span>}
+                                </div>
+                              </td>
+                              <td className="px-4 py-4">
+                                <div className="flex items-center gap-1 justify-end">
+                                  <button onClick={() => setSelectedViewDeal(d)} className="p-1.5 rounded-xl bg-blue-50 hover:bg-blue-100" title="View Deal Details">
+                                    <Eye className="w-4 h-4 text-blue-600" />
+                                  </button>
+                                  <button onClick={async () => { await api.patch(`/admin/deals/${d._id}/status`, { isActive: !d.isActive }); fetchDeals(); }} className={`p-1.5 rounded-xl ${d.isActive ? 'bg-amber-50 hover:bg-amber-100' : 'bg-green-50 hover:bg-green-100'}`} title={d.isActive ? 'Deactivate' : 'Activate'}>
+                                    {d.isActive ? <ToggleRight className="w-4 h-4 text-amber-500" /> : <ToggleLeft className="w-4 h-4 text-green-600" />}
+                                  </button>
+                                  <button onClick={async () => { await api.patch(`/admin/deals/${d._id}/featured`, { isFeatured: !d.isFeatured }); fetchDeals(); }} className={`p-1.5 rounded-xl ${d.isFeatured ? 'bg-gold/20 hover:bg-gold/30' : 'bg-cream hover:bg-beige'}`} title={d.isFeatured ? 'Remove Featured' : 'Mark Featured'}>
+                                    <Star className={`w-4 h-4 ${d.isFeatured ? 'text-gold fill-gold' : 'text-foreground/40'}`} />
+                                  </button>
+                                  <button onClick={() => router.push(`/admin/deals/${d._id}/edit`)} className="p-1.5 rounded-xl bg-cream hover:bg-beige"><Edit2 className="w-4 h-4 text-primary" /></button>
+                                  <button onClick={() => handleDeleteGeneric('/admin/deals', d._id, d.title, fetchDeals)} className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100"><Trash2 className="w-4 h-4 text-red-500" /></button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}</tbody>
+                      </table>
+                    </div>
+                  )}
             </div>
           </div>
         )}
@@ -3319,10 +3318,10 @@ function AdminDashboardContent() {
         {activeTab === 'notifications' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center mb-6">
-              <div>
+              {/* <div>
                 <h3 className="font-serif text-lg font-bold text-primary">System Notification Logs</h3>
                 <p className="text-xs text-foreground/50">Manage platform logs, alerts, user support registrations and ticket creation signals</p>
-              </div>
+              </div> */}
               {adminNotifications.length > 0 && (
                 <button
                   onClick={markAllAdminNotificationsRead}
@@ -3349,14 +3348,12 @@ function AdminDashboardContent() {
                     return (
                       <div
                         key={n._id}
-                        className={`flex items-start justify-between gap-4 p-5 hover:bg-cream/20 transition-all ${
-                          n.isRead ? 'bg-white' : 'bg-blue-50/20'
-                        }`}
+                        className={`flex items-start justify-between gap-4 p-5 hover:bg-cream/20 transition-all ${n.isRead ? 'bg-white' : 'bg-blue-50/20'
+                          }`}
                       >
                         <div className="flex items-start gap-4 min-w-0">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                            n.isRead ? 'bg-gold/10 text-gold' : 'bg-primary/10 text-primary'
-                          }`}>
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${n.isRead ? 'bg-gold/10 text-gold' : 'bg-primary/10 text-primary'
+                            }`}>
                             <Bell className="w-5 h-5" />
                           </div>
                           <div className="min-w-0 space-y-1">
@@ -3458,10 +3455,10 @@ function AdminDashboardContent() {
 
         {activeTab === 'support_tickets' && (
           <div className="space-y-6">
-            <div>
+            {/* <div>
               <h3 className="font-serif text-lg font-bold text-primary">Support Tickets Desk</h3>
               <p className="text-xs text-foreground/50">Manage customer queries, view conversation logs, and send replies live to users</p>
-            </div>
+            </div> */}
 
             <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden flex flex-col md:flex-row min-h-[550px]">
               {/* Left pane: Ticket list */}
@@ -3481,17 +3478,15 @@ function AdminDashboardContent() {
                         <button
                           key={tk._id}
                           onClick={() => handleOpenAdminTicketChat(tk)}
-                          className={`w-full text-left p-4 transition-all hover:bg-cream/30 flex flex-col gap-1.5 ${
-                            isActive ? 'bg-cream/50 border-l-4 border-primary' : ''
-                          }`}
+                          className={`w-full text-left p-4 transition-all hover:bg-cream/30 flex flex-col gap-1.5 ${isActive ? 'bg-cream/50 border-l-4 border-primary' : ''
+                            }`}
                         >
                           <div className="flex justify-between items-start gap-2">
                             <span className="text-xs font-bold text-primary truncate max-w-[120px]">{tk.subject}</span>
-                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                              tk.status === 'OPEN' ? 'bg-red-100 text-red-700' :
+                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${tk.status === 'OPEN' ? 'bg-red-100 text-red-700' :
                               tk.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-700' :
-                              'bg-green-100 text-green-700'
-                            }`}>
+                                'bg-green-100 text-green-700'
+                              }`}>
                               {tk.status}
                             </span>
                           </div>
@@ -3555,15 +3550,13 @@ function AdminDashboardContent() {
                         return (
                           <div
                             key={idx}
-                            className={`flex flex-col max-w-[70%] gap-1 ${
-                              isAdmin ? 'ml-auto items-end' : 'mr-auto items-start'
-                            }`}
+                            className={`flex flex-col max-w-[70%] gap-1 ${isAdmin ? 'ml-auto items-end' : 'mr-auto items-start'
+                              }`}
                           >
-                            <div className={`p-3 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm ${
-                              isAdmin
-                                ? 'bg-primary text-white rounded-tr-none'
-                                : 'bg-white text-primary border border-gold/15 rounded-tl-none'
-                            }`}>
+                            <div className={`p-3 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm ${isAdmin
+                              ? 'bg-primary text-white rounded-tr-none'
+                              : 'bg-white text-primary border border-gold/15 rounded-tl-none'
+                              }`}>
                               {editingAdminMsgId === msg._id ? (
                                 <div className="space-y-1">
                                   <input
@@ -3632,10 +3625,10 @@ function AdminDashboardContent() {
         {/* ── TAB: Wallet & Payouts ── */}
         {activeTab === 'wallet' && (
           <div className="space-y-6">
-            <div className="border-b border-gold/15 pb-4">
+            {/* <div className="border-b border-gold/15 pb-4">
               <h3 className="font-serif text-lg font-bold text-primary">Wallet &amp; Payouts Control Center</h3>
               <p className="text-xs text-foreground/50">Track Service Partners wallet balances and manage payout distributions live</p>
-            </div>
+            </div> */}
 
             <div className="space-y-4">
               {/* Wallet Balances List */}
@@ -3760,10 +3753,10 @@ function AdminDashboardContent() {
         {/* ── TAB: Payout Logs ── */}
         {activeTab === 'payout_logs' && (
           <div className="space-y-6">
-            <div className="border-b border-gold/15 pb-4">
+            {/* <div className="border-b border-gold/15 pb-4">
               <h3 className="font-serif text-lg font-bold text-primary">Payout Logs &amp; History</h3>
               <p className="text-xs text-foreground/50">Detailed record of all payments made to Service Partners</p>
-            </div>
+            </div> */}
 
             <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-gold/15 bg-cream/40 flex justify-between items-center">
@@ -3883,10 +3876,10 @@ function AdminDashboardContent() {
         {/* ── TAB: Reviews & Ratings ── */}
         {activeTab === 'reviews' && (
           <div className="space-y-6">
-            <div className="border-b border-gold/15 pb-4">
+            {/* <div className="border-b border-gold/15 pb-4">
               <h3 className="font-serif text-lg font-bold text-primary">Pending Customer Reviews</h3>
               <p className="text-xs text-foreground/50">Approve or reject customer-submitted service reviews and ratings before they go public</p>
-            </div>
+            </div> */}
 
             <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-gold/15 bg-cream/40">
@@ -3921,9 +3914,8 @@ function AdminDashboardContent() {
                               {Array.from({ length: 5 }).map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`w-4 h-4 ${
-                                    i < rev.rating ? 'fill-amber-500 text-amber-500' : 'text-foreground/20'
-                                  }`}
+                                  className={`w-4 h-4 ${i < rev.rating ? 'fill-amber-500 text-amber-500' : 'text-foreground/20'
+                                    }`}
                                 />
                               ))}
                             </div>
@@ -4050,12 +4042,7 @@ function AdminDashboardContent() {
                   </div>
                 </div>
 
-                {settingsMsg && (
-                  <div className={`flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-medium ${settingsMsg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
-                    {settingsMsg.type === 'ok' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                    {settingsMsg.text}
-                  </div>
-                )}
+
                 <button onClick={handleSaveSettings} disabled={settingsSaving || Math.abs(weightsSum - 100) > 0.01}
                   className="flex items-center gap-2 px-8 py-3.5 bg-primary text-white rounded-full font-semibold hover:bg-primary/90 disabled:opacity-60 text-sm">
                   {settingsSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Settings2 className="w-4 h-4" />}
@@ -4200,7 +4187,7 @@ function AdminPartnerAvailabilityModal({ partner, onClose }: { partner: any; onC
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-[#F8F4EE] rounded-[32px] w-full max-w-4xl border border-gold/30 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        
+
         <div className="p-6 border-b border-gold/15 flex items-center justify-between">
           <div>
             <h3 className="font-serif text-xl font-bold text-primary">Availability &amp; Service Areas</h3>
@@ -4227,12 +4214,12 @@ function AdminPartnerAvailabilityModal({ partner, onClose }: { partner: any; onC
             <div className="py-12 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
+
               <div className="bg-white border border-gold/15 rounded-3xl p-5 space-y-4 shadow-sm">
                 <h4 className="font-serif font-bold text-primary text-sm flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-gold" /> Service Locations
                 </h4>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <div className="relative" ref={cityRef}>
                     <label className="block text-[9px] font-bold text-foreground/60 uppercase mb-1">City</label>
@@ -4378,9 +4365,8 @@ function AdminPartnerAvailabilityModal({ partner, onClose }: { partner: any; onC
                             if (active) setDays(days.filter(x => x !== d));
                             else setDays([...days, d]);
                           }}
-                          className={`py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
-                            active ? 'bg-primary text-white border-primary shadow-sm' : 'bg-cream text-foreground/75 border-gold/20'
-                          }`}
+                          className={`py-1.5 rounded-lg text-[10px] font-bold border transition-all ${active ? 'bg-primary text-white border-primary shadow-sm' : 'bg-cream text-foreground/75 border-gold/20'
+                            }`}
                         >
                           {d}
                         </button>
@@ -4403,9 +4389,8 @@ function AdminPartnerAvailabilityModal({ partner, onClose }: { partner: any; onC
                             if (active) setSlots(slots.filter(x => x !== s));
                             else setSlots([...slots, s]);
                           }}
-                          className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${
-                            active ? 'bg-primary text-white border-primary shadow-sm' : 'bg-cream text-foreground/75 border-gold/20'
-                          }`}
+                          className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${active ? 'bg-primary text-white border-primary shadow-sm' : 'bg-cream text-foreground/75 border-gold/20'
+                            }`}
                         >
                           {s}
                         </button>
