@@ -133,19 +133,46 @@ function CheckoutForm() {
     setLoadingDetails(true);
     try {
       if (packageId) {
-        // Dynamic Package fetch by slug
-        const pkgRes = await api.get(`/public/packages/${packageId}`);
-        if (pkgRes.data?.success && pkgRes.data.package) {
-          const pkg = pkgRes.data.package;
-          setService({
-            _id: pkg._id,
-            name: pkg.name,
-            basePrice: pkg.basePrice,
-            discountPercentage: pkg.discountPercentage || 0,
-            description: pkg.description || `Package includes: ${(pkg.includedServices || []).map((s: any) => s.name).join(', ')}`,
-            isPackage: true,
-            includedServices: pkg.includedServices || [],
-          });
+        let loaded = false;
+        try {
+          // Dynamic Package fetch by slug
+          const pkgRes = await api.get(`/public/packages/${packageId}`);
+          if (pkgRes.data?.success && pkgRes.data.package) {
+            const pkg = pkgRes.data.package;
+            setService({
+              _id: pkg._id || pkg.slug,
+              name: pkg.name,
+              basePrice: pkg.basePrice,
+              discountPercentage: pkg.discountPercentage || 0,
+              description: pkg.description || `Package includes: ${(pkg.includedServices || []).map((s: any) => s.name).join(', ')}`,
+              isPackage: true,
+              includedServices: pkg.includedServices || [],
+            });
+            loaded = true;
+          }
+        } catch (apiErr) {
+          console.warn("Package not found in MongoDB. Falling back to local static registry.");
+        }
+
+        if (!loaded) {
+          const LOCAL_PACKAGES = {
+            'basic-home-care': { name: 'Basic Home Care', price: 699, desc: 'Essential maintenance package for your home covering cleaning, electrical and plumbing needs.' },
+            'deep-home-care': { name: 'Deep Home Care', price: 1299, desc: 'Comprehensive deep cleaning package for bathroom, kitchen and sofa — leaving your home spotless and hygienically clean.' },
+            'move-in-care': { name: 'Move-In Care', price: 1999, desc: 'Get your new home fresh and pest-free before moving in with a full home clean and herbal pest treatment.' },
+            'annual-home-care': { name: 'Annual Home Care', price: 2999, desc: 'Year-round home maintenance with quarterly AC, RO, electrical and plumbing service visits.' }
+          };
+          const localPkg = LOCAL_PACKAGES[packageId as keyof typeof LOCAL_PACKAGES];
+          if (localPkg) {
+            setService({
+              _id: packageId,
+              name: localPkg.name,
+              basePrice: localPkg.price,
+              discountPercentage: 0,
+              description: localPkg.desc,
+              isPackage: true,
+              includedServices: [],
+            });
+          }
         }
       } else if (serviceId) {
         // Single service booking: fetch from public API
