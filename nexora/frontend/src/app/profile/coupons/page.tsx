@@ -21,8 +21,24 @@ export default function CouponsOffersPage() {
         api.get('/public/offers').catch(() => ({ data: { offers: [] } }))
       ]);
 
+      const storedUser = typeof window !== 'undefined' ? localStorage.getItem('nexora_user') : null;
+      let currentUserId = '';
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          currentUserId = parsed.id || parsed._id || '';
+        } catch {}
+      }
+
       if (cpRes.data?.success) {
-        setCoupons(cpRes.data.data || []);
+        let allCoupons = cpRes.data.data || [];
+        if (currentUserId) {
+          allCoupons = allCoupons.filter((c: any) => {
+            const userUsedCount = c.usageLogs?.filter((log: any) => log.userId === currentUserId || log.userId?._id === currentUserId || log.userId?.toString() === currentUserId.toString()).length || 0;
+            return userUsedCount < c.perUserLimit;
+          });
+        }
+        setCoupons(allCoupons);
       }
       if (ofRes.data?.success) {
         setOffers(ofRes.data.offers || []);

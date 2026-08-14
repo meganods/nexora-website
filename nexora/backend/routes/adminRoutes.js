@@ -28,8 +28,14 @@ const {
   listSupportTickets,
   getSupportTicketDetails,
   replyToSupportTicketByAdmin,
+  editSupportTicketMessageByAdmin,
+  deleteSupportTicketMessageByAdmin,
+  getWalletBalances,
+  getPayoutLogs,
+  createPayout,
   getPendingReviews,
   reviewUserReview,
+  deleteVendorReply,
 } = require("../controllers/adminController");
 
 const {
@@ -179,9 +185,17 @@ router.get("/assign/:bookingId/preview", protect, authorize("super_admin", "admi
 router.get("/tickets", protect, authorize("super_admin", "admin", "support"), listSupportTickets);
 router.get("/tickets/:id", protect, authorize("super_admin", "admin", "support"), getSupportTicketDetails);
 router.post("/tickets/:id/reply", protect, authorize("super_admin", "admin"), replyToSupportTicketByAdmin);
+router.put("/tickets/:ticketId/messages/:messageId", protect, authorize("super_admin", "admin"), editSupportTicketMessageByAdmin);
+router.delete("/tickets/:ticketId/messages/:messageId", protect, authorize("super_admin", "admin"), deleteSupportTicketMessageByAdmin);
+
+// ─── Wallet & Payouts (Admin) ─────────────────────────────────────────────────
+router.get("/wallet/balances", protect, authorize("super_admin", "admin"), getWalletBalances);
+router.get("/wallet/payouts", protect, authorize("super_admin", "admin"), getPayoutLogs);
+router.post("/wallet/payouts", protect, authorize("super_admin", "admin"), createPayout);
 
 // ─── Reviews Approvals (Admin) ─────────────────────────────────────────────────
 router.get("/reviews/pending", protect, authorize("super_admin", "admin", "support"), getPendingReviews);
 router.patch("/reviews/:id/review", protect, authorize("super_admin", "admin"), reviewUserReview);
+router.delete("/reviews/:id/reply", protect, authorize("super_admin", "admin"), deleteVendorReply);
 
 module.exports = router;

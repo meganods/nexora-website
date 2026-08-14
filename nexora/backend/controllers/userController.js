@@ -1,4 +1,6 @@
 const User = require("../models/User");
+const ServicePartner = require("../models/ServicePartner");
+const Admin = require("../models/Admin");
 const generateToken = require("../utils/generateToken");
 const { storeOtp, verifyOtp } = require("../utils/mockOtp");
 const asyncHandler = require("../utils/asyncHandler");
@@ -154,8 +156,15 @@ const getProfile = asyncHandler(async (req, res) => {
 const updateProfile = asyncHandler(async (req, res) => {
   const { name, email, phone, profilePhoto, password } = req.body;
   
-  // Fetch user document directly to ensure pre-save hook runs on user password modify
-  const user = await User.findById(req.user.id);
+  let user;
+  if (req.user.role === "user") {
+    user = await User.findById(req.user.id);
+  } else if (req.user.role === "vendor") {
+    user = await ServicePartner.findById(req.user.id);
+  } else {
+    user = await Admin.findById(req.user.id);
+  }
+
   if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
   if (name !== undefined) user.name = name;

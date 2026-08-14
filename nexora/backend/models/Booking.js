@@ -116,6 +116,10 @@ const bookingSchema = new mongoose.Schema({
     name: { type: String, required: true },
     price: { type: Number, required: true }
   }],
+  quantity: {
+    type: Number,
+    default: 1
+  },
   rejectionLog: [{
     vendorId: { type: mongoose.Schema.Types.ObjectId, ref: 'ServicePartner' },
     reason: String,

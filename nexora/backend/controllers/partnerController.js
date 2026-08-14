@@ -699,7 +699,8 @@ const updateOnboarding = asyncHandler(async (req, res) => {
     category,
     businessType, experience, teamSize, businessDescription, primaryContact,
     location, bankDetails, onboardingStep, kycDetails, availability, serviceAreas,
-    customServices // ← Step 3: service selection & pricing overrides (onboarding only)
+    customServices, // ← Step 3: service selection & pricing overrides (onboarding only)
+    profilePictureUrl, aboutMe, skills, certifications, languages, workingHours
   } = req.body;
 
   if (category !== undefined) vendor.category = category;
@@ -711,6 +712,12 @@ const updateOnboarding = asyncHandler(async (req, res) => {
   if (location !== undefined) vendor.location = location;
   if (onboardingStep !== undefined) vendor.onboardingStep = onboardingStep;
   if (availability !== undefined) vendor.availability = availability;
+  if (profilePictureUrl !== undefined) vendor.profilePictureUrl = profilePictureUrl;
+  if (aboutMe !== undefined) vendor.aboutMe = aboutMe;
+  if (skills !== undefined) vendor.skills = skills;
+  if (certifications !== undefined) vendor.certifications = certifications;
+  if (languages !== undefined) vendor.languages = languages;
+  if (workingHours !== undefined) vendor.workingHours = workingHours;
   if (req.body.serviceAreaIds !== undefined) {
     vendor.serviceAreaIds = req.body.serviceAreaIds;
     const Area = require('../models/Area');
@@ -839,7 +846,7 @@ const getPartnerCreatedServices = asyncHandler(async (req, res) => {
 // @access  Private (ServicePartner)
 const createPartnerService = asyncHandler(async (req, res) => {
   const Service = require('../models/Service');
-  const { name, categoryId, description, basePrice, estimatedDurationMins, inclusions, imageUrl, imagePublicId, parentId } = req.body;
+  const { name, categoryId, description, basePrice, estimatedDurationMins, inclusions, imageUrl, imagePublicId, parentId, serviceImages, bannerImageUrl } = req.body;
 
   if (!name || !categoryId || basePrice === undefined || !estimatedDurationMins) {
     return res.status(400).json({ success: false, message: "Required fields: name, categoryId, basePrice, estimatedDurationMins" });
@@ -863,6 +870,8 @@ const createPartnerService = asyncHandler(async (req, res) => {
     imageUrl: imageUrl || null,
     imagePublicId: imagePublicId || null,
     parentId: parentId || null,
+    serviceImages: Array.isArray(serviceImages) ? serviceImages : [],
+    bannerImageUrl: bannerImageUrl || null,
     createdByPartnerId: req.user.userId,
     approvalStatus: 'PENDING_APPROVAL',
     isActive: false,
@@ -877,7 +886,7 @@ const createPartnerService = asyncHandler(async (req, res) => {
 // @access  Private (ServicePartner)
 const updatePartnerService = asyncHandler(async (req, res) => {
   const Service = require('../models/Service');
-  const { name, categoryId, description, basePrice, estimatedDurationMins, inclusions, imageUrl, imagePublicId, parentId } = req.body;
+  const { name, categoryId, description, basePrice, estimatedDurationMins, inclusions, imageUrl, imagePublicId, parentId, serviceImages, bannerImageUrl } = req.body;
   
   const service = await Service.findOne({ _id: req.params.id, createdByPartnerId: req.user.userId, isDeleted: false });
   if (!service) {
@@ -903,6 +912,8 @@ const updatePartnerService = asyncHandler(async (req, res) => {
   if (imageUrl !== undefined) service.imageUrl = imageUrl;
   if (imagePublicId !== undefined) service.imagePublicId = imagePublicId;
   if (parentId !== undefined) service.parentId = parentId || null;
+  if (Array.isArray(serviceImages)) service.serviceImages = serviceImages;
+  if (bannerImageUrl !== undefined) service.bannerImageUrl = bannerImageUrl;
 
   // Reset approval status on edit
   service.approvalStatus = 'PENDING_APPROVAL';
@@ -928,6 +939,40 @@ const deletePartnerService = asyncHandler(async (req, res) => {
   await service.save();
 
   res.json({ success: true, message: "Service soft deleted successfully." });
+});
+
+// Get all reviews for this partner
+const getPartnerReviews = asyncHandler(async (req, res) => {
+  const Review = require('../models/Review');
+  const reviews = await Review.find({ vendorId: req.user.userId })
+    .populate('userId', 'name profilePhoto')
+    .populate('serviceId', 'name')
+    .sort({ createdAt: -1 });
+
+  res.json({ success: true, reviews });
+});
+
+// Submit/edit a vendor reply to an approved review
+const replyToReview = asyncHandler(async (req, res) => {
+  const { replyText } = req.body;
+  if (!replyText || !replyText.trim()) {
+    return res.status(400).json({ success: false, message: "Reply text is required." });
+  }
+
+  const Review = require('../models/Review');
+  const review = await Review.findOne({ _id: req.params.id, vendorId: req.user.userId });
+  if (!review) {
+    return res.status(404).json({ success: false, message: "Review not found." });
+  }
+
+  if (review.approvalStatus !== 'APPROVED') {
+    return res.status(400).json({ success: false, message: "You can only reply to approved reviews." });
+  }
+
+  review.vendorReply = replyText;
+  await review.save();
+
+  res.json({ success: true, message: "Reply saved successfully.", review });
 });
 
 module.exports = {
@@ -959,6 +1004,8 @@ module.exports = {
   getPartnerCreatedServices,
   createPartnerService,
   updatePartnerService,
-  deletePartnerService
+  deletePartnerService,
+  getPartnerReviews,
+  replyToReview
 };
 

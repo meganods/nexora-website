@@ -81,6 +81,14 @@ const userSchema = new mongoose.Schema(
       type: [addressSchema],
       default: [],
     },
+    wishlist: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Service'
+    }],
+    searchHistory: [{
+      query: { type: String, trim: true },
+      searchedAt: { type: Date, default: Date.now }
+    }],
     isActive: {
       type: Boolean,
       default: true,

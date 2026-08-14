@@ -37,7 +37,7 @@ export default function Footer() {
               <li><Link href="/services" className="hover:text-white transition-colors">All Services</Link></li>
               <li><Link href="/services" className="hover:text-white transition-colors">Popular Services</Link></li>
               <li><Link href="/deals" className="hover:text-white transition-colors">Best Deals</Link></li>
-              <li><Link href="/services" className="hover:text-white transition-colors">Browse Categories</Link></li>
+              <li><Link href="/categories" className="hover:text-white transition-colors">Browse Categories</Link></li>
             </ul>
           </div>
 

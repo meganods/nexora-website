@@ -63,13 +63,15 @@ export default function BookingDetailPage() {
   return (
     <div className="min-h-screen bg-cream pb-12">
       {/* Top Navbar */}
-      <header className="bg-[#1D3B31] text-white py-4 px-6 border-b border-gold/15 flex items-center gap-4 sticky top-0 z-40">
-        <button onClick={() => router.back()} className="p-1 hover:bg-white/5 rounded-full transition-colors">
-          <ArrowLeft className="w-5 h-5 text-gold" />
-        </button>
-        <div>
-          <h1 className="font-serif text-base font-bold">Booking Details</h1>
-          <p className="text-[10px] text-white/55 font-mono">ID: {String(booking._id).toUpperCase()}</p>
+      <header className="bg-[#1D3B31] text-white py-4 px-6 border-b border-gold/15 sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto w-full flex items-center gap-4">
+          <button onClick={() => router.back()} className="p-1 hover:bg-white/5 rounded-full transition-colors">
+            <ArrowLeft className="w-5 h-5 text-gold" />
+          </button>
+          <div>
+            <h1 className="font-serif text-base font-bold">Booking Details</h1>
+            <p className="text-[10px] text-white/55 font-mono">ID: {String(booking._id).toUpperCase()}</p>
+          </div>
         </div>
       </header>
 
@@ -90,7 +92,7 @@ export default function BookingDetailPage() {
                   href={`/bookings/${booking._id}/track`}
                   className="text-xs font-bold text-white bg-primary px-4 py-2 rounded-xl hover:bg-primary/95 transition-all shadow-sm"
                 >
-                  Track Job
+                  Track Booking
                 </Link>
               </div>
 

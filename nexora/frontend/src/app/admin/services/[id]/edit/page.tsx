@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Check, Loader2, ToggleLeft, ToggleRight, ChevronDown } from 'lucide-react';
 import AdminPageLayout from '../../../_components/AdminPageLayout';
 import ImageUpload from '../../../_components/ImageUpload';
+import MultiImageUpload from '../../../_components/MultiImageUpload';
 import api from '@/lib/api';
 
 const autoSlug = (name: string) =>
@@ -57,6 +58,9 @@ export default function EditServicePage() {
     recommendedServicesRaw: '[]',
     addonsRaw: '[]',
     seoTitle: '', seoDescription: '', seoKeywords: '',
+    serviceImages: [] as string[],
+    beforeImages: [] as string[],
+    afterImages: [] as string[],
   });
 
   useEffect(() => {
@@ -99,6 +103,9 @@ export default function EditServicePage() {
           seoTitle: svc.seoTitle || '',
           seoDescription: svc.seoDescription || '',
           seoKeywords: svc.seoKeywords || '',
+          serviceImages: svc.serviceImages || [],
+          beforeImages: svc.beforeImages || [],
+          afterImages: svc.afterImages || [],
         });
       } catch (err) {
         setError('Failed to load service.');
@@ -305,6 +312,12 @@ export default function EditServicePage() {
             <textarea rows={4} value={form.inclusions} onChange={e => setForm(p => ({ ...p, inclusions: e.target.value }))} className={`${inp} resize-none font-mono`} />
           </div>
           <ImageUpload imageUrl={form.imageUrl} imagePublicId={form.imagePublicId} onChange={(url, pid) => setForm(p => ({ ...p, imageUrl: url, imagePublicId: pid }))} label="Service Image" folder="nexora/services" />
+          <ImageUpload imageUrl={form.bannerImageUrl} imagePublicId="" onChange={(url) => setForm(p => ({ ...p, bannerImageUrl: url }))} label="Main Banner Image" folder="nexora/banners" />
+          <MultiImageUpload imageUrls={form.serviceImages} onChange={(urls) => setForm(p => ({ ...p, serviceImages: urls }))} label="Gallery Images" folder="nexora/gallery" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <MultiImageUpload imageUrls={form.beforeImages} onChange={(urls) => setForm(p => ({ ...p, beforeImages: urls }))} label="Before Images" folder="nexora/before" />
+            <MultiImageUpload imageUrls={form.afterImages} onChange={(urls) => setForm(p => ({ ...p, afterImages: urls }))} label="After Images" folder="nexora/after" />
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {TOGGLES.map(({ key, label }) => (
               <label key={key} className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${form[key as ToggleKey] ? 'border-[#0F3D30] bg-[#0F3D30]/5 text-[#0F3D30]' : 'border-[#C3AB84]/20 text-foreground/60'}`}>

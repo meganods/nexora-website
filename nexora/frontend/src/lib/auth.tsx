@@ -50,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback((newToken: string, newUser: User) => {
     localStorage.setItem('nexora_token', newToken);
     localStorage.setItem('nexora_user', JSON.stringify(newUser));
+    localStorage.setItem('nexora_role', 'user');
     setToken(newToken);
     setUser(newUser);
   }, []);
@@ -57,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem('nexora_token');
     localStorage.removeItem('nexora_user');
+    localStorage.removeItem('nexora_role');
     setToken(null);
     setUser(null);
   }, []);

@@ -3,8 +3,49 @@ const bcrypt = require("bcryptjs");
 
 const ADMIN_ROLES = ["super_admin", "admin", "support"];
 
+const addressSchema = new mongoose.Schema(
+  {
+    label: {
+      type: String,
+      trim: true,
+      default: "Home",
+    },
+    fullName: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    houseNo: { type: String, trim: true },
+    street: { type: String, trim: true },
+    landmark: { type: String, trim: true },
+    countryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Country' },
+    stateId: { type: mongoose.Schema.Types.ObjectId, ref: 'State' },
+    cityId: { type: mongoose.Schema.Types.ObjectId, ref: 'City' },
+    areaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Area' },
+    pincodeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Pincode' },
+    city: {
+      type: String,
+      trim: true,
+    },
+    state: {
+      type: String,
+      trim: true,
+    },
+    pincode: {
+      type: String,
+      trim: true,
+    },
+    isDefault: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { _id: true }
+);
+
 const adminSchema = new mongoose.Schema(
   {
+    addresses: {
+      type: [addressSchema],
+      default: [],
+    },
     email: {
       type: String,
       required: [true, "Email is required"],

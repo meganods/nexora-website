@@ -23,7 +23,7 @@ export default function BookingTrackingPage() {
     { key: 'ARRIVED', label: 'Partner Arrived', desc: 'Partner arrived at service location' },
     { key: 'OTP_VERIFICATION', label: 'OTP Verified', desc: 'Secure OTP validation complete' },
     { key: 'IN_PROGRESS', label: 'Service In Progress', desc: 'Service execution started' },
-    { key: 'COMPLETED', label: 'Service Completed', desc: 'Job execution successful' },
+    { key: 'COMPLETED', label: 'Service Completed', desc: 'Service execution successful' },
   ];
 
   useEffect(() => {
@@ -71,13 +71,15 @@ export default function BookingTrackingPage() {
   return (
     <div className="min-h-screen bg-cream pb-12">
       {/* Header bar */}
-      <header className="bg-[#1D3B31] text-white py-4 px-6 border-b border-gold/15 flex items-center gap-4 sticky top-0 z-40">
-        <button onClick={() => router.back()} className="p-1 hover:bg-white/5 rounded-full transition-colors">
-          <ArrowLeft className="w-5 h-5 text-gold" />
-        </button>
-        <div>
-          <h1 className="font-serif text-base font-bold">Booking Tracking</h1>
-          <p className="text-[10px] text-white/55 font-mono">Job ID: {String(booking._id).toUpperCase()}</p>
+      <header className="bg-[#1D3B31] text-white py-4 px-6 border-b border-gold/15 sticky top-0 z-40">
+        <div className="max-w-xl mx-auto w-full flex items-center gap-4">
+          <button onClick={() => router.back()} className="p-1 hover:bg-white/5 rounded-full transition-colors">
+            <ArrowLeft className="w-5 h-5 text-gold" />
+          </button>
+          <div>
+            <h1 className="font-serif text-base font-bold">Booking Tracking</h1>
+            <p className="text-[10px] text-white/55 font-mono">Booking ID: {String(booking._id).toUpperCase()}</p>
+          </div>
         </div>
       </header>
 

@@ -54,12 +54,12 @@ export default function ProfileDashboard() {
   };
 
   const statCards = [
-    { label: 'Active Bookings', value: stats.activeBookings, icon: Calendar, color: 'text-blue-600 bg-blue-50 border-blue-100' },
-    { label: 'Completed Bookings', value: stats.completedBookings, icon: CheckCircle2, color: 'text-green-600 bg-green-50 border-green-100' },
-    { label: 'Cancelled Bookings', value: stats.cancelledBookings, icon: XCircle, color: 'text-red-600 bg-red-50 border-red-100' },
-    { label: 'Saved Addresses', value: stats.savedAddresses, icon: MapPin, color: 'text-amber-600 bg-amber-50 border-amber-100' },
-    { label: 'Available Coupons', value: stats.availableCoupons, icon: Tag, color: 'text-purple-600 bg-purple-50 border-purple-100' },
-    { label: 'Total Savings', value: `₹${stats.totalSavings.toLocaleString('en-IN')}`, icon: IndianRupee, color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
+    { label: 'Active Bookings', value: stats.activeBookings, icon: Calendar, color: 'text-blue-600 bg-blue-50 border-blue-100', href: '/profile/bookings' },
+    { label: 'Completed Bookings', value: stats.completedBookings, icon: CheckCircle2, color: 'text-green-600 bg-green-50 border-green-100', href: '/profile/history' },
+    { label: 'Cancelled Bookings', value: stats.cancelledBookings, icon: XCircle, color: 'text-red-600 bg-red-50 border-red-100', href: '/profile/history' },
+    { label: 'Saved Addresses', value: stats.savedAddresses, icon: MapPin, color: 'text-amber-600 bg-amber-50 border-amber-100', href: '/profile/addresses' },
+    { label: 'Available Coupons', value: stats.availableCoupons, icon: Tag, color: 'text-purple-600 bg-purple-50 border-purple-100', href: '/profile/coupons' },
+    { label: 'Total Savings', value: `₹${stats.totalSavings.toLocaleString('en-IN')}`, icon: IndianRupee, color: 'text-emerald-600 bg-emerald-50 border-emerald-100', href: '/profile/coupons' },
   ];
 
   return (
@@ -73,13 +73,17 @@ export default function ProfileDashboard() {
       {/* Analytics stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {statCards.map((card, i) => (
-          <div key={i} className={`border rounded-3xl p-5 flex flex-col justify-between h-[130px] shadow-sm bg-white ${card.color}`}>
+          <Link
+            key={i}
+            href={card.href}
+            className={`border rounded-3xl p-5 flex flex-col justify-between h-[130px] shadow-sm bg-white cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all ${card.color}`}
+          >
             <div className="flex justify-between items-start">
               <span className="text-[10px] uppercase font-bold tracking-wider opacity-80">{card.label}</span>
               <card.icon className="w-5 h-5 opacity-70" />
             </div>
             <p className="text-xl font-bold font-serif leading-none mt-2">{card.value}</p>
-          </div>
+          </Link>
         ))}
       </div>
 

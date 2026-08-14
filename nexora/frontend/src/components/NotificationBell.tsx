@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Bell, Check, CheckCheck, BookOpen, ShieldCheck, IndianRupee, Megaphone, X, Loader2 } from "lucide-react";
 import api from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface Notification {
@@ -51,6 +52,7 @@ function timeAgo(dateStr: string): string {
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 export default function NotificationBell({ tokenKey, theme = "dark" }: Props) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unread, setUnread] = useState(0);
@@ -148,6 +150,25 @@ export default function NotificationBell({ tokenKey, theme = "dark" }: Props) {
     setOpen((s) => !s);
   };
 
+  // ── Deep link helper ──────────────────────────────────────────────────────
+  const getDeepLink = (n: Notification): string | null => {
+    const meta = n.metadata || {};
+    if (n.type === "booking" && meta.bookingId) return `/bookings/${meta.bookingId}`;
+    if (n.type === "payment" && meta.bookingId) return `/bookings/${meta.bookingId}`;
+    if (n.type === "approval" && meta.serviceId) return `/services/${meta.serviceId}`;
+    if (n.type === "promo") return "/services";
+    return null;
+  };
+
+  const handleNotificationClick = async (n: Notification) => {
+    if (!n.isRead) await markOneRead(n._id);
+    const link = getDeepLink(n);
+    if (link) {
+      setOpen(false);
+      router.push(link);
+    }
+  };
+
   // ── Styles ────────────────────────────────────────────────────────────────
   const btnBase =
     theme === "dark"
@@ -233,8 +254,11 @@ export default function NotificationBell({ tokenKey, theme = "dark" }: Props) {
                   return (
                     <li
                       key={n._id}
-                      className={`flex items-start gap-3 px-4 py-3.5 transition-colors cursor-default group ${
-                        n.isRead ? "bg-white" : "bg-blue-50/40 hover:bg-blue-50/60"
+                      onClick={() => handleNotificationClick(n)}
+                      className={`flex items-start gap-3 px-4 py-3.5 transition-colors group ${
+                        getDeepLink(n) ? 'cursor-pointer' : 'cursor-default'
+                      } ${
+                        n.isRead ? "bg-white hover:bg-cream/30" : "bg-blue-50/40 hover:bg-blue-50/70"
                       }`}
                     >
                       {/* Icon */}
@@ -249,7 +273,7 @@ export default function NotificationBell({ tokenKey, theme = "dark" }: Props) {
                           </p>
                           {!n.isRead && (
                             <button
-                              onClick={() => markOneRead(n._id)}
+                              onClick={(e) => { e.stopPropagation(); markOneRead(n._id); }}
                               className="opacity-0 group-hover:opacity-100 flex-shrink-0 p-0.5 rounded hover:bg-primary/10 transition-all"
                               title="Mark as read"
                             >
@@ -276,13 +300,15 @@ export default function NotificationBell({ tokenKey, theme = "dark" }: Props) {
           </div>
 
           {/* Footer */}
-          {notifications.length > 0 && (
-            <div className="px-4 py-2.5 border-t border-gold/15 bg-cream/40">
-              <p className="text-[10px] text-foreground/40 text-center font-medium">
-                Showing last {notifications.length} notification{notifications.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-          )}
+          <div className="px-4 py-2.5 border-t border-gold/15 bg-cream/40 flex items-center justify-between gap-2">
+            <p className="text-[10px] text-foreground/40 font-medium">
+              {notifications.length > 0 ? `${notifications.length} notification${notifications.length !== 1 ? 's' : ''}` : ''}
+            </p>
+            <button onClick={() => { setOpen(false); router.push('/profile/notifications'); }}
+              className="text-[10px] font-bold text-primary hover:underline">
+              View All →
+            </button>
+          </div>
         </div>
       )}
     </div>

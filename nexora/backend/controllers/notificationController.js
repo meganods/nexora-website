@@ -21,9 +21,10 @@ const createNotification = async (recipientId, recipientType, title, body, type 
 };
 
 // ─── GET /api/notifications ────────────────────────────────────────────────────
-// Returns last 50 notifications for the authenticated user (any role)
+// Returns paginated notifications. Supports ?type=booking&page=1&limit=20&unreadOnly=true
 const getNotifications = asyncHandler(async (req, res) => {
   const { id, role } = req.user;
+  const { type, page = 1, limit = 20, unreadOnly } = req.query;
 
   // Determine recipientType from role
   let recipientType;
@@ -31,21 +32,36 @@ const getNotifications = asyncHandler(async (req, res) => {
   else if (role === "vendor") recipientType = "vendor";
   else recipientType = "admin"; // super_admin, admin, support
 
-  const notifications = await Notification.find({
-    recipientId: id,
-    recipientType,
-  })
-    .sort({ createdAt: -1 })
-    .limit(50)
-    .lean();
+  const filter = { recipientId: id, recipientType };
+  if (type && type !== "all") filter.type = type;
+  if (unreadOnly === "true") filter.isRead = false;
 
-  const unreadCount = await Notification.countDocuments({
-    recipientId: id,
-    recipientType,
-    isRead: false,
+  const pageNum = Math.max(1, parseInt(page, 10));
+  const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10)));
+  const skip = (pageNum - 1) * limitNum;
+
+  const [notifications, total, unreadCount] = await Promise.all([
+    Notification.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean(),
+    Notification.countDocuments(filter),
+    Notification.countDocuments({ recipientId: id, recipientType, isRead: false }),
+  ]);
+
+  res.json({
+    success: true,
+    data: notifications,
+    unreadCount,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum),
+      hasMore: pageNum * limitNum < total,
+    },
   });
-
-  res.json({ success: true, data: notifications, unreadCount });
 });
 
 // ─── PATCH /api/notifications/:id/read ────────────────────────────────────────

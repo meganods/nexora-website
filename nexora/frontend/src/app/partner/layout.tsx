@@ -18,9 +18,10 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAuthRoute = pathname === '/partner/login' || pathname === '/partner/register' || pathname === '/partner/signup';
+  const isPublicProfile = /^\/partner\/[a-f\d]{24}$/i.test(pathname || '');
 
   useEffect(() => {
-    if (isAuthRoute) {
+    if (isAuthRoute || isPublicProfile) {
       setChecked(true);
       return;
     }
@@ -80,8 +81,8 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
     );
   }
 
-  // If on login/register/signup, just render children directly without sidebar layout
-  if (isAuthRoute || pathname === '/partner/status') {
+  // If on login/register/signup or public profile, just render children directly without sidebar layout
+  if (isAuthRoute || isPublicProfile || pathname === '/partner/status') {
     return <>{children}</>;
   }
 

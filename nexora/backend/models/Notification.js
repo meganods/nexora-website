@@ -21,7 +21,7 @@ const notificationSchema = new mongoose.Schema(
     // Category / type — used for icon selection on the frontend
     type: {
       type: String,
-      enum: ["booking", "approval", "payment", "system", "promo"],
+      enum: ["booking", "approval", "payment", "system", "promo", "review", "support"],
       default: "system",
     },
 

@@ -11,6 +11,13 @@ const {
   listTickets,
   getTicketDetails,
   replyToTicket,
+  editTicketMessage,
+  deleteTicketMessage,
+  getUserWishlist,
+  toggleWishlist,
+  getSearchHistory,
+  saveSearchHistory,
+  clearSearchHistory,
 } = require("../controllers/userDashboardController");
 const { protect } = require("../middlewares/auth");
 
@@ -30,10 +37,22 @@ router.delete("/addresses/:addressId", deleteAddress);
 router.get("/reviews", getUserReviews);
 router.post("/reviews", submitReview);
 
+// Wishlist
+router.get("/wishlist", getUserWishlist);
+router.post("/wishlist/toggle", toggleWishlist);
+
+// Search History
+router.get("/search-history", getSearchHistory);
+router.post("/search-history", saveSearchHistory);
+router.delete("/search-history", clearSearchHistory);
+
 // Support tickets
 router.post("/tickets", createSupportTicket);
 router.get("/tickets", listTickets);
 router.get("/tickets/:ticketId", getTicketDetails);
 router.post("/tickets/:ticketId/reply", replyToTicket);
+router.put("/tickets/:ticketId/messages/:messageId", editTicketMessage);
+router.delete("/tickets/:ticketId/messages/:messageId", deleteTicketMessage);
 
 module.exports = router;
+

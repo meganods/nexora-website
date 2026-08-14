@@ -28,7 +28,9 @@ const {
   getPartnerCreatedServices,
   createPartnerService,
   updatePartnerService,
-  deletePartnerService
+  deletePartnerService,
+  getPartnerReviews,
+  replyToReview
 } = require("../controllers/partnerController");
 const { getMyDeals, createVendorDeal, updateVendorDeal } = require("../controllers/dealController");
 const { protect, authorize, requireApprovedVendor } = require("../middlewares/auth");
@@ -84,5 +86,9 @@ router.get("/created-services", protect, authorize("vendor"), requireApprovedVen
 router.post("/created-services", protect, authorize("vendor"), requireApprovedVendor, createPartnerService);
 router.put("/created-services/:id", protect, authorize("vendor"), requireApprovedVendor, updatePartnerService);
 router.delete("/created-services/:id", protect, authorize("vendor"), requireApprovedVendor, deletePartnerService);
+
+// Reviews & Replies
+router.get("/reviews", protect, authorize("vendor"), requireApprovedVendor, getPartnerReviews);
+router.post("/reviews/:id/reply", protect, authorize("vendor"), requireApprovedVendor, replyToReview);
 
 module.exports = router;

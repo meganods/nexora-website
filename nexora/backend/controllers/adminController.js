@@ -4,6 +4,7 @@ const ServicePartner = require("../models/ServicePartner");
 const AdminSettings = require("../models/AdminSettings");
 const Review = require("../models/Review");
 const SupportTicket = require("../models/SupportTicket");
+const Payout = require("../models/Payout");
 const { createNotification } = require("./notificationController");
 const generateToken = require("../utils/generateToken");
 const asyncHandler = require("../utils/asyncHandler");
@@ -87,7 +88,7 @@ const listVendors = asyncHandler(async (req, res) => {
 // @route   GET /api/admin/users
 // @access  Private (admin roles)
 const listUsers = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 20 } = req.query;
+  const { page = 1, limit = 15 } = req.query;
 
   const pageNum = Math.max(1, parseInt(page, 10));
   const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
@@ -555,7 +556,7 @@ const reviewPartnerService = asyncHandler(async (req, res) => {
 // @route   GET /api/admin/bookings
 // @access  Private (admin)
 const listAllBookings = asyncHandler(async (req, res) => {
-  const { status, serviceId, vendorId, date, q, page = 1, limit = 20 } = req.query;
+  const { status, serviceId, vendorId, date, q, page = 1, limit = 15 } = req.query;
   const filter = {};
 
   if (status && status !== 'ALL') filter.status = status;
@@ -789,6 +790,109 @@ const replyToSupportTicketByAdmin = asyncHandler(async (req, res) => {
   res.json({ success: true, message: "Reply sent successfully", ticket });
 });
 
+const editSupportTicketMessageByAdmin = asyncHandler(async (req, res) => {
+  const { message } = req.body;
+  const { ticketId, messageId } = req.params;
+
+  const ticket = await SupportTicket.findById(ticketId);
+  if (!ticket) return res.status(404).json({ success: false, message: "Ticket not found." });
+
+  const msg = ticket.messages.id(messageId);
+  if (!msg) return res.status(404).json({ success: false, message: "Message not found." });
+
+  if (msg.senderType !== "admin" && msg.senderType !== "support") {
+    return res.status(403).json({ success: false, message: "Access denied. You can only edit admin replies." });
+  }
+
+  msg.message = message;
+  await ticket.save();
+
+  res.json({ success: true, message: "Message updated successfully", ticket });
+});
+
+const deleteSupportTicketMessageByAdmin = asyncHandler(async (req, res) => {
+  const { ticketId, messageId } = req.params;
+
+  const ticket = await SupportTicket.findById(ticketId);
+  if (!ticket) return res.status(404).json({ success: false, message: "Ticket not found." });
+
+  const msg = ticket.messages.id(messageId);
+  if (!msg) return res.status(404).json({ success: false, message: "Message not found." });
+
+  ticket.messages.pull(messageId);
+  await ticket.save();
+
+  res.json({ success: true, message: "Message deleted successfully", ticket });
+});
+
+const getWalletBalances = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 15 } = req.query;
+  const pageNum = Math.max(1, parseInt(page, 10));
+  const limitNum = Math.max(1, parseInt(limit, 10));
+  const skip = (pageNum - 1) * limitNum;
+
+  const [partners, total] = await Promise.all([
+    ServicePartner.find({}, "name businessName email phone walletBalance").sort({ walletBalance: -1 }).skip(skip).limit(limitNum).lean(),
+    ServicePartner.countDocuments()
+  ]);
+
+  res.json({ success: true, data: partners, total, page: pageNum, pages: Math.ceil(total / limitNum) });
+});
+
+const getPayoutLogs = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 15 } = req.query;
+  const pageNum = Math.max(1, parseInt(page, 10));
+  const limitNum = Math.max(1, parseInt(limit, 10));
+  const skip = (pageNum - 1) * limitNum;
+
+  const [payouts, total] = await Promise.all([
+    Payout.find({}).populate("vendorId", "name businessName email").sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+    Payout.countDocuments()
+  ]);
+
+  res.json({ success: true, data: payouts, total, page: pageNum, pages: Math.ceil(total / limitNum) });
+});
+
+const createPayout = asyncHandler(async (req, res) => {
+  const { vendorId, amount, notes } = req.body;
+
+  if (!vendorId || !amount || amount <= 0) {
+    return res.status(400).json({ success: false, message: "Valid vendorId and amount are required." });
+  }
+
+  const partner = await ServicePartner.findById(vendorId);
+  if (!partner) {
+    return res.status(404).json({ success: false, message: "Service partner not found." });
+  }
+
+  if ((partner.walletBalance || 0) < amount) {
+    return res.status(400).json({ success: false, message: `Insufficient wallet balance. Current balance is ₹${partner.walletBalance || 0}.` });
+  }
+
+  partner.walletBalance = (partner.walletBalance || 0) - amount;
+  await partner.save();
+
+  const payout = await Payout.create({
+    vendorId,
+    amount,
+    notes: notes || "",
+    status: "COMPLETED",
+    referenceId: "PAY-" + Math.random().toString(36).substring(2, 10).toUpperCase()
+  });
+
+  // Notify partner
+  createNotification(
+    vendorId,
+    "vendor",
+    "Payout Processed",
+    `A payout of ₹${amount} has been successfully processed and transferred.`,
+    "payment",
+    { payoutId: payout._id }
+  );
+
+  res.json({ success: true, message: "Payout processed and saved successfully.", payout, walletBalance: partner.walletBalance });
+});
+
 // ─── Reviews Approvals (Admin) ─────────────────────────────────────────────────
 const getPendingReviews = asyncHandler(async (req, res) => {
   const reviews = await Review.find({ approvalStatus: "PENDING" })
@@ -853,6 +957,17 @@ const reviewUserReview = asyncHandler(async (req, res) => {
   res.json({ success: true, message: `Review ${action}d successfully.`, review });
 });
 
+const deleteVendorReply = asyncHandler(async (req, res) => {
+  const Review = require('../models/Review');
+  const review = await Review.findById(req.params.id);
+  if (!review) return res.status(404).json({ success: false, message: "Review not found." });
+
+  review.vendorReply = "";
+  await review.save();
+
+  res.json({ success: true, message: "Vendor reply deleted successfully.", review });
+});
+
 module.exports = {
   getPendingCounts,
   loginAdmin,
@@ -882,6 +997,13 @@ module.exports = {
   listSupportTickets,
   getSupportTicketDetails,
   replyToSupportTicketByAdmin,
+  editSupportTicketMessageByAdmin,
+  deleteSupportTicketMessageByAdmin,
+  getWalletBalances,
+  getPayoutLogs,
+  createPayout,
   getPendingReviews,
   reviewUserReview,
+  deleteVendorReply,
 };
+

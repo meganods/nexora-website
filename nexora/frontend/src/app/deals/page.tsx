@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { IndianRupee, Star, Search, SlidersHorizontal, Loader2, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { IndianRupee, Star, Search, SlidersHorizontal, Loader2, ArrowRight, ChevronDown } from 'lucide-react';
 import api from '@/lib/api';
 
 export default function DealsPage() {
+  const router = useRouter();
   const [deals, setDeals] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,6 +16,8 @@ export default function DealsPage() {
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('');
   const [sortBy, setSortBy] = useState('recommended');
+  const [catDropdownOpen, setCatDropdownOpen] = useState(false);
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
 
   useEffect(() => {
     // Fetch categories
@@ -77,27 +81,106 @@ export default function DealsPage() {
                 <span className="text-xs font-bold uppercase tracking-wider text-foreground/60">Filters:</span>
               </div>
               
-              <select
-                value={selectedCat}
-                onChange={e => setSelectedCat(e.target.value)}
-                className="bg-cream border border-gold/30 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-primary focus:outline-none cursor-pointer"
-              >
-                <option value="">All Categories</option>
-                {categories.map((c: any) => (
-                  <option key={c._id} value={c._id}>{c.name}</option>
-                ))}
-              </select>
+              {/* Custom Category Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCatDropdownOpen(!catDropdownOpen);
+                    setSortDropdownOpen(false);
+                  }}
+                  className="bg-cream border border-gold/30 rounded-2xl px-4 py-2.5 text-base sm:text-sm font-semibold text-primary focus:outline-none cursor-pointer flex items-center justify-between gap-2 min-w-[160px]"
+                >
+                  <span>{categories.find(c => c._id === selectedCat)?.name || "All Categories"}</span>
+                  <ChevronDown className={`w-4 h-4 text-gold transition-transform duration-200 ${catDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {catDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setCatDropdownOpen(false)} />
+                    <div className="absolute right-0 sm:left-0 mt-2 w-56 bg-white border border-gold/20 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5 animate-in fade-in slide-in-from-top-1 duration-100">
+                      <button
+                        onClick={() => {
+                          setSelectedCat("");
+                          setCatDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${!selectedCat ? 'bg-primary text-white' : 'text-foreground/75 hover:bg-cream'}`}
+                      >
+                        All Categories
+                      </button>
+                      {categories.map((c: any) => (
+                        <button
+                          key={c._id}
+                          onClick={() => {
+                            setSelectedCat(c._id);
+                            setCatDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${selectedCat === c._id ? 'bg-primary text-white' : 'text-foreground/75 hover:bg-cream'}`}
+                        >
+                          {c.name}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
 
-              <select
-                value={sortBy}
-                onChange={e => setSortBy(e.target.value)}
-                className="bg-cream border border-gold/30 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-primary focus:outline-none cursor-pointer"
+              {/* Custom Sort Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSortDropdownOpen(!sortDropdownOpen);
+                    setCatDropdownOpen(false);
+                  }}
+                  className="bg-cream border border-gold/30 rounded-2xl px-4 py-2.5 text-base sm:text-sm font-semibold text-primary focus:outline-none cursor-pointer flex items-center justify-between gap-2 min-w-[160px]"
+                >
+                  <span>
+                    {sortBy === "recommended" && "Sort: Recommended"}
+                    {sortBy === "highest_discount" && "Highest Discount"}
+                    {sortBy === "lowest_price" && "Lowest Price"}
+                    {sortBy === "newest" && "Newest Deals"}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-gold transition-transform duration-200 ${sortDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {sortDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setSortDropdownOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-56 bg-white border border-gold/20 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5 animate-in fade-in slide-in-from-top-1 duration-100">
+                      {[
+                        { value: "recommended", label: "Sort: Recommended" },
+                        { value: "highest_discount", label: "Highest Discount" },
+                        { value: "lowest_price", label: "Lowest Price" },
+                        { value: "newest", label: "Newest Deals" }
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => {
+                            setSortBy(opt.value);
+                            setSortDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${sortBy === opt.value ? 'bg-primary text-white' : 'text-foreground/75 hover:bg-cream'}`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Clear Filters button to redirect */}
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCat("");
+                  setSearch("");
+                  setSortBy("recommended");
+                  router.push("/services");
+                }}
+                className="bg-red-50 hover:bg-red-100 border border-red-200/30 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold text-red-700 focus:outline-none cursor-pointer transition-colors"
               >
-                <option value="recommended">Sort: Recommended</option>
-                <option value="highest_discount">Highest Discount</option>
-                <option value="lowest_price">Lowest Price</option>
-                <option value="newest">Newest Deals</option>
-              </select>
+                Clear Filters
+              </button>
             </div>
           </div>
         </div>

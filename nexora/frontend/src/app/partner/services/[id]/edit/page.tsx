@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Loader2, Check } from 'lucide-react';
 import api from '@/lib/api';
 import ImageUpload from '@/app/admin/_components/ImageUpload';
+import MultiImageUpload from '@/app/admin/_components/MultiImageUpload';
 
 const inp = 'w-full border border-[#C3AB84]/30 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#0F3D30] bg-[#F8F4EE] transition-colors';
 const lbl = 'block text-xs font-semibold text-foreground/60 mb-1.5 uppercase tracking-wider';
@@ -25,6 +26,8 @@ export default function PartnerEditServicePage() {
   const [inclusionInput, setInclusionInput] = useState('');
   const [inclusions, setInclusions] = useState<string[]>([]);
   const [parentId, setParentId] = useState<string | null>(null);
+  const [bannerImageUrl, setBannerImageUrl] = useState('');
+  const [serviceImages, setServiceImages] = useState<string[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,6 +54,8 @@ export default function PartnerEditServicePage() {
           setImagePublicId(svc.imagePublicId || '');
           setInclusions(svc.inclusions || []);
           setParentId(svc.parentId || null);
+          setBannerImageUrl(svc.bannerImageUrl || '');
+          setServiceImages(svc.serviceImages || []);
         } else {
           setErrorMsg('Service not found.');
         }
@@ -89,7 +94,9 @@ export default function PartnerEditServicePage() {
         inclusions,
         imageUrl,
         imagePublicId,
-        parentId
+        parentId,
+        bannerImageUrl,
+        serviceImages
       };
       const { data } = await api.put(`/partner/created-services/${id}`, payload);
       if (data.success) {
@@ -165,11 +172,29 @@ export default function PartnerEditServicePage() {
         </div>
 
         <div>
-          <label className={lbl}>Service Image</label>
+          <label className={lbl}>Service Image (Thumbnail)</label>
           <div className="bg-[#F8F4EE] border border-[#C3AB84]/30 rounded-2xl p-4">
             <ImageUpload label="Service Image" imageUrl={imageUrl} imagePublicId={imagePublicId} onChange={(url, pubId) => {
               setImageUrl(url);
               setImagePublicId(pubId);
+            }} />
+          </div>
+        </div>
+
+        <div>
+          <label className={lbl}>Service Banner Image</label>
+          <div className="bg-[#F8F4EE] border border-[#C3AB84]/30 rounded-2xl p-4">
+            <ImageUpload label="Service Banner Image" imageUrl={bannerImageUrl} imagePublicId="" onChange={(url) => {
+              setBannerImageUrl(url);
+            }} />
+          </div>
+        </div>
+
+        <div>
+          <label className={lbl}>Gallery Images</label>
+          <div className="bg-[#F8F4EE] border border-[#C3AB84]/30 rounded-2xl p-4">
+            <MultiImageUpload label="Gallery Images" imageUrls={serviceImages} onChange={(urls) => {
+              setServiceImages(urls);
             }} />
           </div>
         </div>

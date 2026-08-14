@@ -15,6 +15,8 @@ function CheckoutForm() {
 
   const serviceId = searchParams.get('serviceId') || '';
   const packageId = searchParams.get('packageId') || '';
+  const qtyParam = searchParams.get('qty') || searchParams.get('quantity') || '1';
+  const qty = Math.max(1, parseInt(qtyParam) || 1);
 
 
 
@@ -43,40 +45,61 @@ function CheckoutForm() {
   const [fetchingGps, setFetchingGps] = useState(false);
 
   const handleGpsFetch = () => {
+    setFetchingGps(true);
+
+    const performReverseLookup = async (lat: number, lon: number) => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=en`);
+        const geo = await res.json();
+        if (geo && geo.address) {
+          const addr = geo.address;
+          const streetVal = addr.suburb || addr.neighbourhood || addr.road || '';
+          const districtVal = addr.city || addr.town || addr.state_district || '';
+          setStreet(streetVal);
+          setCity(districtVal);
+          setStateStr(addr.state || '');
+          setPincode(addr.postcode || '');
+        }
+      } catch (err) {
+        console.error('OSM Nominatim lookup failed:', err);
+        // Fallback to IP lookup if reverse lookup fails
+        await fetchIpLocation();
+      }
+    };
+
+    const fetchIpLocation = async () => {
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        if (data && data.city) {
+          setCity(data.city);
+          setStateStr(data.region || '');
+          setPincode(data.postal || '');
+          setStreet(data.org || '');
+        }
+      } catch (err) {
+        console.error('IP Geolocation failed:', err);
+        alert('Could not fetch location automatically. Please enter your address details manually.');
+      }
+    };
+
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      fetchIpLocation().finally(() => setFetchingGps(false));
       return;
     }
-    setFetchingGps(true);
+
+    // Try low accuracy directly (faster, doesn't crash on Wi-Fi triangulation devices like MacBooks)
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          // Force English response using OSM Nominatim accept-language parameter
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`);
-          const geo = await res.json();
-          if (geo && geo.address) {
-            const addr = geo.address;
-            const streetVal = addr.suburb || addr.neighbourhood || addr.road || '';
-            const districtVal = addr.city || addr.town || addr.state_district || '';
-            setStreet(streetVal);
-            setCity(districtVal);
-            setStateStr(addr.state || '');
-            setPincode(addr.postcode || '');
-          }
-        } catch (err) {
-          console.error(err);
-          alert('GPS location reverse lookup failed.');
-        } finally {
-          setFetchingGps(false);
-        }
+      (position) => {
+        performReverseLookup(position.coords.latitude, position.coords.longitude)
+          .finally(() => setFetchingGps(false));
       },
       (err) => {
-        console.error(err);
-        alert('Permission denied or failed to access location GPS.');
-        setFetchingGps(false);
+        console.warn('Browser GPS lookup failed, falling back to IP lookup. Error:', err);
+        fetchIpLocation()
+          .finally(() => setFetchingGps(false));
       },
-      { enableHighAccuracy: true, timeout: 8000 }
+      { enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 }
     );
   };
 
@@ -95,8 +118,14 @@ function CheckoutForm() {
       router.replace('/');
       return;
     }
-    if (user && hasTarget) {
-      loadCheckoutDetails();
+    
+    if (user) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nexora_role', 'user');
+      }
+      if (hasTarget) {
+        loadCheckoutDetails();
+      }
     }
   }, [authLoading, serviceId, packageId, user]);
 
@@ -204,10 +233,25 @@ function CheckoutForm() {
     };
   };
 
+  const formatTime12h = (time24: string) => {
+    if (!time24) return '';
+    try {
+      const [hoursStr, minutesStr] = time24.split(':');
+      let hours = parseInt(hoursStr, 10);
+      const minutes = minutesStr;
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; 
+      return `${hours.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+    } catch {
+      return time24;
+    }
+  };
+
   const createOrder = async () => {
     const activeAddr = getActiveAddress();
     const finalSlotString = selectedTimeSlot === 'Custom Time' 
-      ? `${slot} (Custom: ${customTimeVal})` 
+      ? `${slot} (Custom: ${formatTime12h(customTimeVal)})` 
       : `${slot} (${selectedTimeSlot})`;
 
     const payload: any = {
@@ -215,6 +259,7 @@ function CheckoutForm() {
       scheduledDate: date,
       scheduledSlot: finalSlotString,
       addons: parsedAddons,
+      quantity: qty,
     };
 
     if (service?.isPackage) {
@@ -300,7 +345,7 @@ function CheckoutForm() {
   }
 
   const role = typeof window !== 'undefined' ? localStorage.getItem('nexora_role') : null;
-  if (role && role !== 'user') {
+  if (!user && role && role !== 'user') {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center px-4">
         <div className="bg-white rounded-3xl p-8 sm:p-10 border border-gold/20 shadow-lg max-w-sm w-full text-center">
@@ -336,7 +381,8 @@ function CheckoutForm() {
   if (service?.discountPercentage > 0) {
     basePrice = Math.round(basePrice * (1 - service.discountPercentage / 100));
   }
-  const subtotal = basePrice + addonsPriceTotal;
+  const multipliedBasePrice = basePrice * qty;
+  const subtotal = multipliedBasePrice + addonsPriceTotal;
   const total = Math.max(0, subtotal + platformFee - appliedDiscount);
 
   return (
@@ -563,7 +609,7 @@ function CheckoutForm() {
                         setSelectedTimeSlot(t);
                         if (t !== 'Custom Time') setCustomTimeVal('');
                       }}
-                      className={`py-2.5 px-2 rounded-xl border text-xs font-semibold text-center transition-all ${selectedTimeSlot === t ? 'bg-primary text-white border-primary' : 'bg-cream text-foreground/70 border-gold/25 hover:border-primary/45'}`}
+                  className={`py-2.5 px-2 rounded-xl border text-xs font-semibold text-center transition-all ${selectedTimeSlot === t ? 'bg-primary text-white border-primary' : 'bg-cream text-foreground/70 border-gold/25 hover:border-primary/45'}`}
                     >
                       {t === 'Custom Time' ? '✏️ Custom Time' : t.split(' - ')[0]}
                     </button>
@@ -572,10 +618,9 @@ function CheckoutForm() {
 
                 {selectedTimeSlot === 'Custom Time' && (
                   <div className="mt-4">
-                    <label className="block text-xs font-bold text-foreground/50 uppercase tracking-wider mb-2">Enter Custom Time (e.g. 10:30 AM)</label>
+                    <label className="block text-xs font-bold text-foreground/50 uppercase tracking-wider mb-2">Select Custom Time</label>
                     <input 
-                      type="text"
-                      placeholder="e.g. 10:30 AM or 02:15 PM"
+                      type="time"
                       value={customTimeVal}
                       onChange={e => setCustomTimeVal(e.target.value)}
                       className="w-full bg-cream border border-gold/30 rounded-xl p-3 text-sm focus:outline-none focus:border-primary"

@@ -4,6 +4,7 @@ const Coupon = require("../models/Coupon");
 const Review = require("../models/Review");
 const SupportTicket = require("../models/SupportTicket");
 const ServicePartner = require("../models/ServicePartner");
+const Admin = require("../models/Admin");
 const asyncHandler = require("../utils/asyncHandler");
 const { createNotification } = require("./notificationController");
 const mongoose = require("mongoose");
@@ -16,7 +17,10 @@ exports.getDashboardOverview = asyncHandler(async (req, res) => {
     Booking.countDocuments({ customerId: userId, status: { $in: ["REQUESTED", "ASSIGNED", "PARTNER_ACCEPTED", "ON_THE_WAY", "ARRIVED", "OTP_VERIFICATION", "IN_PROGRESS"] } }),
     Booking.countDocuments({ customerId: userId, status: "COMPLETED" }),
     Booking.countDocuments({ customerId: userId, status: "CANCELLED" }),
-    User.findById(userId).then(u => u?.addresses?.length || 0),
+    (async () => {
+      const u = await User.findById(userId) || await ServicePartner.findById(userId) || await Admin.findById(userId);
+      return u?.addresses?.length || 0;
+    })(),
     Coupon.countDocuments({ isActive: true }),
     Booking.find({ customerId: userId })
       .populate("serviceId", "name basePrice")
@@ -99,7 +103,7 @@ exports.addAddress = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const { label, fullName, phone, houseNo, street, landmark, countryId, stateId, cityId, areaId, pincodeId, city, state, pincode, isDefault } = req.body;
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId) || await ServicePartner.findById(userId) || await Admin.findById(userId);
   if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
   if (isDefault) {
@@ -135,7 +139,7 @@ exports.updateAddress = asyncHandler(async (req, res) => {
   const { addressId } = req.params;
   const updates = req.body;
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId) || await ServicePartner.findById(userId) || await Admin.findById(userId);
   if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
   const addr = user.addresses.id(addressId);
@@ -155,7 +159,7 @@ exports.deleteAddress = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const { addressId } = req.params;
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId) || await ServicePartner.findById(userId) || await Admin.findById(userId);
   if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
   user.addresses.pull({ _id: addressId });
@@ -284,3 +288,138 @@ exports.getUserReviews = asyncHandler(async (req, res) => {
 
   res.json({ success: true, data: reviews });
 });
+
+exports.editTicketMessage = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { message } = req.body;
+  const { ticketId, messageId } = req.params;
+
+  const ticket = await SupportTicket.findOne({ _id: ticketId, userId });
+  if (!ticket) return res.status(404).json({ success: false, message: "Ticket not found." });
+
+  const msg = ticket.messages.id(messageId);
+  if (!msg) return res.status(404).json({ success: false, message: "Message not found." });
+
+  if (msg.senderId.toString() !== userId.toString()) {
+    return res.status(403).json({ success: false, message: "Access denied. You can only edit your own messages." });
+  }
+
+  msg.message = message;
+  await ticket.save();
+
+  res.json({ success: true, message: "Message updated successfully", ticket });
+});
+
+exports.deleteTicketMessage = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { ticketId, messageId } = req.params;
+
+  const ticket = await SupportTicket.findOne({ _id: ticketId, userId });
+  if (!ticket) return res.status(404).json({ success: false, message: "Ticket not found." });
+
+  const msg = ticket.messages.id(messageId);
+  if (!msg) return res.status(404).json({ success: false, message: "Message not found." });
+
+  if (msg.senderId.toString() !== userId.toString()) {
+    return res.status(403).json({ success: false, message: "Access denied. You can only delete your own messages." });
+  }
+
+  ticket.messages.pull(messageId);
+  await ticket.save();
+
+  res.json({ success: true, message: "Message deleted successfully", ticket });
+});
+
+// Get User Wishlist
+exports.getUserWishlist = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id).populate('wishlist');
+  if (!user) {
+    return res.json({ success: true, wishlist: [] });
+  }
+  res.json({ success: true, wishlist: user.wishlist || [] });
+});
+
+// Toggle Wishlist Item
+exports.toggleWishlist = asyncHandler(async (req, res) => {
+  const { serviceId } = req.body;
+  if (!serviceId) return res.status(400).json({ success: false, message: "Service ID is required." });
+
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    return res.status(400).json({ success: false, message: "Only customer accounts can use the wishlist." });
+  }
+
+  if (!user.wishlist) user.wishlist = [];
+
+  const index = user.wishlist.indexOf(serviceId);
+  let added = false;
+  if (index > -1) {
+    user.wishlist.splice(index, 1);
+  } else {
+    user.wishlist.push(serviceId);
+    added = true;
+  }
+
+  await user.save();
+  res.json({ success: true, added, wishlist: user.wishlist });
+});
+
+// ─── Search History ──────────────────────────────────────────────────────────
+
+// GET /user/search-history — fetch last 10 recent searches
+exports.getSearchHistory = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id).select('searchHistory').lean();
+  if (!user) {
+    return res.json({ success: true, data: [] });
+  }
+
+  const history = (user.searchHistory || [])
+    .sort((a, b) => new Date(b.searchedAt) - new Date(a.searchedAt))
+    .slice(0, 10);
+
+  res.json({ success: true, data: history });
+});
+
+// POST /user/search-history — save a search query (max 10 unique)
+exports.saveSearchHistory = asyncHandler(async (req, res) => {
+  const { query } = req.body;
+  if (!query || !query.trim()) return res.status(400).json({ success: false, message: 'Query is required.' });
+
+  const trimmedQuery = query.trim();
+
+  await User.findByIdAndUpdate(req.user.id, {
+    // Remove existing duplicate entry for same query (case-insensitive)
+    $pull: { searchHistory: { query: { $regex: new RegExp(`^${trimmedQuery}$`, 'i') } } }
+  });
+
+  // Push new entry at top
+  await User.findByIdAndUpdate(req.user.id, {
+    $push: {
+      searchHistory: {
+        $each: [{ query: trimmedQuery, searchedAt: new Date() }],
+        $position: 0,
+        $slice: 10   // keep only last 10
+      }
+    }
+  });
+
+  res.json({ success: true, message: 'Search saved.' });
+});
+
+// DELETE /user/search-history — clear all or one entry
+exports.clearSearchHistory = asyncHandler(async (req, res) => {
+  const { query } = req.body;
+
+  if (query) {
+    // Clear specific entry
+    await User.findByIdAndUpdate(req.user.id, {
+      $pull: { searchHistory: { query: { $regex: new RegExp(`^${query.trim()}$`, 'i') } } }
+    });
+    return res.json({ success: true, message: 'Entry removed.' });
+  }
+
+  // Clear all
+  await User.findByIdAndUpdate(req.user.id, { $set: { searchHistory: [] } });
+  res.json({ success: true, message: 'Search history cleared.' });
+});
+

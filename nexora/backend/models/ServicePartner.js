@@ -46,8 +46,49 @@ const locationSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const addressSchema = new mongoose.Schema(
+  {
+    label: {
+      type: String,
+      trim: true,
+      default: "Home",
+    },
+    fullName: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    houseNo: { type: String, trim: true },
+    street: { type: String, trim: true },
+    landmark: { type: String, trim: true },
+    countryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Country' },
+    stateId: { type: mongoose.Schema.Types.ObjectId, ref: 'State' },
+    cityId: { type: mongoose.Schema.Types.ObjectId, ref: 'City' },
+    areaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Area' },
+    pincodeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Pincode' },
+    city: {
+      type: String,
+      trim: true,
+    },
+    state: {
+      type: String,
+      trim: true,
+    },
+    pincode: {
+      type: String,
+      trim: true,
+    },
+    isDefault: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { _id: true }
+);
+
 const servicePartnerSchema = new mongoose.Schema(
   {
+    addresses: {
+      type: [addressSchema],
+      default: [],
+    },
     phone: {
       type: String,
       required: [true, "Phone number is required"],
@@ -186,7 +227,31 @@ const servicePartnerSchema = new mongoose.Schema(
     serviceAreaIds: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Area'
-    }]
+    }],
+    profilePictureUrl: {
+      type: String,
+      default: ""
+    },
+    aboutMe: {
+      type: String,
+      default: ""
+    },
+    skills: {
+      type: [String],
+      default: []
+    },
+    certifications: {
+      type: [String],
+      default: []
+    },
+    languages: {
+      type: [String],
+      default: ['English', 'Hindi']
+    },
+    workingHours: {
+      type: String,
+      default: "Monday - Sunday: 9:00 AM - 8:00 PM"
+    }
   },
   {
     timestamps: true,

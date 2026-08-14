@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 import {
   IndianRupee, Users, ShoppingBag, ShieldCheck, Check, X,
@@ -10,7 +11,7 @@ import {
   Edit2, Trash2, Plus, Search, ChevronLeft, ChevronRight,
   UserCheck, BookOpen, Tag, Image as ImageIcon, Clock, Star,
   Gift, Megaphone, Percent, CalendarDays, ToggleLeft, ToggleRight, Link as LinkIcon,
-  Wallet, Bell, TrendingUp, ListCollapse, Menu, Eye, Globe, Map, MapPin, Hash, Building
+  Wallet, Bell, TrendingUp, ListCollapse, Menu, Eye, Globe, Map, MapPin, Hash, Building, LifeBuoy, Receipt
 } from 'lucide-react';
 import api from '@/lib/api';
 import DashboardKPICard from '@/components/dashboard/DashboardKPICard';
@@ -611,6 +612,38 @@ function AdminDashboardContent() {
   // Mobile sidebar
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
+  // Notifications tab states
+  const [adminNotifications, setAdminNotifications] = useState<any[]>([]);
+  const [adminNotificationsLoading, setAdminNotificationsLoading] = useState(false);
+
+  // Support Tickets tab states
+  const [adminTickets, setAdminTickets] = useState<any[]>([]);
+  const [adminTicketsLoading, setAdminTicketsLoading] = useState(false);
+  const [activeAdminTicket, setActiveAdminTicket] = useState<any | null>(null);
+  const [adminTicketReplyMsg, setAdminTicketReplyMsg] = useState('');
+  const [sendingAdminReply, setSendingAdminReply] = useState(false);
+  const [editingAdminMsgId, setEditingAdminMsgId] = useState<string | null>(null);
+  const [editAdminMsgContent, setEditAdminMsgContent] = useState('');
+
+  // Wallet & Payouts states
+  const [partnerWallets, setPartnerWallets] = useState<any[]>([]);
+  const [payoutLogs, setPayoutLogs] = useState<any[]>([]);
+  const [walletsLoading, setWalletsLoading] = useState(false);
+  const [payoutsLoading, setPayoutsLoading] = useState(false);
+  const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [selectedPayoutPartner, setSelectedPayoutPartner] = useState<any | null>(null);
+  const [payoutAmount, setPayoutAmount] = useState('');
+  const [payoutNotes, setPayoutNotes] = useState('');
+  const [processingPayout, setProcessingPayout] = useState(false);
+  const [walletPage, setWalletPage] = useState(1);
+  const [walletTotal, setWalletTotal] = useState(0);
+  const [payoutPage, setPayoutPage] = useState(1);
+  const [payoutTotal, setPayoutTotal] = useState(0);
+
+  // Reviews states
+  const [pendingReviews, setPendingReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+
   // Custom Dropdowns states
   const [isDealDropdownOpen, setIsDealDropdownOpen] = useState(false);
   const [isBookingSvcDropdownOpen, setIsBookingSvcDropdownOpen] = useState(false);
@@ -628,6 +661,252 @@ function AdminDashboardContent() {
     fetchSettings();
   }, []);
 
+  const fetchAdminNotifications = async () => {
+    try {
+      setAdminNotificationsLoading(true);
+      const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+      const { data } = await api.get('/notifications', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data?.success) {
+        setAdminNotifications(data.data || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAdminNotificationsLoading(false);
+    }
+  };
+
+  const markAdminNotificationRead = async (id: string) => {
+    const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+    try {
+      await api.patch(`/notifications/${id}/read`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAdminNotifications(prev =>
+        prev.map(n => n._id === id ? { ...n, isRead: true } : n)
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const markAllAdminNotificationsRead = async () => {
+    const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+    try {
+      await api.patch('/notifications/read-all', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAdminNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const deleteAdminNotification = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this notification?')) return;
+    const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+    try {
+      await api.delete(`/notifications/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAdminNotifications(prev => prev.filter(n => n._id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchAdminTickets = async () => {
+    try {
+      setAdminTicketsLoading(true);
+      const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+      const { data } = await api.get('/admin/tickets', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data?.success) {
+        setAdminTickets(data.data || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAdminTicketsLoading(false);
+    }
+  };
+
+  const handleSendAdminReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminTicketReplyMsg.trim() || !activeAdminTicket) return;
+    try {
+      setSendingAdminReply(true);
+      const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+      const { data } = await api.post(`/admin/tickets/${activeAdminTicket._id}/reply`, {
+        message: adminTicketReplyMsg
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data?.success) {
+        setActiveAdminTicket(data.ticket);
+        setAdminTicketReplyMsg('');
+        fetchAdminTickets();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to send reply.');
+    } finally {
+      setSendingAdminReply(false);
+    }
+  };
+
+  const handleOpenAdminTicketChat = async (ticket: any) => {
+    try {
+      const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+      const { data } = await api.get(`/admin/tickets/${ticket._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data?.success) {
+        setActiveAdminTicket(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+      setActiveAdminTicket(ticket);
+    }
+  };
+
+  const handleSaveAdminEdit = async (msgId: string) => {
+    if (!editAdminMsgContent.trim() || !activeAdminTicket) return;
+    try {
+      const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+      const { data } = await api.put(`/admin/tickets/${activeAdminTicket._id}/messages/${msgId}`, {
+        message: editAdminMsgContent
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data?.success) {
+        setActiveAdminTicket(data.ticket);
+        setEditingAdminMsgId(null);
+        setEditAdminMsgContent('');
+        fetchAdminTickets();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to update message');
+    }
+  };
+
+  const handleDeleteAdminMessage = async (msgId: string) => {
+    if (!confirm('Are you sure you want to delete this message?')) return;
+    try {
+      const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+      const { data } = await api.delete(`/admin/tickets/${activeAdminTicket._id}/messages/${msgId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data?.success) {
+        setActiveAdminTicket(data.ticket);
+        fetchAdminTickets();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete message');
+    }
+  };
+
+  const fetchWalletBalances = async () => {
+    try {
+      setWalletsLoading(true);
+      const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+      const { data } = await api.get(`/admin/wallet/balances?page=${walletPage}&limit=15`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data?.success) {
+        setPartnerWallets(data.data || []);
+        setWalletTotal(data.total || 0);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setWalletsLoading(false);
+    }
+  };
+
+  const fetchPayoutLogs = async () => {
+    try {
+      setPayoutsLoading(true);
+      const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+      const { data } = await api.get(`/admin/wallet/payouts?page=${payoutPage}&limit=15`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data?.success) {
+        setPayoutLogs(data.data || []);
+        setPayoutTotal(data.total || 0);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPayoutsLoading(false);
+    }
+  };
+
+  const handleProcessPayoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPayoutPartner || !payoutAmount || Number(payoutAmount) <= 0) return;
+    try {
+      setProcessingPayout(true);
+      const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+      const { data } = await api.post('/admin/wallet/payouts', {
+        vendorId: selectedPayoutPartner._id,
+        amount: Number(payoutAmount),
+        notes: payoutNotes
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data?.success) {
+        alert('Payout processed successfully!');
+        setShowPayoutModal(false);
+        setSelectedPayoutPartner(null);
+        setPayoutAmount('');
+        setPayoutNotes('');
+        setWalletPage(1);
+        setPayoutPage(1);
+        fetchWalletBalances();
+        fetchPayoutLogs();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to process payout.');
+    } finally {
+      setProcessingPayout(false);
+    }
+  };
+
+  const fetchPendingReviews = async () => {
+    try {
+      setReviewsLoading(true);
+      const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+      const { data } = await api.get('/admin/reviews/pending', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data?.success) {
+        setPendingReviews(data.data || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  const handleReviewApproval = async (id: string, action: 'approve' | 'reject') => {
+    try {
+      const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+      const { data } = await api.patch(`/admin/reviews/${id}/review`, { action }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data?.success) {
+        alert(`Review ${action}d successfully!`);
+        fetchPendingReviews();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to review rating.');
+    }
+  };
+
   useEffect(() => { 
     if (activeTab === 'services' || activeTab === 'sub_services' || activeTab === 'service_approvals') {
       fetchServices(); 
@@ -643,6 +922,34 @@ function AdminDashboardContent() {
   useEffect(() => { if (activeTab === 'deals') fetchDeals(); }, [activeTab, dealSearch, dealFilter]);
   useEffect(() => { if (activeTab === 'reports') fetchReportData(); }, [activeTab]);
   useEffect(() => { if (activeTab === 'partners') fetchPartners(); }, [activeTab, partnersPage, partnerKycFilter]);
+  useEffect(() => { if (activeTab === 'notifications') fetchAdminNotifications(); }, [activeTab]);
+  useEffect(() => { if (activeTab === 'support_tickets') fetchAdminTickets(); }, [activeTab]);
+  useEffect(() => {
+    if (activeTab === 'wallet') {
+      fetchWalletBalances();
+    }
+  }, [activeTab, walletPage]);
+
+  useEffect(() => {
+    if (activeTab === 'payout_logs') {
+      fetchPayoutLogs();
+    }
+  }, [activeTab, payoutPage]);
+  useEffect(() => {
+    if (activeTab === 'reviews') {
+      fetchPendingReviews();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('tab') !== activeTab) {
+        url.searchParams.set('tab', activeTab);
+        window.history.replaceState(null, '', url.pathname + url.search);
+      }
+    }
+  }, [activeTab]);
 
   const fetchPartners = async () => {
     setPartnersLoading(true);
@@ -744,7 +1051,7 @@ function AdminDashboardContent() {
   const fetchBookings = async () => {
     setBookingsLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(bookingsPage), limit: '20' });
+      const params = new URLSearchParams({ page: String(bookingsPage), limit: '15' });
       if (bookingStatusFilter !== 'ALL') params.set('status', bookingStatusFilter);
       if (bookingSearch) params.set('q', bookingSearch);
       if (bookingServiceFilter) params.set('serviceId', bookingServiceFilter);
@@ -759,7 +1066,7 @@ function AdminDashboardContent() {
   const fetchUsers = async () => {
     setUsersLoading(true);
     try {
-      const { data } = await api.get(`/admin/users?page=${usersPage}&limit=20`);
+      const { data } = await api.get(`/admin/users?page=${usersPage}&limit=15`);
       setUsers(data.users || []);
       setUsersTotal(data.total || 0);
     } catch (e) { console.error(e); }
@@ -915,7 +1222,9 @@ function AdminDashboardContent() {
     { id: 'reviews',            label: 'Reviews & Ratings',     icon: Star },
     { id: 'assignment',         label: 'Auto Assign Engine',    icon: Zap },
     { id: 'wallet',             label: 'Wallet & Payouts',      icon: Wallet },
+    { id: 'payout_logs',        label: 'Payout Logs',           icon: Receipt },
     { id: 'notifications',      label: 'Notifications',         icon: Bell },
+    { id: 'support_tickets',    label: 'Support Tickets',       icon: LifeBuoy },
     { id: 'reports',            label: 'Reports & Analytics',   icon: TrendingUp },
     { id: 'settings',           label: 'Settings',              icon: Settings2 },
   ];
@@ -1906,7 +2215,7 @@ function AdminDashboardContent() {
                 </div>
               )}
             </div>
-            <PaginationBar page={bookingsPage} total={bookingsTotal} limit={20} onPage={p => setBookingsPage(p)} />
+            <PaginationBar page={bookingsPage} total={bookingsTotal} limit={15} onPage={p => setBookingsPage(p)} />
           </div>
         )}
 
@@ -1961,7 +2270,7 @@ function AdminDashboardContent() {
                 </div>
               )}
             </div>
-            <PaginationBar page={usersPage} total={usersTotal} limit={20} onPage={p => setUsersPage(p)} />
+            <PaginationBar page={usersPage} total={usersTotal} limit={15} onPage={p => setUsersPage(p)} />
           </div>
         )}
 
@@ -2239,13 +2548,20 @@ function AdminDashboardContent() {
                     </div>
                   </div>
 
-                  <div className="flex gap-4 pt-6 border-t border-gray-100 justify-end">
+                  <div className="flex flex-wrap gap-2.5 pt-6 border-t border-gray-100 justify-end">
                     <button 
                       onClick={() => setSelectedReviewVendor(null)}
                       className="px-5 py-2 border border-gold/30 hover:bg-cream/45 text-xs font-bold rounded-full text-foreground/60 transition-all"
                     >
                       Close
                     </button>
+                    <Link 
+                      href={`/partner/${selectedReviewVendor._id}`}
+                      target="_blank"
+                      className="px-5 py-2 border border-[#0F3D30]/20 hover:bg-[#FAF6F0] text-xs font-bold rounded-full text-[#0F3D30] transition-all inline-flex items-center"
+                    >
+                      Public Profile Preview
+                    </Link>
                     <button 
                       onClick={() => {
                         const reason = prompt('Rejection reason (shown to partner):');
@@ -2951,6 +3267,606 @@ function AdminDashboardContent() {
                       );
                     })}</tbody>
                   </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB: Notifications ── */}
+        {activeTab === 'notifications' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-primary">System Notification Logs</h3>
+                <p className="text-xs text-foreground/50">Manage platform logs, alerts, user support registrations and ticket creation signals</p>
+              </div>
+              {adminNotifications.length > 0 && (
+                <button
+                  onClick={markAllAdminNotificationsRead}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-primary/5 text-primary border border-primary/10 rounded-full font-bold text-xs hover:bg-primary/10 transition-all"
+                >
+                  <CheckCircle2 className="w-4 h-4" /> Mark All Read
+                </button>
+              )}
+            </div>
+
+            <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
+              {adminNotificationsLoading ? (
+                <div className="p-12 text-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+                </div>
+              ) : adminNotifications.length === 0 ? (
+                <div className="p-12 text-center text-foreground/40">
+                  <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p>All caught up! No notifications yet.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gold/10">
+                  {adminNotifications.map((n) => {
+                    return (
+                      <div
+                        key={n._id}
+                        className={`flex items-start justify-between gap-4 p-5 hover:bg-cream/20 transition-all ${
+                          n.isRead ? 'bg-white' : 'bg-blue-50/20'
+                        }`}
+                      >
+                        <div className="flex items-start gap-4 min-w-0">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                            n.isRead ? 'bg-gold/10 text-gold' : 'bg-primary/10 text-primary'
+                          }`}>
+                            <Bell className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <p className={`text-sm font-bold truncate ${n.isRead ? 'text-foreground/75' : 'text-primary'}`}>
+                                {n.title}
+                              </p>
+                              {!n.isRead && (
+                                <span className="bg-blue-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider font-mono">
+                                  New
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-foreground/60 leading-relaxed">{n.body}</p>
+                            <p className="text-[10px] text-foreground/45 font-mono">
+                              {new Date(n.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {!n.isRead && (
+                            <button
+                              onClick={() => markAdminNotificationRead(n._id)}
+                              className="p-1.5 rounded-xl border border-gold/20 hover:bg-cream text-primary transition-all"
+                              title="Mark as read"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => deleteAdminNotification(n._id)}
+                            className="p-1.5 rounded-xl border border-red-100 hover:bg-red-50 text-red-500 transition-all"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB: Support Tickets ── */}
+        {activeTab === 'support_tickets' && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-serif text-lg font-bold text-primary">Support Tickets Desk</h3>
+              <p className="text-xs text-foreground/50">Manage customer queries, view conversation logs, and send replies live to users</p>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden flex flex-col md:flex-row min-h-[550px]">
+              {/* Left pane: Ticket list */}
+              <div className="w-full md:w-80 border-r border-gold/15 bg-cream/10 flex flex-col flex-shrink-0">
+                <div className="p-4 border-b border-gold/15 bg-cream/20">
+                  <span className="text-xs font-bold text-primary/75">Ticket Log ({adminTickets.length})</span>
+                </div>
+                <div className="overflow-y-auto max-h-[500px] divide-y divide-gold/10">
+                  {adminTicketsLoading ? (
+                    <div className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>
+                  ) : adminTickets.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-foreground/45 italic">No tickets found.</div>
+                  ) : (
+                    adminTickets.map((tk) => {
+                      const isActive = activeAdminTicket?._id === tk._id;
+                      return (
+                        <button
+                          key={tk._id}
+                          onClick={() => handleOpenAdminTicketChat(tk)}
+                          className={`w-full text-left p-4 transition-all hover:bg-cream/30 flex flex-col gap-1.5 ${
+                            isActive ? 'bg-cream/50 border-l-4 border-primary' : ''
+                          }`}
+                        >
+                          <div className="flex justify-between items-start gap-2">
+                            <span className="text-xs font-bold text-primary truncate max-w-[120px]">{tk.subject}</span>
+                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                              tk.status === 'OPEN' ? 'bg-red-100 text-red-700' :
+                              tk.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-700' :
+                              'bg-green-100 text-green-700'
+                            }`}>
+                              {tk.status}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-foreground/50 font-mono">ID: ...{String(tk._id).slice(-6)}</span>
+                          <span className="text-[9px] text-foreground/40 self-end">
+                            {new Date(tk.updatedAt).toLocaleDateString('en-IN')}
+                          </span>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Right pane: Chat details */}
+              <div className="flex-grow flex flex-col bg-white">
+                {activeAdminTicket ? (
+                  <div className="flex flex-col h-full min-h-[500px]">
+                    {/* Active Ticket Header */}
+                    <div className="p-4 border-b border-gold/15 bg-cream/10 flex justify-between items-center flex-wrap gap-2">
+                      <div>
+                        <h4 className="font-bold text-sm text-primary">{activeAdminTicket.subject}</h4>
+                        <p className="text-[10px] text-foreground/50 font-mono">Ticket ID: {activeAdminTicket._id}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-foreground/50">Change Status:</span>
+                        <select
+                          value={activeAdminTicket.status}
+                          onChange={async (e) => {
+                            const newStatus = e.target.value;
+                            try {
+                              const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+                              const { data } = await api.post(`/admin/tickets/${activeAdminTicket._id}/reply`, {
+                                message: `Ticket status set to ${newStatus} by support staff.`,
+                                status: newStatus
+                              }, {
+                                headers: { Authorization: `Bearer ${token}` }
+                              });
+                              if (data?.success) {
+                                setActiveAdminTicket(data.ticket);
+                                fetchAdminTickets();
+                              }
+                            } catch (err: any) {
+                              alert(err.response?.data?.message || 'Failed to update status');
+                            }
+                          }}
+                          className="border border-gold/25 rounded-lg text-xs px-2 py-1 focus:outline-none bg-white font-bold"
+                        >
+                          <option value="OPEN">OPEN</option>
+                          <option value="IN_PROGRESS">IN_PROGRESS</option>
+                          <option value="RESOLVED">RESOLVED</option>
+                          <option value="CLOSED">CLOSED</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Chat Messages Log */}
+                    <div className="flex-grow p-4 overflow-y-auto max-h-[360px] bg-cream/5 space-y-3">
+                      {activeAdminTicket.messages?.map((msg: any, idx: number) => {
+                        const isAdmin = msg.senderType === 'admin' || msg.senderType === 'support';
+                        return (
+                          <div
+                            key={idx}
+                            className={`flex flex-col max-w-[70%] gap-1 ${
+                              isAdmin ? 'ml-auto items-end' : 'mr-auto items-start'
+                            }`}
+                          >
+                            <div className={`p-3 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm ${
+                              isAdmin
+                                ? 'bg-primary text-white rounded-tr-none'
+                                : 'bg-white text-primary border border-gold/15 rounded-tl-none'
+                            }`}>
+                              {editingAdminMsgId === msg._id ? (
+                                <div className="space-y-1">
+                                  <input
+                                    type="text"
+                                    value={editAdminMsgContent}
+                                    onChange={(e) => setEditAdminMsgContent(e.target.value)}
+                                    className="text-xs text-primary bg-white border border-gold/30 rounded px-2 py-1 focus:outline-none w-full font-semibold"
+                                  />
+                                  <div className="flex gap-2 justify-end">
+                                    <button onClick={() => handleSaveAdminEdit(msg._id)} className="text-[9px] font-bold text-white hover:underline bg-green-700 px-2 py-0.5 rounded">Save</button>
+                                    <button onClick={() => setEditingAdminMsgId(null)} className="text-[9px] font-bold text-white hover:underline bg-gray-500 px-2 py-0.5 rounded">Cancel</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <p className="whitespace-pre-wrap">{msg.message}</p>
+                                  {isAdmin && (
+                                    <div className="flex gap-2 mt-1.5 pt-1 border-t border-white/10">
+                                      <button onClick={() => { setEditingAdminMsgId(msg._id); setEditAdminMsgContent(msg.message); }} className="text-[9px] font-bold hover:underline text-white/80 hover:text-white">Edit</button>
+                                      <button onClick={() => handleDeleteAdminMessage(msg._id)} className="text-[9px] font-bold hover:underline text-red-200 hover:text-red-100">Delete</button>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                            <span className="text-[9px] text-foreground/45 px-1 font-mono">
+                              {isAdmin ? 'SUPPORT' : 'USER'} • {new Date(msg.sentAt || msg.createdAt || Date.now()).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Reply Form */}
+                    <form onSubmit={handleSendAdminReply} className="p-4 border-t border-gold/15 bg-cream/15 flex gap-2">
+                      <input
+                        type="text"
+                        required
+                        value={adminTicketReplyMsg}
+                        onChange={(e) => setAdminTicketReplyMsg(e.target.value)}
+                        placeholder="Type your support reply here..."
+                        className="flex-grow border border-gold/25 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-primary"
+                      />
+                      <button
+                        type="submit"
+                        disabled={sendingAdminReply}
+                        className="px-5 py-2.5 bg-primary text-white font-bold rounded-xl text-xs hover:bg-primary/95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      >
+                        {sendingAdminReply ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Send'}
+                      </button>
+                    </form>
+                  </div>
+                ) : (
+                  <div className="flex-grow flex flex-col items-center justify-center text-center p-12 gap-3 bg-cream/5">
+                    <LifeBuoy className="w-12 h-12 text-gold/45 animate-pulse" />
+                    <p className="text-sm font-bold text-primary">No Active Chat</p>
+                    <p className="text-xs text-foreground/50 max-w-xs">
+                      Select a support ticket from the left panel to read logs and chat live with the customer.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        {/* ── TAB: Wallet & Payouts ── */}
+        {activeTab === 'wallet' && (
+          <div className="space-y-6">
+            <div className="border-b border-gold/15 pb-4">
+              <h3 className="font-serif text-lg font-bold text-primary">Wallet &amp; Payouts Control Center</h3>
+              <p className="text-xs text-foreground/50">Track Service Partners wallet balances and manage payout distributions live</p>
+            </div>
+
+            <div className="space-y-4">
+              {/* Wallet Balances List */}
+              <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gold/15 bg-cream/40 flex justify-between items-center">
+                  <span className="text-xs font-bold text-primary uppercase">Partner Wallet Balances</span>
+                </div>
+                {walletsLoading ? (
+                  <div className="p-12 text-center"><Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" /></div>
+                ) : partnerWallets.length === 0 ? (
+                  <div className="p-12 text-center text-foreground/45">No partners found.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-cream/20 border-b border-gold/10 text-xs font-bold text-foreground/55 uppercase">
+                          <th className="text-left px-5 py-3">Partner / Business</th>
+                          <th className="text-left px-5 py-3">Email &amp; Phone</th>
+                          <th className="text-left px-5 py-3">Wallet Balance</th>
+                          <th className="text-right px-5 py-3">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gold/10">
+                        {partnerWallets.map((pt) => (
+                          <tr key={pt._id} className="hover:bg-cream/10 transition-colors">
+                            <td className="px-5 py-4">
+                              <p className="font-bold text-xs text-primary">{pt.businessName || pt.name}</p>
+                              <p className="text-[10px] text-foreground/50">{pt.name}</p>
+                            </td>
+                            <td className="px-5 py-4">
+                              <p className="text-xs font-mono">{pt.email}</p>
+                              <p className="text-[10px] text-foreground/50">{pt.phone}</p>
+                            </td>
+                            <td className="px-5 py-4">
+                              <span className="font-bold text-xs text-primary font-mono">₹{(pt.walletBalance || 0).toLocaleString('en-IN')}</span>
+                            </td>
+                            <td className="px-5 py-4 text-right">
+                              <button
+                                onClick={() => {
+                                  setSelectedPayoutPartner(pt);
+                                  setPayoutAmount(String(pt.walletBalance || 0));
+                                  setShowPayoutModal(true);
+                                }}
+                                disabled={!pt.walletBalance || pt.walletBalance <= 0}
+                                className="text-[10px] font-bold text-white bg-primary px-3 py-1.5 rounded-full hover:bg-primary/95 transition-all disabled:opacity-40"
+                              >
+                                Process Payout
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <PaginationBar page={walletPage} total={walletTotal} limit={15} onPage={p => setWalletPage(p)} />
+              </div>
+            </div>
+
+            {/* Payout Dialog Modal */}
+            {showPayoutModal && selectedPayoutPartner && (
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-white border border-gold/25 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-150">
+                  <div className="p-5 border-b border-gold/15 bg-cream/40 flex justify-between items-center">
+                    <h4 className="font-serif text-sm font-bold text-primary">Process Payout Transaction</h4>
+                    <button onClick={() => { setShowPayoutModal(false); setSelectedPayoutPartner(null); }} className="text-primary/70 hover:text-primary font-bold text-lg">&times;</button>
+                  </div>
+                  <form onSubmit={handleProcessPayoutSubmit} className="p-5 space-y-4">
+                    <div>
+                      <p className="text-xs text-foreground/55">Recipient Partner</p>
+                      <p className="text-sm font-bold text-primary">{selectedPayoutPartner.businessName || selectedPayoutPartner.name}</p>
+                      <p className="text-xs text-foreground/45 font-mono">Current Wallet Balance: ₹{(selectedPayoutPartner.walletBalance || 0).toLocaleString('en-IN')}</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-foreground/60 uppercase mb-1">Payout Amount (₹)</label>
+                      <input
+                        type="number"
+                        required
+                        min={1}
+                        max={selectedPayoutPartner.walletBalance}
+                        value={payoutAmount}
+                        onChange={(e) => setPayoutAmount(e.target.value)}
+                        placeholder="Enter amount to payout"
+                        className="w-full border border-gold/25 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-primary font-bold font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-foreground/60 uppercase mb-1">Transaction Notes</label>
+                      <textarea
+                        value={payoutNotes}
+                        onChange={(e) => setPayoutNotes(e.target.value)}
+                        placeholder="Add wire reference details, payout notes, bank code"
+                        className="w-full border border-gold/25 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-primary h-20"
+                      />
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        type="submit"
+                        disabled={processingPayout || !payoutAmount || Number(payoutAmount) <= 0 || Number(payoutAmount) > selectedPayoutPartner.walletBalance}
+                        className="flex-grow py-3 bg-primary text-white font-bold rounded-xl text-xs hover:bg-primary/95 transition-all disabled:opacity-50"
+                      >
+                        {processingPayout ? 'Processing Transaction...' : 'Confirm & Transfer'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setShowPayoutModal(false); setSelectedPayoutPartner(null); }}
+                        className="px-6 py-3 border border-gold/30 text-primary font-bold rounded-xl text-xs hover:bg-cream/10 transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TAB: Payout Logs ── */}
+        {activeTab === 'payout_logs' && (
+          <div className="space-y-6">
+            <div className="border-b border-gold/15 pb-4">
+              <h3 className="font-serif text-lg font-bold text-primary">Payout Logs &amp; History</h3>
+              <p className="text-xs text-foreground/50">Detailed record of all payments made to Service Partners</p>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-gold/15 bg-cream/40 flex justify-between items-center">
+                <span className="text-xs font-bold text-primary uppercase">Recent Payout Logs</span>
+              </div>
+              {payoutsLoading ? (
+                <div className="p-12 text-center"><Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" /></div>
+              ) : payoutLogs.length === 0 ? (
+                <div className="p-12 text-center text-foreground/45">No payout logs found.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-cream/20 border-b border-gold/10 text-xs font-bold text-foreground/55 uppercase">
+                        <th className="text-left px-5 py-3">Reference ID</th>
+                        <th className="text-left px-5 py-3">Partner / Business</th>
+                        <th className="text-left px-5 py-3">Payout Amount</th>
+                        <th className="text-left px-5 py-3">Notes</th>
+                        <th className="text-left px-5 py-3">Status</th>
+                        <th className="text-right px-5 py-3">Transaction Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gold/10 text-xs">
+                      {payoutLogs.map((log) => (
+                        <tr key={log._id} className="hover:bg-cream/10 transition-colors">
+                          <td className="px-5 py-4 font-mono font-bold text-primary">
+                            {log.referenceId}
+                          </td>
+                          <td className="px-5 py-4">
+                            <p className="font-bold text-xs text-primary">{log.vendorId?.businessName || log.vendorId?.name || 'Partner'}</p>
+                            <p className="text-[10px] text-foreground/50">{log.vendorId?.email}</p>
+                          </td>
+                          <td className="px-5 py-4 font-bold text-primary font-mono text-sm">
+                            ₹{log.amount.toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-5 py-4 text-foreground/75 italic">
+                            {log.notes || '—'}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className="text-[10px] font-bold text-green-700 bg-green-50 border border-green-150 px-2 py-0.5 rounded-full uppercase tracking-wider font-mono">
+                              {log.status}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-right text-foreground/50 font-mono">
+                            {new Date(log.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <PaginationBar page={payoutPage} total={payoutTotal} limit={15} onPage={p => setPayoutPage(p)} />
+            </div>
+
+            {/* Payout Dialog Modal */}
+            {showPayoutModal && selectedPayoutPartner && (
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-white border border-gold/25 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-150">
+                  <div className="p-5 border-b border-gold/15 bg-cream/40 flex justify-between items-center">
+                    <h4 className="font-serif text-sm font-bold text-primary">Process Payout Transaction</h4>
+                    <button onClick={() => { setShowPayoutModal(false); setSelectedPayoutPartner(null); }} className="text-primary/70 hover:text-primary font-bold text-lg">&times;</button>
+                  </div>
+                  <form onSubmit={handleProcessPayoutSubmit} className="p-5 space-y-4">
+                    <div>
+                      <p className="text-xs text-foreground/55">Recipient Partner</p>
+                      <p className="text-sm font-bold text-primary">{selectedPayoutPartner.businessName || selectedPayoutPartner.name}</p>
+                      <p className="text-xs text-foreground/45 font-mono">Current Wallet Balance: ₹{(selectedPayoutPartner.walletBalance || 0).toLocaleString('en-IN')}</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-foreground/60 uppercase mb-1">Payout Amount (₹)</label>
+                      <input
+                        type="number"
+                        required
+                        min={1}
+                        max={selectedPayoutPartner.walletBalance}
+                        value={payoutAmount}
+                        onChange={(e) => setPayoutAmount(e.target.value)}
+                        placeholder="Enter amount to payout"
+                        className="w-full border border-gold/25 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-primary font-bold font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-foreground/60 uppercase mb-1">Transaction Notes</label>
+                      <textarea
+                        value={payoutNotes}
+                        onChange={(e) => setPayoutNotes(e.target.value)}
+                        placeholder="Add wire reference details, payout notes, bank code"
+                        className="w-full border border-gold/25 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-primary h-20"
+                      />
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        type="submit"
+                        disabled={processingPayout || !payoutAmount || Number(payoutAmount) <= 0 || Number(payoutAmount) > selectedPayoutPartner.walletBalance}
+                        className="flex-grow py-3 bg-primary text-white font-bold rounded-xl text-xs hover:bg-primary/95 transition-all disabled:opacity-50"
+                      >
+                        {processingPayout ? 'Processing Transaction...' : 'Confirm & Transfer'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setShowPayoutModal(false); setSelectedPayoutPartner(null); }}
+                        className="px-6 py-3 border border-gold/30 text-primary font-bold rounded-xl text-xs hover:bg-cream/10 transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {/* ── TAB: Reviews & Ratings ── */}
+        {activeTab === 'reviews' && (
+          <div className="space-y-6">
+            <div className="border-b border-gold/15 pb-4">
+              <h3 className="font-serif text-lg font-bold text-primary">Pending Customer Reviews</h3>
+              <p className="text-xs text-foreground/50">Approve or reject customer-submitted service reviews and ratings before they go public</p>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-gold/15 bg-cream/40">
+                <span className="text-xs font-bold text-primary uppercase">Pending Review Submissions ({pendingReviews.length})</span>
+              </div>
+              {reviewsLoading ? (
+                <div className="p-12 text-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+                </div>
+              ) : pendingReviews.length === 0 ? (
+                <div className="p-12 text-center text-foreground/45">
+                  <Star className="w-12 h-12 mx-auto mb-3 opacity-30 text-gold" />
+                  <p>All caught up! No pending reviews to moderate.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gold/10">
+                  {pendingReviews.map((rev) => {
+                    return (
+                      <div key={rev._id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-cream/10 transition-all">
+                        <div className="space-y-2 max-w-2xl">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-bold text-primary bg-primary/5 px-2.5 py-1 rounded-lg">
+                              {rev.userId?.name || 'Anonymous User'}
+                            </span>
+                            <span className="text-[10px] text-foreground/50 font-mono">
+                              ({rev.userId?.email || 'No email'})
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <div className="flex text-amber-500">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${
+                                    i < rev.rating ? 'fill-amber-500 text-amber-500' : 'text-foreground/20'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs font-bold text-primary font-mono">{rev.rating} / 5</span>
+                          </div>
+
+                          <p className="text-xs text-foreground/75 italic leading-relaxed">
+                            "{rev.comment || 'No comment provided.'}"
+                          </p>
+
+                          <div className="flex flex-wrap gap-2 text-[10px] font-semibold text-foreground/50">
+                            <span>Service: <strong className="text-primary">{rev.serviceId?.name || 'N/A'}</strong></span>
+                            <span>•</span>
+                            <span>Vendor: <strong className="text-primary">{rev.vendorId?.name || 'N/A'}</strong></span>
+                            <span>•</span>
+                            <span className="font-mono">Date: {new Date(rev.createdAt).toLocaleDateString('en-IN')}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleReviewApproval(rev._id, 'approve')}
+                            className="px-4 py-2 bg-green-600 text-white rounded-xl text-xs font-bold hover:bg-green-700 transition-all"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleReviewApproval(rev._id, 'reject')}
+                            className="px-4 py-2 border border-red-200 text-red-500 hover:bg-red-50 rounded-xl text-xs font-bold transition-all"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

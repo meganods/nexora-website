@@ -9,9 +9,11 @@ import {
   Brush, Sparkles, Flower2, Scissors, User, Wind, Broom, Wrench,
   Zap, MapPin, ThumbsUp, BadgeCheck, ChevronLeft, ChevronRight,
   Smartphone, Wallet, Users, MessageSquareQuote, Award,
-  CalendarCheck, UserCheck
+  CalendarCheck, UserCheck, Heart
 } from 'lucide-react';
 import api from '@/lib/api';
+import toast from 'react-hot-toast';
+import { useAuth } from '@/lib/auth';
 
 // ─── Category data (static for icons) ────────────────────────────────────────
 const CATEGORIES = [
@@ -116,51 +118,79 @@ const STATIC_REVIEWS = [
 ];
 
 // Reusable ServiceCard component matching Step 2 criteria
-export function ServiceCard({ service }: { service: any }) {
+export function ServiceCard({
+  service,
+  wishlist = [],
+  onToggleWishlist
+}: {
+  service: any;
+  wishlist?: string[];
+  onToggleWishlist?: (id: string, name: string) => void;
+}) {
+  const isFav = wishlist.includes(service._id);
+
   return (
     <div className="bg-white rounded-3xl overflow-hidden border border-gold/20 shadow-sm flex flex-col hover:shadow-xl hover:-translate-y-1 hover:border-gold/45 transition-all duration-300 group h-full">
       {/* Image Area */}
-      <Link href={`/services/${service.slug || service._id}`} className="relative block h-48 bg-slate-100 overflow-hidden flex-shrink-0">
-        <img
-          src={service.imageUrl || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=500&q=80'}
-          alt={service.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/15 to-transparent" />
-      </Link>
+      <div className="relative block h-28 sm:h-48 bg-slate-100 overflow-hidden flex-shrink-0">
+        <Link href={`/services/${service.slug || service._id}`} className="block w-full h-full">
+          <img
+            src={service.imageUrl || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=500&q=80'}
+            alt={service.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </Link>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/15 to-transparent pointer-events-none" />
+
+        {/* Wishlist Icon */}
+        {onToggleWishlist && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleWishlist(service._id, service.name);
+            }}
+            className="absolute top-2 right-2 sm:top-3 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/95 backdrop-blur-sm border border-gold/20 flex items-center justify-center shadow hover:bg-white hover:scale-105 active:scale-95 transition-all z-20"
+            title={isFav ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-colors ${isFav ? 'fill-red-500 text-red-500' : 'text-foreground/45'}`} />
+          </button>
+        )}
+      </div>
 
       {/* Body Content */}
-      <div className="p-6 flex flex-col flex-1">
+      <div className="p-3 sm:p-6 flex flex-col flex-1">
         {/* Rating row */}
-        <div className="flex items-center gap-1.5 mb-2.5">
-          <Star className="w-4 h-4 fill-gold text-gold" />
-          <span className="text-xs font-bold text-primary">{(service.rating || 4.7).toFixed(1)}</span>
-          <span className="text-xs text-foreground/45">({(service.reviewCount || 100) >= 1000 ? `${((service.reviewCount || 100) / 1000).toFixed(1)}K` : (service.reviewCount || 100)}+ bookings)</span>
+        <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mb-1 sm:mb-2.5">
+          <Star className="w-3.5 h-3.5 fill-gold text-gold" />
+          <span className="text-[10px] sm:text-xs font-bold text-primary">{(service.rating || 4.7).toFixed(1)}</span>
+          <span className="text-[9px] sm:text-xs text-foreground/45">({(service.reviewCount || 100) >= 1000 ? `${((service.reviewCount || 100) / 1000).toFixed(1)}K` : (service.reviewCount || 100)}+)</span>
         </div>
 
         {/* Name & Short description */}
         <Link href={`/services/${service.slug || service._id}`}>
-          <h3 className="font-serif text-base font-bold text-primary mb-1.5 line-clamp-1 hover:text-primary/80 transition-colors h-6">
+          <h3 className="font-serif text-[11px] sm:text-base font-bold text-primary mb-1 sm:mb-1.5 line-clamp-1 hover:text-primary/80 transition-colors h-4 sm:h-6">
             {service.name}
           </h3>
         </Link>
-        <p className="text-xs text-foreground/55 line-clamp-2 flex-1 mb-4 h-8">
+        <p className="hidden sm:block text-xs text-foreground/55 line-clamp-2 flex-1 mb-4 h-8">
           {service.description || 'Professional, verified home service.'}
         </p>
 
         {/* Price & Book Now button */}
-        <div className="pt-4 border-t border-gold/10 flex items-center justify-between gap-2 mt-auto">
+        <div className="pt-2 sm:pt-4 border-t border-gold/10 flex items-center justify-between gap-1.5 mt-auto">
           <div>
-            <p className="text-[10px] text-foreground/45 uppercase tracking-wider font-semibold">Starting At</p>
-            <span className="font-serif font-bold text-primary text-lg flex items-center gap-0.5">
-              <IndianRupee className="w-3.5 h-3.5" />{service.basePrice}
+            <p className="text-[7px] sm:text-[10px] text-foreground/45 uppercase tracking-wider font-semibold">Starting At</p>
+            <span className="font-serif font-bold text-primary text-xs sm:text-lg flex items-center gap-0.5">
+              <IndianRupee className="w-3 sm:w-3.5 h-3 sm:h-3.5" />{service.basePrice}
             </span>
           </div>
           <Link
             href={`/services/${service.slug || service._id}`}
-            className="px-5 py-2.5 bg-primary text-white text-xs font-bold rounded-full hover:bg-primary/95 active:scale-95 transition-all shadow-sm"
+            className="px-3 py-1.5 sm:px-5 sm:py-2.5 bg-primary text-white text-[9px] sm:text-xs font-bold rounded-full hover:bg-primary/95 active:scale-95 transition-all shadow-sm"
           >
-            Book Now
+            Book
           </Link>
         </div>
       </div>
@@ -169,59 +199,89 @@ export function ServiceCard({ service }: { service: any }) {
 }
 
 // Reusable DealCard component matching Step 3 criteria
-function DealCard({ deal }: { deal: any }) {
+function DealCard({
+  deal,
+  wishlist = [],
+  onToggleWishlist
+}: {
+  deal: any;
+  wishlist?: string[];
+  onToggleWishlist?: (id: string, name: string) => void;
+}) {
+  // Use serviceId reference if it exists, otherwise fall back to _id
+  const targetId = deal.serviceId?._id || deal.serviceId || deal._id;
+  const isFav = wishlist.includes(targetId);
+
   return (
     <div className="bg-white rounded-3xl overflow-hidden border border-gold/20 shadow-sm flex flex-col hover:shadow-xl hover:-translate-y-1 hover:border-gold/45 transition-all duration-300 group h-full">
       {/* Image & Discount Badge */}
-      <Link href={deal.checkoutUrl ? `/deals/${deal.slug}` : `/services/${deal.slug}`} className="relative block h-48 bg-slate-100 overflow-hidden flex-shrink-0">
-        <img
-          src={deal.imageUrl}
-          alt={deal.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
+      <div className="relative block h-28 sm:h-48 bg-slate-100 overflow-hidden flex-shrink-0">
+        <Link href={deal.checkoutUrl ? `/deals/${deal.slug}` : `/services/${deal.slug}`} className="block w-full h-full">
+          <img
+            src={deal.imageUrl}
+            alt={deal.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </Link>
+        <div className="absolute top-2 left-2 sm:top-4 sm:left-4 bg-red-500 text-white text-[9px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow pointer-events-none">
           {deal.discount}
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/15 to-transparent" />
-      </Link>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/15 to-transparent pointer-events-none" />
+
+        {/* Wishlist Icon */}
+        {onToggleWishlist && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleWishlist(targetId, deal.name);
+            }}
+            className="absolute top-2 right-2 sm:top-3 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/95 backdrop-blur-sm border border-gold/20 flex items-center justify-center shadow hover:bg-white hover:scale-105 active:scale-95 transition-all z-20"
+            title={isFav ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-colors ${isFav ? 'fill-red-500 text-red-500' : 'text-foreground/45'}`} />
+          </button>
+        )}
+      </div>
 
       {/* Body Content */}
-      <div className="p-6 flex flex-col flex-1">
+      <div className="p-3 sm:p-6 flex flex-col flex-1">
         {/* Rating row */}
-        <div className="flex items-center gap-1.5 mb-2.5">
-          <Star className="w-4 h-4 fill-gold text-gold" />
-          <span className="text-xs font-bold text-primary">{deal.rating.toFixed(1)}</span>
-          <span className="text-xs text-foreground/45">({deal.reviewCount >= 1000 ? `${(deal.reviewCount / 1000).toFixed(1)}K` : deal.reviewCount}+ bookings)</span>
+        <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mb-1 sm:mb-2.5">
+          <Star className="w-3.5 h-3.5 fill-gold text-gold" />
+          <span className="text-[10px] sm:text-xs font-bold text-primary">{deal.rating.toFixed(1)}</span>
+          <span className="text-[9px] sm:text-xs text-foreground/45">({deal.reviewCount >= 1000 ? `${(deal.reviewCount / 1000).toFixed(1)}K` : deal.reviewCount}+)</span>
         </div>
 
         {/* Name & Short description */}
         <Link href={deal.checkoutUrl ? `/deals/${deal.slug}` : `/services/${deal.slug}`}>
-          <h3 className="font-serif text-base font-bold text-primary mb-1.5 line-clamp-1 hover:text-primary/80 transition-colors h-6">
+          <h3 className="font-serif text-[11px] sm:text-base font-bold text-primary mb-1 sm:mb-1.5 line-clamp-1 hover:text-primary/80 transition-colors h-4 sm:h-6">
             {deal.name}
           </h3>
         </Link>
-        <p className="text-xs text-foreground/55 line-clamp-2 flex-1 mb-4 h-8">
+        <p className="hidden sm:block text-xs text-foreground/55 line-clamp-2 flex-1 mb-4 h-8">
           {deal.description}
         </p>
 
         {/* Price & Book Now button */}
-        <div className="pt-4 border-t border-gold/10 flex items-center justify-between gap-2 mt-auto">
+        <div className="pt-2 sm:pt-4 border-t border-gold/10 flex items-center justify-between gap-1.5 mt-auto">
           <div>
-            <p className="text-[10px] text-foreground/45 uppercase tracking-wider font-semibold">Offer Price</p>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-serif font-bold text-primary text-lg flex items-center gap-0.5">
-                <IndianRupee className="w-3.5 h-3.5" />{deal.offerPrice}
+            <p className="text-[7px] sm:text-[10px] text-foreground/45 uppercase tracking-wider font-semibold">Offer Price</p>
+            <div className="flex flex-wrap items-baseline gap-0.5 sm:gap-1.5">
+              <span className="font-serif font-bold text-primary text-xs sm:text-lg flex items-center gap-0.5">
+                <IndianRupee className="w-3 sm:w-3.5 h-3 sm:h-3.5" />{deal.offerPrice}
               </span>
-              <span className="text-xs text-foreground/45 line-through flex items-center gap-0.5">
-                <IndianRupee className="w-3 h-3" />{deal.originalPrice}
+              <span className="text-[8px] sm:text-xs text-foreground/45 line-through flex items-center gap-0.5">
+                <IndianRupee className="w-2.5 sm:w-3 h-2.5 sm:h-3" />{deal.originalPrice}
               </span>
             </div>
           </div>
           <Link
             href={deal.checkoutUrl || `/services/${deal.slug}`}
-            className="px-5 py-2.5 bg-primary text-white text-xs font-bold rounded-full hover:bg-primary/95 active:scale-95 transition-all shadow-sm"
+            className="px-3 py-1.5 sm:px-5 sm:py-2.5 bg-primary text-white text-[9px] sm:text-xs font-bold rounded-full hover:bg-primary/95 active:scale-95 transition-all shadow-sm"
           >
-            Book Now
+            Book
           </Link>
         </div>
       </div>
@@ -387,7 +447,21 @@ function PackageCard({ pkg }: { pkg: any }) {
 }
 
 // Reusable CategoryServiceSection component matching Step 4 criteria
-function CategoryServiceSection({ title, desc, link, services }: { title: string, desc: string, link: string, services: any[] }) {
+function CategoryServiceSection({
+  title,
+  desc,
+  link,
+  services,
+  wishlist = [],
+  onToggleWishlist
+}: {
+  title: string;
+  desc: string;
+  link: string;
+  services: any[];
+  wishlist?: string[];
+  onToggleWishlist?: (id: string, name: string) => void;
+}) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
 
@@ -455,7 +529,11 @@ function CategoryServiceSection({ title, desc, link, services }: { title: string
               key={`${service.slug}-${idx}`}
               className="w-[calc(50%-8px)] sm:w-[calc(33.33%-11px)] lg:w-[calc(25%-12px)] flex-shrink-0 snap-start"
             >
-              <ServiceCard service={service} />
+              <ServiceCard
+                service={service}
+                wishlist={wishlist}
+                onToggleWishlist={onToggleWishlist}
+              />
             </div>
           ))}
         </div>
@@ -615,6 +693,8 @@ export default function Home() {
   const [dbBanners, setDbBanners] = useState<any[]>([]);
   const [dbOffers, setDbOffers] = useState<any[]>([]);
   const [homepageDeals, setHomepageDeals] = useState<any[]>([]);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const { user } = useAuth();
 
   const partnersScrollRef = useRef<HTMLDivElement>(null);
   const popScrollRef = useRef<HTMLDivElement>(null);
@@ -635,7 +715,54 @@ export default function Home() {
     fetchDbBanners();
     fetchDbOffers();
     fetchHomepageDeals();
-  }, []);
+    fetchWishlist();
+  }, [user]);
+
+  const fetchWishlist = async () => {
+    const local = localStorage.getItem('user_wishlist');
+    if (local) {
+      setWishlist(JSON.parse(local));
+    }
+    if (user) {
+      try {
+        const { data } = await api.get('/user/dashboard/wishlist');
+        if (data?.wishlist) {
+          const ids = data.wishlist.map((w: any) => w._id || w);
+          setWishlist(ids);
+          localStorage.setItem('user_wishlist', JSON.stringify(ids));
+        }
+      } catch { /* silent fallback */ }
+    }
+  };
+
+  const toggleWishlist = async (id: string, serviceName: string) => {
+    let updated = [...wishlist];
+    const isAdded = !updated.includes(id);
+    if (!isAdded) {
+      updated = updated.filter(x => x !== id);
+    } else {
+      updated.push(id);
+    }
+    setWishlist(updated);
+    localStorage.setItem('user_wishlist', JSON.stringify(updated));
+
+    if (!user) {
+      toast.success(isAdded ? `${serviceName} added to wishlist (offline)` : `${serviceName} removed from wishlist (offline)`);
+      return;
+    }
+
+    try {
+      await api.post('/user/dashboard/wishlist/toggle', { serviceId: id });
+      toast.success(isAdded ? `${serviceName} added to wishlist` : `${serviceName} removed from wishlist`);
+    } catch {
+      // Revert UI on failure
+      const reverted = isAdded ? wishlist.filter(x => x !== id) : [...wishlist, id];
+      setWishlist(reverted);
+      localStorage.setItem('user_wishlist', JSON.stringify(reverted));
+      toast.error('Failed to update wishlist on database.');
+    }
+  };
+
 
   const fetchHomepageDeals = async () => {
     try {
@@ -1153,7 +1280,11 @@ export default function Home() {
                     key={service._id}
                     className="w-[calc(50%-8px)] sm:w-[calc(33.33%-11px)] lg:w-[calc(25%-12px)] flex-shrink-0 snap-start"
                   >
-                    <ServiceCard service={service} />
+                    <ServiceCard
+                      service={service}
+                      wishlist={wishlist}
+                      onToggleWishlist={toggleWishlist}
+                    />
                   </div>
                 ))}
               </div>
@@ -1218,7 +1349,11 @@ export default function Home() {
                   key={deal.slug}
                   className="w-[calc(50%-8px)] sm:w-[calc(33.33%-11px)] lg:w-[calc(25%-12px)] flex-shrink-0 snap-start"
                 >
-                  <DealCard deal={deal} />
+                  <DealCard
+                    deal={deal}
+                    wishlist={wishlist}
+                    onToggleWishlist={toggleWishlist}
+                  />
                 </div>
               ))}
             </div>
@@ -1290,6 +1425,8 @@ export default function Home() {
                   desc={catSection.desc}
                   link={catSection.link}
                   services={catSection.services}
+                  wishlist={wishlist}
+                  onToggleWishlist={toggleWishlist}
                 />
 
                 {/* Dynamically insert Why Choose Nexora under AC & Appliance Repair (index 2) */}
@@ -1548,7 +1685,11 @@ export default function Home() {
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
                 {displayServices.slice(0, 4).map((service: any, idx: number) => (
                   <div key={service.slug || service._id || idx}>
-                    <ServiceCard service={service} />
+                    <ServiceCard
+                      service={service}
+                      wishlist={wishlist}
+                      onToggleWishlist={toggleWishlist}
+                    />
                   </div>
                 ))}
               </div>

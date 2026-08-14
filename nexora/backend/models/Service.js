@@ -6,6 +6,11 @@ const serviceSchema = new mongoose.Schema({
     ref: 'Category',
     required: true
   },
+  vendorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ServicePartner',
+    default: null
+  },
   name: {
     type: String,
     required: true
@@ -86,7 +91,10 @@ const serviceSchema = new mongoose.Schema({
   approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null },
   approvedAt: { type: Date, default: null },
   parentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Service', default: null },
-  isDeleted: { type: Boolean, default: false }
+  isDeleted: { type: Boolean, default: false },
+  serviceImages: [{ type: String }],
+  beforeImages: [{ type: String }],
+  afterImages: [{ type: String }]
 }, { timestamps: true });
 
 // Auto-generate slug from name if not provided

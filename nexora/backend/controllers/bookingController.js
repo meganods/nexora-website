@@ -15,7 +15,8 @@ cf.XEnvironment = process.env.CASHFREE_ENV === 'PRODUCTION'
 
 exports.createOrder = async (req, res) => {
   try {
-    const { serviceId, packageId, address, scheduledDate, scheduledSlot, couponCode, addons } = req.body;
+    const { serviceId, packageId, address, scheduledDate, scheduledSlot, couponCode, addons, quantity } = req.body;
+    const qty = Math.max(1, parseInt(quantity) || 1);
 
     if (!req.user?.userId) {
       return res.status(401).json({ message: 'Authentication required. Please login to book a service.' });
@@ -41,9 +42,9 @@ exports.createOrder = async (req, res) => {
       const Package = require('../models/Package');
       const pkg = await Package.findById(packageId);
       if (!pkg || !pkg.isActive) return res.status(404).json({ message: 'Package not found or inactive.' });
-      basePrice = pkg.basePrice;
+      basePrice = pkg.basePrice * qty;
       if (pkg.discountPercentage > 0) {
-        basePrice = Math.round(basePrice * (1 - pkg.discountPercentage / 100));
+        basePrice = Math.round((pkg.basePrice * (1 - pkg.discountPercentage / 100)) * qty);
       }
       commissionAmount = Math.round(basePrice * 0.10); // default 10% commission for packages
       isPackageBooking = true;
@@ -52,9 +53,9 @@ exports.createOrder = async (req, res) => {
       // ── Single Service Booking ──
       const service = await Service.findById(serviceId).populate('categoryId');
       if (!service) return res.status(404).json({ message: 'Service not found' });
-      basePrice = service.basePrice;
+      basePrice = service.basePrice * qty;
       if (service.discountPercentage > 0) {
-        basePrice = Math.round(basePrice * (1 - service.discountPercentage / 100));
+        basePrice = Math.round((service.basePrice * (1 - service.discountPercentage / 100)) * qty);
       }
       const platformFeePercentage = service.categoryId?.platformFeePercentage || 10;
       commissionAmount = Math.round(basePrice * platformFeePercentage / 100);
@@ -196,6 +197,7 @@ exports.createOrder = async (req, res) => {
       areaId,
       pincodeId,
       addons: addons || [],
+      quantity: qty,
       paymentDetails: {
         cashfreeOrderId: orderId,
         cashfreePaymentSessionId: paymentSessionId,

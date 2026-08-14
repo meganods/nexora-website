@@ -22,17 +22,17 @@ router.post("/login-google", loginGoogle);
 
 router
   .route("/profile")
-  .get(protect, authorize("user"), getProfile)
-  .put(protect, authorize("user"), updateProfile);
+  .get(protect, getProfile)
+  .put(protect, updateProfile);
 
 router
   .route("/addresses")
-  .get(protect, authorize("user"), getAddresses)
-  .post(protect, authorize("user"), addAddress);
+  .get(protect, getAddresses)
+  .post(protect, addAddress);
 
 router
   .route("/addresses/:addressId")
-  .put(protect, authorize("user"), updateAddress)
-  .delete(protect, authorize("user"), deleteAddress);
+  .put(protect, updateAddress)
+  .delete(protect, deleteAddress);
 
 module.exports = router;
