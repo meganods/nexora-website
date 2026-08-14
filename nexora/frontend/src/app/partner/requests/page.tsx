@@ -39,7 +39,7 @@ export default function PartnerRequestsPage() {
     try {
       const { data } = await api.post(`/partner/requests/${id}/accept`);
       if (data.success) {
-        router.push('/partner/jobs');
+        router.push('/partner/bookings');
       }
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Failed to accept request.');

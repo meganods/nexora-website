@@ -89,7 +89,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
   const menuItems = [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/partner/dashboard' },
     { label: 'Accept Bookings', icon: FileText, href: '/partner/requests' },
-    { label: 'Active Bookings', icon: Briefcase, href: '/partner/jobs' },
+    { label: 'Active Bookings', icon: Briefcase, href: '/partner/bookings' },
     { label: 'Services', icon: Package, href: '/partner/services' },
     { label: 'Sub Services', icon: ListCollapse, href: '/partner/sub-services' },
     { label: 'Availability & Areas', icon: Calendar, href: '/partner/availability' },

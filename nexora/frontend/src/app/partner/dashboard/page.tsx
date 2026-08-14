@@ -545,7 +545,7 @@ export default function PartnerDashboard() {
               </tbody>
             </table>
           </div>
-          <Link href="/partner/jobs" className="text-[11px] font-bold text-primary hover:text-gold transition-colors flex items-center justify-center gap-1 mx-auto w-fit">
+          <Link href="/partner/bookings" className="text-[11px] font-bold text-primary hover:text-gold transition-colors flex items-center justify-center gap-1 mx-auto w-fit">
             View All Bookings <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
@@ -631,7 +631,7 @@ export default function PartnerDashboard() {
               </tbody>
             </table>
           </div>
-          <Link href="/partner/jobs" className="text-[11px] font-bold text-primary hover:text-gold transition-colors flex items-center justify-center gap-1 mx-auto w-fit mt-4">
+          <Link href="/partner/bookings" className="text-[11px] font-bold text-primary hover:text-gold transition-colors flex items-center justify-center gap-1 mx-auto w-fit mt-4">
             View Full Schedule <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
@@ -642,7 +642,7 @@ export default function PartnerDashboard() {
           <div className="grid grid-cols-2 gap-4 flex-1">
             {[
               { label: 'Accept Bookings', sub: 'View new requests', icon: FileText, href: '/partner/requests', color: 'text-blue-600', bg: 'bg-blue-50' },
-              { label: 'Active Bookings', sub: 'Manage current jobs', icon: Briefcase, href: '/partner/jobs', color: 'text-orange-600', bg: 'bg-orange-50' },
+              { label: 'Active Bookings', sub: 'Manage current jobs', icon: Briefcase, href: '/partner/bookings', color: 'text-orange-600', bg: 'bg-orange-50' },
               { label: 'My Services', sub: 'Update pricing', icon: Wrench, href: '/partner/services', color: 'text-orange-600', bg: 'bg-orange-50' },
               { label: 'Earnings & Wallet', sub: 'View payouts', icon: Wallet, href: '/partner/wallet', color: 'text-orange-500', bg: 'bg-orange-50' },
               { label: 'Create Offer', sub: 'New promotion', icon: Percent, href: '/partner/offers/new', color: 'text-orange-500', bg: 'bg-orange-50' },
