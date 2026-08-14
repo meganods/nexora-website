@@ -69,7 +69,7 @@ dealSchema.pre('validate', function (next) {
 });
 
 // ─── MongoDB indexes ─────────────────────────────────────────────────────────
-dealSchema.index({ slug: 1 });
+
 dealSchema.index({ isActive: 1 });
 dealSchema.index({ approvalStatus: 1 });
 dealSchema.index({ startDate: 1 });
