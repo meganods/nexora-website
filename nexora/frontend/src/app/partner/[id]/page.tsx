@@ -84,8 +84,8 @@ export default function PartnerProfilePage({ params }: { params: Promise<{ id: s
     <div className="min-h-screen bg-[#FAF6F0]/40 pb-24 font-sans text-foreground">
       
       {/* ── PROFILE HEADER SECTION ── */}
-      <div className="bg-primary text-white pt-10 pb-24 px-4 sm:px-8 border-b border-[#C3AB84]/15 relative">
-        <div className="container mx-auto max-w-5xl">
+      <div className="bg-primary text-white pt-10 pb-24 border-b border-[#C3AB84]/15 relative">
+        <div className="container mx-auto px-4 sm:px-8 lg:px-12">
           <button onClick={() => router.back()} className="flex items-center gap-2 text-[#C3AB84] hover:text-white mb-6 transition-colors text-xs font-bold uppercase tracking-wider w-fit">
             <ChevronLeft className="w-4 h-4" /> Back to Partners
           </button>
@@ -139,7 +139,7 @@ export default function PartnerProfilePage({ params }: { params: Promise<{ id: s
       </div>
 
       {/* ── PROFILE CONTENT AREA ── */}
-      <div className="container mx-auto max-w-5xl px-4 sm:px-8 -mt-12 relative z-20">
+      <div className="container mx-auto px-4 sm:px-8 lg:px-12 -mt-12 relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* LEFT COLUMN: About, Services, Reviews */}
