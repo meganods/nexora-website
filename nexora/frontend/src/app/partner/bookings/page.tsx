@@ -5,6 +5,7 @@ import {
   Briefcase, IndianRupee, MapPin, Clock, CalendarDays, Loader2, AlertTriangle, ArrowRight, CheckCircle2, ShieldCheck 
 } from 'lucide-react';
 import api from '@/lib/api';
+import ImageUpload from '@/app/admin/_components/ImageUpload';
 
 export default function PartnerActiveJobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -15,6 +16,10 @@ export default function PartnerActiveJobsPage() {
 
   // OTP inputs per-job
   const [otpInputs, setOtpInputs] = useState<Record<string, string>>({});
+
+  // Before & After photos per-job
+  const [beforePhotos, setBeforePhotos] = useState<Record<string, string>>({});
+  const [afterPhotos, setAfterPhotos] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchJobs();
@@ -66,11 +71,21 @@ export default function PartnerActiveJobsPage() {
     setActionLoading(id);
     setErrorMsg('');
     try {
+      const beforePhotoUrl = beforePhotos[id] || '';
+      const afterPhotoUrl = afterPhotos[id] || '';
+      if (!beforePhotoUrl || !afterPhotoUrl) {
+        setErrorMsg('Both Before and After photos are required to complete this booking execution.');
+        setActionLoading(null);
+        return;
+      }
+
       const { data } = await api.patch(`/partner/requests/${id}/status`, {
-        status: 'COMPLETED'
+        status: 'COMPLETED',
+        beforePhotoUrl,
+        afterPhotoUrl
       });
       if (data.success) {
-        setSuccessMsg('Job marked as completed successfully! Wallet earnings updated.');
+        setSuccessMsg('Booking marked as completed successfully! Payout earnings updated.');
         fetchJobs();
       }
     } catch (err: any) {
@@ -147,6 +162,32 @@ export default function PartnerActiveJobsPage() {
                     <span className="font-bold">₹{job.finalPrice}</span>
                   </div>
                 </div>
+
+                {job.status !== 'ASSIGNED' && (
+                  <div className="pt-4 border-t border-gold/10 mt-4 max-w-md">
+                    <p className="text-xs font-bold text-primary mb-3">Service Photos Execution (Required)</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[10px] font-bold text-foreground/50 uppercase block mb-1">Before Work Image</span>
+                        <ImageUpload
+                          label="Before Photo"
+                          imageUrl={beforePhotos[job._id] || job.beforePhotoUrl || ''}
+                          imagePublicId=""
+                          onChange={(url) => setBeforePhotos({ ...beforePhotos, [job._id]: url })}
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-foreground/50 uppercase block mb-1">After Work Image</span>
+                        <ImageUpload
+                          label="After Photo"
+                          imageUrl={afterPhotos[job._id] || job.afterPhotoUrl || ''}
+                          imagePublicId=""
+                          onChange={(url) => setAfterPhotos({ ...afterPhotos, [job._id]: url })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-3 min-w-[240px] md:border-l border-gold/15 md:pl-6 pt-6 md:pt-0">
