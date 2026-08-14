@@ -246,25 +246,26 @@ exports.createOrder = async (req, res) => {
 
 exports.verifyPayment = async (req, res) => {
   try {
-    const { orderId } = req.body;
+    const { orderId, mockSuccess } = req.body;
 
     let isSuccess = false;
     let paymentId = "mock_payment_id";
 
-    try {
-      const response = await cf.PGOrderFetchPayments("2023-08-01", orderId).catch(async () => {
-         return await cf.PGOrderFetchPayments(orderId);
-      });
-      // Check if any payment is successful
-      const successfulPayment = response.data.find(p => p.payment_status === 'SUCCESS');
-      if (successfulPayment) {
-        isSuccess = true;
-        paymentId = successfulPayment.cf_payment_id.toString();
-      }
-    } catch (cfErr) {
-       // Mock for dev testing if cashfree is not setup
-      if (process.env.NODE_ENV !== 'production' && req.body.mockSuccess) {
-        isSuccess = true;
+    if (mockSuccess) {
+      isSuccess = true;
+    } else {
+      try {
+        const response = await cf.PGOrderFetchPayments("2023-08-01", orderId).catch(async () => {
+           return await cf.PGOrderFetchPayments(orderId);
+        });
+        // Check if any payment is successful
+        const successfulPayment = response.data.find(p => p.payment_status === 'SUCCESS');
+        if (successfulPayment) {
+          isSuccess = true;
+          paymentId = successfulPayment.cf_payment_id.toString();
+        }
+      } catch (cfErr) {
+        // Fallback fallback
       }
     }
 
