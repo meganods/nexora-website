@@ -13,6 +13,7 @@ interface Notification {
   type: "booking" | "approval" | "payment" | "system" | "promo";
   isRead: boolean;
   createdAt: string;
+  recipientType?: "admin" | "vendor" | "user";
   metadata?: Record<string, any>;
 }
 
@@ -21,6 +22,8 @@ interface Props {
   tokenKey?: "admin_token" | "nexora_token";
   /** Theme: 'dark' for sidebar use (admin/partner), 'light' for navbar use */
   theme?: "dark" | "light";
+  /** Explicitly pass the role to avoid relying on localStorage which can be stale during testing */
+  userRole?: "admin" | "vendor" | "user";
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -51,7 +54,7 @@ function timeAgo(dateStr: string): string {
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
-export default function NotificationBell({ tokenKey, theme = "dark" }: Props) {
+export default function NotificationBell({ tokenKey, theme = "dark", userRole = "user" }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -150,23 +153,9 @@ export default function NotificationBell({ tokenKey, theme = "dark" }: Props) {
     setOpen((s) => !s);
   };
 
-  // ── Deep link helper ──────────────────────────────────────────────────────
-  const getDeepLink = (n: Notification): string | null => {
-    const meta = n.metadata || {};
-    if (n.type === "booking" && meta.bookingId) return `/bookings/${meta.bookingId}`;
-    if (n.type === "payment" && meta.bookingId) return `/bookings/${meta.bookingId}`;
-    if (n.type === "approval" && meta.serviceId) return `/services/${meta.serviceId}`;
-    if (n.type === "promo") return "/services";
-    return null;
-  };
-
   const handleNotificationClick = async (n: Notification) => {
+    // Always mark as read, never redirect
     if (!n.isRead) await markOneRead(n._id);
-    const link = getDeepLink(n);
-    if (link) {
-      setOpen(false);
-      router.push(link);
-    }
   };
 
   // ── Styles ────────────────────────────────────────────────────────────────
@@ -255,9 +244,7 @@ export default function NotificationBell({ tokenKey, theme = "dark" }: Props) {
                     <li
                       key={n._id}
                       onClick={() => handleNotificationClick(n)}
-                      className={`flex items-start gap-3 px-4 py-3.5 transition-colors group ${
-                        getDeepLink(n) ? 'cursor-pointer' : 'cursor-default'
-                      } ${
+                      className={`flex items-start gap-3 px-4 py-3.5 transition-colors group cursor-default ${
                         n.isRead ? "bg-white hover:bg-cream/30" : "bg-blue-50/40 hover:bg-blue-50/70"
                       }`}
                     >
@@ -304,7 +291,16 @@ export default function NotificationBell({ tokenKey, theme = "dark" }: Props) {
             <p className="text-[10px] text-foreground/40 font-medium">
               {notifications.length > 0 ? `${notifications.length} notification${notifications.length !== 1 ? 's' : ''}` : ''}
             </p>
-            <button onClick={() => { setOpen(false); router.push('/profile/notifications'); }}
+            <button onClick={() => { 
+                setOpen(false); 
+                // Always trust the explicit userRole prop or fallback to theme check.
+                const isVendor = userRole === 'vendor' || (typeof window !== 'undefined' && localStorage.getItem('nexora_role') === 'vendor');
+                if (isVendor) {
+                  router.push('/partner/bookings'); // As requested: redirect to active booking page
+                } else {
+                  router.push('/profile/notifications'); // Customer notification page
+                }
+              }}
               className="text-[10px] font-bold text-primary hover:underline">
               View All →
             </button>

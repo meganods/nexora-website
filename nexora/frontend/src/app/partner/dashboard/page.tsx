@@ -282,7 +282,7 @@ export default function PartnerDashboard() {
             )}
           </div>
           
-          <NotificationBell tokenKey="nexora_token" theme="light" />
+          <NotificationBell tokenKey="nexora_token" theme="light" userRole="vendor" />
           
           <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm cursor-pointer">
              <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${vendor?.name || 'Partner'}`} alt="avatar" className="w-full h-full object-cover" />

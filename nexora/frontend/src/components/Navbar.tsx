@@ -377,7 +377,7 @@ export default function Navbar() {
             <div className="h-8 w-24 bg-gold/20 rounded-full animate-pulse" />
           ) : user ? (
             <>
-              <NotificationBell tokenKey="nexora_token" theme="light" />
+              <NotificationBell tokenKey="nexora_token" theme="light" userRole="user" />
               <Link href="/profile" className="flex items-center gap-2 border border-gold/40 rounded-full px-4 py-2 hover:bg-beige transition-all text-primary font-semibold text-sm">
                 <User className="w-4 h-4 text-primary flex-shrink-0" />
                 <span>Profile</span>
@@ -393,7 +393,7 @@ export default function Navbar() {
 
         {/* Mobile hamburger */}
         <div className="md:hidden flex items-center gap-2 flex-shrink-0">
-          {user && <NotificationBell tokenKey="nexora_token" theme="light" />}
+          {user && <NotificationBell tokenKey="nexora_token" theme="light" userRole="user" />}
           <button onClick={() => setMobileOpen(!mobileOpen)}
             className="p-2 rounded-full hover:bg-beige transition-colors text-foreground">
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

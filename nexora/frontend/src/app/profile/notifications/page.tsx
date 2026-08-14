@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Bell, Trash2, CheckCircle2, AlertTriangle, Loader2, BookOpen, ShieldCheck, IndianRupee, Megaphone, Star, ChevronDown } from 'lucide-react';
 import api from '@/lib/api';
-import { useRouter } from 'next/navigation';
 
 type NotifType = 'all' | 'booking' | 'payment' | 'promo' | 'approval' | 'review' | 'support' | 'system';
 
@@ -22,16 +21,7 @@ const FILTER_TABS: { key: NotifType; label: string }[] = [
   { key: 'promo', label: 'Promos' }, { key: 'review', label: 'Reviews' }, { key: 'support', label: 'Support' }, { key: 'system', label: 'System' },
 ];
 
-function getDeepLink(n: any): string | null {
-  const meta = n.metadata || {};
-  if (n.type === 'booking'  && meta.bookingId) return `/bookings/${meta.bookingId}`;
-  if (n.type === 'payment'  && meta.bookingId) return `/bookings/${meta.bookingId}`;
-  if (n.type === 'approval' && meta.serviceId) return `/services/${meta.serviceId}`;
-  if (n.type === 'promo')  return '/services';
-  if (n.type === 'review') return '/profile/reviews';
-  if (n.type === 'support') return '/profile/support';
-  return null;
-}
+// No deep-link navigation for user notifications — informational cards only
 
 function timeAgo(d: string): string {
   const diff = Date.now() - new Date(d).getTime();
@@ -44,7 +34,6 @@ function timeAgo(d: string): string {
 }
 
 export default function UserNotificationsPage() {
-  const router = useRouter();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -95,10 +84,9 @@ export default function UserNotificationsPage() {
     catch { alert('Failed to delete notification.'); }
   };
 
+  // Mark as read only — no navigation for user notifications
   const handleNotificationClick = async (n: any) => {
     if (!n.isRead) await handleMarkRead(n._id);
-    const link = getDeepLink(n);
-    if (link) router.push(link);
   };
 
   return (
@@ -167,10 +155,9 @@ export default function UserNotificationsPage() {
             {notifications.map(n => {
               const meta = TYPE_META[n.type] ?? TYPE_META.system;
               const Icon = meta.icon;
-              const hasLink = !!getDeepLink(n);
               return (
                 <div key={n._id} onClick={() => handleNotificationClick(n)}
-                  className={`bg-white border rounded-3xl p-4 sm:p-5 flex items-start gap-4 transition-all group ${hasLink ? 'cursor-pointer' : 'cursor-default'} ${n.isRead ? 'border-gold/15 opacity-80 hover:opacity-100 hover:border-gold/30' : 'border-primary/30 shadow-md'}`}>
+                  className={`bg-white border rounded-3xl p-4 sm:p-5 flex items-start gap-4 transition-all group cursor-default ${n.isRead ? 'border-gold/15 opacity-80 hover:opacity-100 hover:border-gold/30' : 'border-primary/30 shadow-md'}`}>
                   <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${meta.bg}`}>
                     <Icon className={`w-5 h-5 ${meta.color}`} />
                   </div>
