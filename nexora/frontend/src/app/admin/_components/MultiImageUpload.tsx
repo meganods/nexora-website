@@ -98,7 +98,7 @@ export default function MultiImageUpload({
               <ImageIcon className="w-6 h-6 text-[#C3AB84]" />
             )}
             <span className="text-xs font-semibold text-[#0F3D30]">
-              {uploading ? 'Uploading...' : 'Upload multiple via Cloudinary'}
+              {uploading ? 'Uploading...' : 'Upload multiple images'}
             </span>
             <span className="text-[10px] text-foreground/40">PNG, JPG, WEBP up to 10MB</span>
           </label>

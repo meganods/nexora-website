@@ -179,7 +179,7 @@ function ImageUpload({
               <ImageIcon className="w-6 h-6 text-gold" />
             )}
             <span className="text-xs font-medium text-primary">
-              {uploading ? 'Uploading...' : 'Upload file to Cloudinary'}
+              {uploading ? 'Uploading...' : 'Upload Image'}
             </span>
           </label>
           {error && <p className="text-[10px] text-red-500 mt-2 text-center">{error}</p>}
