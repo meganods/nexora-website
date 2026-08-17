@@ -24,6 +24,23 @@ router.get('/categories', async (req, res) => {
   }
 });
 
+// ─── Public Reviews ───────────────────────────────────────────────────────────
+router.get('/reviews', async (req, res) => {
+  try {
+    const reviews = await Review.find({ approvalStatus: 'APPROVED' })
+      .populate('userId', 'name profilePhoto')
+      .populate('categoryId', 'name')
+      .populate('serviceId', 'name')
+      .sort({ rating: -1, createdAt: -1 })
+      .limit(6)
+      .lean();
+    res.json({ success: true, reviews });
+  } catch (error) {
+    console.error('Error fetching public reviews:', error);
+    res.status(500).json({ success: false, message: 'Server error fetching reviews' });
+  }
+});
+
 // ─── Contact Us ───────────────────────────────────────────────────────────────
 router.post('/contact', async (req, res) => {
   try {

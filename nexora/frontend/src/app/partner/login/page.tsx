@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ShieldCheck, Mail, Lock, Eye, EyeOff, Loader2, Star, CheckCircle2, Smartphone } from 'lucide-react';
 import api from '@/lib/api';
+import toast from 'react-hot-toast';
 
 
 
@@ -16,8 +17,7 @@ function PartnerLoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-
+  
   const signupSuccess = searchParams.get('signup_success') === 'true';
 
   const [step, setStep] = useState<'credentials' | 'otp'>('credentials');
@@ -25,10 +25,10 @@ function PartnerLoginForm() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    
 
     if (!identifier.trim() || !password) {
-      setError('Please fill in both email/phone and password fields.');
+      toast.error('Please fill in both email/phone and password fields.');
       return;
     }
 
@@ -43,7 +43,7 @@ function PartnerLoginForm() {
         setStep('otp');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Invalid credentials.');
+      toast.error(err.response?.data?.message || 'Login failed. Invalid credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -51,10 +51,10 @@ function PartnerLoginForm() {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    
 
     if (!otp.trim() || otp.length < 4) {
-      setError('Please enter a valid OTP.');
+      toast.error('Please enter a valid OTP.');
       return;
     }
 
@@ -71,7 +71,7 @@ function PartnerLoginForm() {
         router.push('/partner/dashboard');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid OTP.');
+      toast.error(err.response?.data?.message || 'Invalid OTP.');
     } finally {
       setIsLoading(false);
     }

@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/auth";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { LocationProvider } from "@/lib/location";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -38,6 +39,7 @@ export default function RootLayout({
           <AuthProvider>
             <LocationProvider>
               <LayoutWrapper>
+                <Toaster position="top-right" />
                 {children}
               </LayoutWrapper>
             </LocationProvider>

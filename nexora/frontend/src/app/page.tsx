@@ -696,6 +696,7 @@ export default function Home() {
   const [dbOffers, setDbOffers] = useState<any[]>([]);
   const [homepageDeals, setHomepageDeals] = useState<any[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [liveReviews, setLiveReviews] = useState<any[]>([]);
   const { user } = useAuth();
   const { selectedCity } = useLocation();
 
@@ -718,7 +719,17 @@ export default function Home() {
     fetchDbOffers();
     fetchHomepageDeals();
     fetchWishlist();
+    fetchLiveReviews();
   }, [user]);
+
+  const fetchLiveReviews = async () => {
+    try {
+      const { data } = await api.get('/public/reviews');
+      if (data?.reviews) {
+        setLiveReviews(data.reviews);
+      }
+    } catch { /* silent fallback */ }
+  };
 
   const fetchWishlist = async () => {
     const local = localStorage.getItem('user_wishlist');
@@ -1792,7 +1803,14 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {STATIC_REVIEWS.map((review, i) => (
+            {(liveReviews.length > 0 ? liveReviews.map(r => ({
+              rating: r.rating,
+              text: r.reviewText,
+              service: r.serviceId?.name || r.categoryId?.name || 'General Service',
+              avatar: r.userId?.name?.charAt(0) || 'U',
+              name: r.userId?.name || 'Customer',
+              date: new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+            })) : STATIC_REVIEWS).slice(0, 3).map((review, i) => (
               <div key={i} className="bg-white rounded-3xl p-7 border border-gold/15 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col">
                 {/* Stars */}
                 <div className="flex gap-1 mb-4">
