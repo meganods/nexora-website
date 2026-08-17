@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, Mail, Lock, Shield, Sparkles, CheckCircle2, TrendingUp, Users } from 'lucide-react';
+import { Loader2, Mail, Lock, Shield, Sparkles, CheckCircle2, TrendingUp, Users, Eye, EyeOff } from 'lucide-react';
 import api from '@/lib/api';
 
 export default function AdminLogin() {
@@ -12,6 +12,7 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,13 +142,20 @@ export default function AdminLogin() {
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
                   <input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="block w-full rounded-2xl border border-[#C3AB84]/30 bg-white py-3.5 pl-12 pr-4 text-[#0F3D30] shadow-sm text-sm focus:outline-none focus:border-[#0F3D30] focus:ring-1 focus:ring-[#0F3D30] transition-all placeholder-foreground/30 font-medium"
+                    className="block w-full rounded-2xl border border-[#C3AB84]/30 bg-white py-3.5 pl-12 pr-12 text-[#0F3D30] shadow-sm text-sm focus:outline-none focus:border-[#0F3D30] focus:ring-1 focus:ring-[#0F3D30] transition-all placeholder-foreground/30 font-medium"
                     placeholder="••••••••"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/30 hover:text-[#0F3D30] transition-colors focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
             </div>
