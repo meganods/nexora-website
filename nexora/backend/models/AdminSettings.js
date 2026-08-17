@@ -10,10 +10,10 @@ const adminSettingsSchema = new mongoose.Schema(
     // ─── Assignment Engine Weights (must sum to 100) ───────────────────────
     weights: {
       categoryMatch: { type: Number, default: 30, min: 0, max: 100 }, // exact category = full score
-      location:      { type: Number, default: 25, min: 0, max: 100 }, // inverse distance score
-      availability:  { type: Number, default: 20, min: 0, max: 100 }, // isOnline == true
-      workload:      { type: Number, default: 15, min: 0, max: 100 }, // fewer active bookings = higher
-      rating:        { type: Number, default: 10, min: 0, max: 100 }, // avgRating (future-proof)
+      location: { type: Number, default: 25, min: 0, max: 100 }, // inverse distance score
+      availability: { type: Number, default: 20, min: 0, max: 100 }, // isOnline == true
+      workload: { type: Number, default: 15, min: 0, max: 100 }, // fewer active bookings = higher
+      rating: { type: Number, default: 10, min: 0, max: 100 }, // avgRating (future-proof)
     },
 
     // ─── Geo Search Radius ─────────────────────────────────────────────────

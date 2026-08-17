@@ -2123,7 +2123,7 @@ function AdminDashboardContent() {
                     <div key={cat._id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors gap-3">
                       <div className="min-w-0">
                         <h3 className="font-medium text-sm text-foreground">{cat.name}</h3>
-                        <p className="text-xs text-foreground/50 font-mono">{cat.slug} · Fee: {cat.platformFeePercentage || 10}%</p>
+                        <p className="text-xs text-foreground/50 font-mono">{cat.slug} · Fee: {cat.platformFeePercentage ?? 10}%</p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${cat.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
