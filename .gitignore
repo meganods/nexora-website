@@ -23,3 +23,5 @@ pnpm-debug.log*
 
 # Do NOT ignore .env files per user instruction
 # .env
+
+.env

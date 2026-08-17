@@ -14,6 +14,7 @@ import {
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth';
+import { useLocation } from '@/lib/location';
 
 // ─── Category data (static for icons) ────────────────────────────────────────
 const CATEGORIES = [
@@ -680,6 +681,7 @@ export default function Home() {
   // ── State ──────────────────────────────────────────────────────────────────
   const [popularServices, setPopularServices] = useState<any[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
+  const [partnersLoading, setPartnersLoading] = useState(true);
   const [approvedPartners, setApprovedPartners] = useState<any[]>([]);
   const [promoCode, setPromoCode] = useState<string>('');
   const [promoText, setPromoText] = useState<string>('');
@@ -695,6 +697,7 @@ export default function Home() {
   const [homepageDeals, setHomepageDeals] = useState<any[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const { user } = useAuth();
+  const { selectedCity } = useLocation();
 
   const partnersScrollRef = useRef<HTMLDivElement>(null);
   const popScrollRef = useRef<HTMLDivElement>(null);
@@ -707,7 +710,6 @@ export default function Home() {
   useEffect(() => {
     fetchPopularServices();
     fetchPromoSettings();
-    fetchApprovedPartners();
     fetchMostBooked();
     fetchDbCategories();
     fetchAllServices();
@@ -884,12 +886,20 @@ export default function Home() {
     } catch (e) { /* silent */ }
   };
 
-  const fetchApprovedPartners = async () => {
+  const fetchApprovedPartners = async (city: string) => {
+    setPartnersLoading(true);
     try {
-      const { data } = await api.get('/public/partners?limit=6');
+      const url = city ? `/public/partners?limit=6&city=${encodeURIComponent(city)}` : '/public/partners?limit=6';
+      const { data } = await api.get(url);
       if (data.success) setApprovedPartners(data.partners);
-    } catch (e) { /* silent */ }
+    } catch (e) { /* silent */ } finally {
+      setPartnersLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchApprovedPartners(selectedCity);
+  }, [selectedCity]);
 
   // ── Promo banner data ──────────────────────────────────────────────────────
   const promoBanners = [
@@ -1472,7 +1482,11 @@ export default function Home() {
             </p>
           </div>
 
-          {approvedPartners.length === 0 ? (
+          {partnersLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+            </div>
+          ) : approvedPartners.length === 0 ? (
             <div className="relative">
               {/* Static placeholder cards when no DB data */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1586,11 +1600,6 @@ export default function Home() {
             </div>
           )}
 
-          <div className="flex justify-center mt-10">
-            <Link href="/services" className="flex items-center gap-2 text-sm font-semibold text-primary border border-primary/20 px-6 py-2.5 rounded-full hover:bg-primary hover:text-white transition-all">
-              View All Professionals <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
       </div>
                 )}
               </React.Fragment>

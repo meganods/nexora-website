@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, CheckCircle2, Clock, HelpCircle, Star } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle2, Clock, HelpCircle, Star, MapPin } from 'lucide-react';
 import api from '@/lib/api';
 
 export default function BookingTrackingPage() {
@@ -12,17 +12,18 @@ export default function BookingTrackingPage() {
 
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
 
   // States
   const timelineStates = [
-    { key: 'PENDING_PAYMENT', label: 'Payment Pending', desc: 'Awaiting customer payment confirmation' },
-    { key: 'REQUESTED', label: 'Booking Requested', desc: 'Booking received, finding matching partners' },
-    { key: 'ASSIGNED', label: 'Partner Assigned', desc: 'Partner scored and auto-assigned' },
+    { key: 'PENDING_PAYMENT', label: 'Payment Pending', desc: 'Awaiting customer payment' },
+    { key: 'REQUESTED', label: 'Booking Confirmed', desc: 'Booking received and verified' },
+    { key: 'ASSIGNED', label: 'Partner Assigned', desc: 'Partner matched and assigned' },
     { key: 'PARTNER_ACCEPTED', label: 'Partner Accepted', desc: 'Partner accepted the booking details' },
-    { key: 'ON_THE_WAY', label: 'Partner On The Way', desc: 'Partner has started transit to location' },
-    { key: 'ARRIVED', label: 'Partner Arrived', desc: 'Partner arrived at service location' },
-    { key: 'OTP_VERIFICATION', label: 'OTP Verified', desc: 'Secure OTP validation complete' },
-    { key: 'IN_PROGRESS', label: 'Service In Progress', desc: 'Service execution started' },
+    { key: 'ON_THE_WAY', label: 'On The Way', desc: 'Partner has started transit' },
+    { key: 'ARRIVED', label: 'Arrived', desc: 'Partner reached your location' },
+    { key: 'OTP_VERIFICATION', label: 'OTP Verification', desc: 'Secure OTP validation complete' },
+    { key: 'IN_PROGRESS', label: 'Work Started', desc: 'Service execution is in progress' },
     { key: 'COMPLETED', label: 'Service Completed', desc: 'Service execution successful' },
   ];
 
@@ -38,9 +39,11 @@ export default function BookingTrackingPage() {
       const { data } = await api.get(`/bookings/${bookingId}`);
       if (data) {
         setBooking(data);
+        setErrorMsg('');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setErrorMsg(err.response?.data?.message || 'Booking not found or access denied.');
     } finally {
       setLoading(false);
     }
@@ -54,10 +57,11 @@ export default function BookingTrackingPage() {
     );
   }
 
-  if (!booking) {
+  if (errorMsg || !booking) {
     return (
       <div className="min-h-screen bg-cream p-6 flex flex-col items-center justify-center text-center">
         <h2 className="font-serif text-lg font-bold text-primary mb-2">Booking Not Found</h2>
+        <p className="text-xs text-foreground/50 max-w-sm mb-6">{errorMsg || 'Booking not found or access denied.'}</p>
         <button onClick={() => router.back()} className="text-xs font-bold bg-primary text-white px-5 py-2.5 rounded-xl">
           Go Back
         </button>
@@ -86,14 +90,36 @@ export default function BookingTrackingPage() {
       <main className="max-w-xl mx-auto p-6 space-y-8">
         {/* Partner Info Header snippet */}
         {booking.vendorId && (
-          <div className="bg-white border border-gold/15 rounded-3xl p-5 shadow-sm flex items-center gap-4">
-            <div className="w-11 h-11 rounded-full bg-cream overflow-hidden border border-gold/20 flex-shrink-0">
-              <img src={booking.vendorId.profilePicture || `https://api.dicebear.com/7.x/notionists/svg?seed=${booking.vendorId.name}`} alt="vendor" className="w-full h-full object-cover" />
+          <div className="space-y-4">
+            <div className="bg-white border border-gold/15 rounded-3xl p-5 shadow-sm flex items-center gap-4">
+              <div className="w-11 h-11 rounded-full bg-cream overflow-hidden border border-gold/20 flex-shrink-0">
+                <img src={booking.vendorId.profilePicture || `https://api.dicebear.com/7.x/notionists/svg?seed=${booking.vendorId.name}`} alt="vendor" className="w-full h-full object-cover" />
+              </div>
+              <div>
+                <p className="text-xs text-foreground/45">Partner assigned to your service:</p>
+                <p className="text-sm font-bold text-primary">{booking.vendorId.name}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-foreground/45">Partner assigned to your service:</p>
-              <p className="text-sm font-bold text-primary">{booking.vendorId.name}</p>
-            </div>
+
+            {booking.tripLocation && booking.status === 'ON_THE_WAY' && (
+              <div className="bg-white border border-gold/15 rounded-3xl p-5 shadow-sm space-y-2">
+                <h4 className="text-xs font-bold text-[#0F3D30] uppercase tracking-wide">Live Trip Location</h4>
+                <p className="text-xs text-foreground/60 flex items-start gap-1.5 leading-normal">
+                  <MapPin className="w-4 h-4 text-[#C3AB84] flex-shrink-0 mt-0.5" />
+                  <span>{booking.tripLocation.address || 'Partner in transit...'}</span>
+                </p>
+                {booking.tripLocation.etaMins !== null && (
+                  <p className="text-xs text-foreground/60 font-semibold pl-5">
+                    Estimated Arrival: <span className="text-[#C3AB84] font-bold">{booking.tripLocation.etaMins} mins</span>
+                  </p>
+                )}
+                {booking.tripLocation.lastUpdated && (
+                  <p className="text-[9px] text-foreground/45 pl-5">
+                    Last Updated: {new Date(booking.tripLocation.lastUpdated).toLocaleTimeString()}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 

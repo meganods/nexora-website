@@ -333,16 +333,19 @@ exports.getBookingDetails = async (req, res) => {
     const booking = await Booking.findById(req.params.id)
       .populate('serviceId')
       .populate('packageId')
-      .populate('vendorId', 'name phone profilePicture')
+      .populate('vendorId', 'name phone profilePicture location')
       .populate('customerId', 'name phone');
       
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
     
     // Auth check: Only customer or assigned vendor or admin can view
-    if (req.user.role === 'customer' && booking.customerId._id.toString() !== req.user.userId) {
+    const isCustomer = req.user.role === 'customer' || req.user.role === 'user';
+    const isVendor = req.user.role === 'vendor' || req.user.role === 'partner';
+
+    if (isCustomer && booking.customerId && booking.customerId._id.toString() !== req.user.userId.toString()) {
       return res.status(403).json({ message: 'Forbidden' });
     }
-    if (req.user.role === 'vendor' && booking.vendorId && booking.vendorId._id.toString() !== req.user.userId) {
+    if (isVendor && booking.vendorId && booking.vendorId._id.toString() !== req.user.userId.toString()) {
       return res.status(403).json({ message: 'Forbidden' });
     }
     

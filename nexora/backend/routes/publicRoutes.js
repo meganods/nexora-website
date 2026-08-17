@@ -297,7 +297,13 @@ router.get('/settings', async (req, res) => {
 router.get('/partners', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 6;
-    const partners = await ServicePartner.find({ kycStatus: 'APPROVED', isActive: true })
+    const filter = { kycStatus: 'APPROVED', isActive: true };
+    
+    if (req.query.city && req.query.city !== 'All Cities') {
+      filter['location.city'] = new RegExp(`^${req.query.city}$`, 'i');
+    }
+
+    const partners = await ServicePartner.find(filter)
       .select('name category rating totalCompletedJobs location.city createdAt')
       .sort({ rating: -1, totalCompletedJobs: -1 })
       .limit(limit);

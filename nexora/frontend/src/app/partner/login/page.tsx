@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldCheck, Mail, Lock, Eye, EyeOff, Loader2, Star, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, Eye, EyeOff, Loader2, Star, CheckCircle2, Smartphone } from 'lucide-react';
 import api from '@/lib/api';
 
 
@@ -49,30 +49,30 @@ function PartnerLoginForm() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full bg-cream">
+    <div className="flex flex-col lg:grid lg:grid-cols-2 min-h-screen w-full bg-[#FAF6F0]">
       {/* Left Column Visual Banner */}
-      <div className="relative hidden lg:block overflow-hidden bg-[#1D3B31]">
-        <div className="absolute inset-0 bg-[#1D3B31]/85 z-10" />
+      <div className="relative h-[55vh] lg:h-full lg:block overflow-hidden bg-[#1D3B31]">
+        <div className="absolute inset-0 bg-[#1D3B31]/75 z-10" />
         <div className="absolute inset-0">
-          <img 
-            src="/images/hero-interior.png" 
-            alt="Premium Home Services Partner Banner" 
+          <img
+            src="/images/hero-interior.png"
+            alt="Premium Home Services Partner Banner"
             className="w-full h-full object-cover"
           />
         </div>
-        <div className="relative z-20 h-full flex flex-col justify-between p-16 text-white max-w-xl">
-          <div className="font-serif text-3xl font-bold tracking-tight">Nexora</div>
-          
-          <div className="space-y-6">
+        <div className="relative z-20 h-full flex flex-col justify-center lg:justify-between p-6 sm:p-12 lg:p-16 text-white max-w-xl pb-16">
+          <div className="font-serif text-2xl lg:text-3xl font-bold tracking-tight mb-8 lg:mb-0">Nexora</div>
+
+          <div className="space-y-4 lg:space-y-6">
             <h2 className="font-serif text-4xl sm:text-5xl font-extrabold leading-tight">
-              Grow Your Business with Nexora
+              Grow Your Business with <span className="text-[#E8DCC4]">Nexora</span>
             </h2>
-            <p className="text-white/70 text-base leading-relaxed">
+            <p className="text-white/80 text-sm lg:text-base leading-relaxed pr-4">
               Join Nexora and connect with customers looking for trusted professionals. Manage leads, track bookings, and increase earnings.
             </p>
           </div>
 
-          <div className="flex gap-6 items-center text-xs font-semibold text-gold/90">
+          <div className="hidden lg:flex gap-6 items-center text-xs font-semibold text-gold/90 mt-12">
             <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" /> 100% Verified Jobs</span>
             <span className="w-1.5 h-1.5 rounded-full bg-gold/50" />
             <span className="flex items-center gap-1.5"><Star className="w-4 h-4 fill-current" /> Premium Partner Network</span>
@@ -81,11 +81,11 @@ function PartnerLoginForm() {
       </div>
 
       {/* Right Column Service Partner Login Form */}
-      <div className="flex items-center justify-center p-6 sm:p-12 lg:p-16">
-        <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-10 border border-gold/20 shadow-xl shadow-primary/5">
-          <div className="text-center mb-6">
+      <div className="flex flex-col items-center justify-start lg:justify-center w-full relative z-30 -mt-10 lg:mt-0 lg:p-16">
+        <div className="w-full lg:max-w-md bg-[#FAF6F0] lg:bg-white rounded-t-[2.5rem] lg:rounded-3xl p-8 sm:p-10 lg:border lg:border-gold/20 lg:shadow-xl shadow-primary/5 min-h-[50vh]">
+          <div className="text-center mb-6 pt-2 lg:pt-0">
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-primary">Service Partner Login</h1>
-            <p className="mt-1.5 text-xs sm:text-sm text-foreground/50">Access your professional service partner portal</p>
+            <p className="mt-2 text-xs sm:text-sm text-foreground/60">Access your professional service partner portal</p>
           </div>
 
           {signupSuccess && (
@@ -142,6 +142,13 @@ function PartnerLoginForm() {
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Login'}
             </button>
 
+            <div className="flex items-center gap-4 my-6 opacity-70">
+              <div className="flex-1 h-px bg-[#C3AB84]/40" />
+              <span className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest">OR</span>
+              <div className="flex-1 h-px bg-[#C3AB84]/40" />
+            </div>
+
+
 
           </form>
 
@@ -149,6 +156,13 @@ function PartnerLoginForm() {
             Interested in joining?{' '}
             <Link href="/partner/register" className="font-bold text-primary hover:underline">Register as Service Partner</Link>
           </div>
+        </div>
+
+        {/* Mobile footer links */}
+        <div className="lg:hidden flex justify-center gap-4 py-8 text-[10px] font-medium text-foreground/60">
+          <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> 100% Verified Jobs</span>
+          <span className="w-px h-3 bg-foreground/20" />
+          <span className="flex items-center gap-1.5"><Star className="w-3.5 h-3.5" /> Premium Partner Benefits</span>
         </div>
       </div>
     </div>

@@ -80,7 +80,7 @@ const bookingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['PENDING_PAYMENT', 'REQUESTED', 'ASSIGNED', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'],
+    enum: ['PENDING_PAYMENT', 'REQUESTED', 'ASSIGNED', 'PARTNER_ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'OTP_VERIFICATION', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'],
     default: 'PENDING_PAYMENT'
   },
   paymentDetails: {
@@ -111,6 +111,24 @@ const bookingSchema = new mongoose.Schema({
   afterPhotoUrl: {
     type: String,
     default: null
+  },
+  tripLocation: {
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      default: null
+    },
+    address: {
+      type: String,
+      default: ''
+    },
+    etaMins: {
+      type: Number,
+      default: null
+    },
+    lastUpdated: {
+      type: Date,
+      default: null
+    }
   },
   addons: [{
     name: { type: String, required: true },

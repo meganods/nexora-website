@@ -23,7 +23,7 @@ const reviewSchema = new mongoose.Schema(
     serviceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Service",
-      required: true,
+      required: false,
     },
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,

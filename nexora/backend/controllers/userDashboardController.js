@@ -185,12 +185,30 @@ exports.submitReview = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: "You have already reviewed this booking." });
   }
 
+  // Look up Service & Category IDs dynamically from the database
+  let serviceId = booking.serviceId;
+  let categoryId = null;
+
+  if (serviceId) {
+    const Service = require('../models/Service');
+    const service = await Service.findById(serviceId);
+    if (service) {
+      categoryId = service.categoryId;
+    }
+  } else if (booking.packageId) {
+    const Package = require('../models/Package');
+    const pkg = await Package.findById(booking.packageId);
+    if (pkg && pkg.categoryIds && pkg.categoryIds.length > 0) {
+      categoryId = pkg.categoryIds[0];
+    }
+  }
+
   const review = await Review.create({
     bookingId,
     userId,
     vendorId: booking.vendorId,
-    serviceId: booking.serviceId,
-    categoryId: booking.categoryId,
+    serviceId: serviceId || null,
+    categoryId,
     rating,
     reviewText,
     images: images || [],
@@ -349,19 +367,19 @@ exports.toggleWishlist = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: "Only customer accounts can use the wishlist." });
   }
 
-  if (!user.wishlist) user.wishlist = [];
-
-  const index = user.wishlist.indexOf(serviceId);
+  const userWishlist = user.wishlist || [];
+  const index = userWishlist.findIndex(id => id.toString() === serviceId.toString());
   let added = false;
+  
   if (index > -1) {
-    user.wishlist.splice(index, 1);
+    await User.findByIdAndUpdate(req.user.id, { $pull: { wishlist: serviceId } });
   } else {
-    user.wishlist.push(serviceId);
+    await User.findByIdAndUpdate(req.user.id, { $addToSet: { wishlist: serviceId } });
     added = true;
   }
 
-  await user.save();
-  res.json({ success: true, added, wishlist: user.wishlist });
+  const updatedUser = await User.findById(req.user.id).select('wishlist');
+  return res.json({ success: true, wishlist: updatedUser.wishlist, added });
 });
 
 // ─── Search History ──────────────────────────────────────────────────────────

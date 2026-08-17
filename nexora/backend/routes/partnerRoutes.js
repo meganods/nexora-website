@@ -13,6 +13,7 @@ const {
   acceptRequest,
   rejectRequest,
   updateRequestStatus,
+  updateTripLocation,
   getMyRequests,
   getPartnerProfile,
   getPartnerServices,
@@ -56,6 +57,7 @@ router.get("/available-requests", protect, authorize("vendor"), requireApprovedV
 router.post("/requests/:id/accept", protect, authorize("vendor"), requireApprovedVendor, acceptRequest);
 router.post("/requests/:id/reject", protect, authorize("vendor"), requireApprovedVendor, rejectRequest);
 router.patch("/requests/:id/status", protect, authorize("vendor"), requireApprovedVendor, updateRequestStatus);
+router.put("/bookings/:id/trip-location", protect, authorize("vendor"), requireApprovedVendor, updateTripLocation);
 router.get("/my-requests", protect, authorize("vendor"), requireApprovedVendor, getMyRequests);
 router.get("/profile", protect, authorize("vendor"), getPartnerProfile); // Profile can be loaded by anyone
 
