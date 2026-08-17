@@ -350,7 +350,21 @@ function CheckoutForm() {
   };
 
   if (authLoading || loadingDetails) {
-    return <div className="min-h-screen bg-cream flex items-center justify-center"><Loader2 className="w-10 h-10 text-primary animate-spin" /></div>;
+    return (
+      <div className="min-h-screen bg-[#FAF6F0] pb-24 font-sans pt-12 animate-pulse">
+        <div className="container mx-auto px-4 lg:px-12 max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="h-64 bg-gray-200 rounded-3xl w-full border border-gray-100"></div>
+              <div className="h-48 bg-gray-200 rounded-3xl w-full border border-gray-100"></div>
+            </div>
+            <div className="lg:col-span-1">
+              <div className="h-96 bg-gray-200 rounded-3xl w-full border border-gray-100"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {

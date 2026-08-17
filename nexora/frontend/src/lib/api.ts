@@ -37,4 +37,34 @@ function getCookie(name: string): string | null {
   return null;
 }
 
+// Simple in-memory cache for GET requests
+const apiCache = new Map<string, { timestamp: number; data: any }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+const originalGet = api.get;
+api.get = async function (url: string, config?: any) {
+  // Only cache GET requests that don't explicitly disable it
+  const cacheKey = url + (config?.params ? JSON.stringify(config.params) : '');
+  
+  if (cacheKey && apiCache.has(cacheKey)) {
+    const cached = apiCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return Promise.resolve(cached.data);
+    } else {
+      apiCache.delete(cacheKey);
+    }
+  }
+
+  const response = await originalGet.call(api, url, config);
+  
+  if (response.status >= 200 && response.status < 300) {
+    // Only cache public routes or data that is safe to cache
+    if (url.includes('/public/')) {
+      apiCache.set(cacheKey, { timestamp: Date.now(), data: response });
+    }
+  }
+  
+  return response;
+};
+
 export default api;

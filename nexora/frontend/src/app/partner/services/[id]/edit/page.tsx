@@ -172,28 +172,18 @@ export default function PartnerEditServicePage() {
         </div>
 
         <div>
-          <label className={lbl}>Service Image (Thumbnail)</label>
+          <label className={lbl}>Main Image</label>
           <div className="bg-[#F8F4EE] border border-[#C3AB84]/30 rounded-2xl p-4">
-            <ImageUpload label="Service Image" imageUrl={imageUrl} imagePublicId={imagePublicId} onChange={(url, pubId) => {
-              setImageUrl(url);
-              setImagePublicId(pubId);
-            }} />
-          </div>
-        </div>
-
-        <div>
-          <label className={lbl}>Service Banner Image</label>
-          <div className="bg-[#F8F4EE] border border-[#C3AB84]/30 rounded-2xl p-4">
-            <ImageUpload label="Service Banner Image" imageUrl={bannerImageUrl} imagePublicId="" onChange={(url) => {
+            <ImageUpload label="Main Image" imageUrl={bannerImageUrl} imagePublicId="" onChange={(url) => {
               setBannerImageUrl(url);
             }} />
           </div>
         </div>
 
         <div>
-          <label className={lbl}>Gallery Images</label>
+          <label className={lbl}>Sub Images</label>
           <div className="bg-[#F8F4EE] border border-[#C3AB84]/30 rounded-2xl p-4">
-            <MultiImageUpload label="Gallery Images" imageUrls={serviceImages} onChange={(urls) => {
+            <MultiImageUpload label="Sub Images" imageUrls={serviceImages} onChange={(urls) => {
               setServiceImages(urls);
             }} />
           </div>

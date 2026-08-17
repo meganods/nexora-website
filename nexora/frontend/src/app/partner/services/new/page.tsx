@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2, Check, Plus } from 'lucide-react';
 import api from '@/lib/api';
 import ImageUpload from '@/app/admin/_components/ImageUpload';
+import MultiImageUpload from '@/app/admin/_components/MultiImageUpload';
 
 const inp = 'w-full border border-[#C3AB84]/30 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#0F3D30] bg-[#F8F4EE] transition-colors';
 const lbl = 'block text-xs font-semibold text-foreground/60 mb-1.5 uppercase tracking-wider';
@@ -18,8 +19,8 @@ export default function PartnerNewServicePage() {
   const [description, setDescription] = useState('');
   const [basePrice, setBasePrice] = useState(0);
   const [estimatedDurationMins, setEstimatedDurationMins] = useState(60);
-  const [imageUrl, setImageUrl] = useState('');
-  const [imagePublicId, setImagePublicId] = useState('');
+  const [bannerImageUrl, setBannerImageUrl] = useState('');
+  const [serviceImages, setServiceImages] = useState<string[]>([]);
   const [inclusionInput, setInclusionInput] = useState('');
   const [inclusions, setInclusions] = useState<string[]>([]);
   
@@ -57,8 +58,8 @@ export default function PartnerNewServicePage() {
         basePrice,
         estimatedDurationMins,
         inclusions,
-        imageUrl,
-        imagePublicId,
+        bannerImageUrl,
+        serviceImages,
         parentId: null
       };
       const { data } = await api.post('/partner/created-services', payload);
@@ -135,11 +136,19 @@ export default function PartnerNewServicePage() {
         </div>
 
         <div>
-          <label className={lbl}>Service Image</label>
+          <label className={lbl}>Main Image</label>
           <div className="bg-[#F8F4EE] border border-[#C3AB84]/30 rounded-2xl p-4">
-            <ImageUpload label="Service Image" imageUrl={imageUrl} imagePublicId={imagePublicId} onChange={(url, pubId) => {
-              setImageUrl(url);
-              setImagePublicId(pubId);
+            <ImageUpload label="Main Image" imageUrl={bannerImageUrl} imagePublicId="" onChange={(url) => {
+              setBannerImageUrl(url);
+            }} />
+          </div>
+        </div>
+
+        <div>
+          <label className={lbl}>Sub Images</label>
+          <div className="bg-[#F8F4EE] border border-[#C3AB84]/30 rounded-2xl p-4">
+            <MultiImageUpload label="Sub Images" imageUrls={serviceImages} onChange={(urls) => {
+              setServiceImages(urls);
             }} />
           </div>
         </div>

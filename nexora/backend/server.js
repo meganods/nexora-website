@@ -80,6 +80,12 @@ const startServer = async () => {
 
   app.listen(PORT, () => {
     console.log(`Nexora API listening on port ${PORT} [${process.env.NODE_ENV || "development"}]`);
+    
+    // Prevent Render Free Tier from sleeping
+    const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${PORT}`;
+    setInterval(() => {
+      fetch(`${BACKEND_URL}/api/health`).catch(err => console.error("Ping failed:", err.message));
+    }, 14 * 60 * 1000); // 14 minutes
   });
 };
 
