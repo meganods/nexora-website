@@ -177,7 +177,7 @@ export default function PartnerRegisterWizard() {
 
       const payload: any = {
         onboardingStep: step,
-        category: selectedCategories.join(', '),
+        category: selectedCategories.length > 0 ? selectedCategories.join(', ') : undefined,
         businessType,
         experience,
         teamSize,

@@ -23,91 +23,6 @@ interface DashboardChartsProps {
   categoryData?: { name: string; percentage: number; color: string }[];
 }
 
-// Today (hourly)
-const todayRevenue = [
-  { label: '09:00', value: 12000 },
-  { label: '11:00', value: 24000 },
-  { label: '13:00', value: 45000 },
-  { label: '15:00', value: 38000 },
-  { label: '17:00', value: 52000 },
-  { label: '19:00', value: 68000 },
-];
-const todayBookings = [
-  { label: '09:00', value: 5 },
-  { label: '11:00', value: 12 },
-  { label: '13:00', value: 18 },
-  { label: '15:00', value: 15 },
-  { label: '17:00', value: 22 },
-  { label: '19:00', value: 30 },
-];
-
-// Week (daily)
-const weekRevenue = [
-  { label: 'Mon', value: 150000 },
-  { label: 'Tue', value: 180000 },
-  { label: 'Wed', value: 220000 },
-  { label: 'Thu', value: 210000 },
-  { label: 'Fri', value: 290000 },
-  { label: 'Sat', value: 350000 },
-  { label: 'Sun', value: 380000 },
-];
-const weekBookings = [
-  { label: 'Mon', value: 45 },
-  { label: 'Tue', value: 52 },
-  { label: 'Wed', value: 68 },
-  { label: 'Thu', value: 60 },
-  { label: 'Fri', value: 85 },
-  { label: 'Sat', value: 110 },
-  { label: 'Sun', value: 125 },
-];
-
-// Month (mockup)
-const monthRevenue = [
-  { label: '01 May', value: 120000 },
-  { label: '06 May', value: 340000 },
-  { label: '11 May', value: 410000 },
-  { label: '16 May', value: 650000 },
-  { label: '21 May', value: 380000 },
-  { label: '26 May', value: 520000 },
-  { label: '31 May', value: 690000 },
-];
-const monthBookings = [
-  { label: '01 May', value: 40 },
-  { label: '06 May', value: 180 },
-  { label: '11 May', value: 240 },
-  { label: '16 May', value: 420 },
-  { label: '21 May', value: 290 },
-  { label: '26 May', value: 320 },
-  { label: '31 May', value: 380 },
-];
-
-// Year (monthly)
-const yearRevenue = [
-  { label: 'Jan', value: 1200000 },
-  { label: 'Feb', value: 1450000 },
-  { label: 'Mar', value: 1800000 },
-  { label: 'Apr', value: 1650000 },
-  { label: 'May', value: 2200000 },
-  { label: 'Jun', value: 2500000 },
-];
-const yearBookings = [
-  { label: 'Jan', value: 450 },
-  { label: 'Feb', value: 520 },
-  { label: 'Mar', value: 680 },
-  { label: 'Apr', value: 610 },
-  { label: 'May', value: 890 },
-  { label: 'Jun', value: 1120 },
-];
-
-const defaultCategoryData = [
-  { name: 'Home Cleaning', value: 28, color: '#0F3D30' },
-  { name: 'Beauty & Salon', value: 22, color: '#C3AB84' },
-  { name: 'Appliance Repair', value: 18, color: '#3B82F6' },
-  { name: 'Pest Control', value: 12, color: '#8B5CF6' },
-  { name: 'Painting', value: 10, color: '#EC4899' },
-  { name: 'Others', value: 10, color: '#9CA3AF' }
-];
-
 const TIMEFRAME_LABELS = {
   today: 'Today',
   week: 'This Week',
@@ -146,32 +61,20 @@ export default function DashboardCharts({
   // Get active dataset based on selection
   const getRevenueDataset = () => {
     if (revenueData && revenueData.length > 0) return revenueData;
-    switch (revenueTimeframe) {
-      case 'today': return todayRevenue;
-      case 'week': return weekRevenue;
-      case 'year': return yearRevenue;
-      case 'month':
-      default: return monthRevenue;
-    }
+    return [];
   };
 
   const getBookingDataset = () => {
     if (bookingData && bookingData.length > 0) return bookingData;
-    switch (bookingTimeframe) {
-      case 'today': return todayBookings;
-      case 'week': return weekBookings;
-      case 'year': return yearBookings;
-      case 'month':
-      default: return monthBookings;
-    }
+    return [];
   };
 
   const activeRevenueData = getRevenueDataset();
   const activeBookingData = getBookingDataset();
 
-  const activeCategoryData = categoryData && categoryData.length > 0 
-    ? categoryData.map(c => ({ name: c.name, value: c.percentage, color: c.color })) 
-    : defaultCategoryData;
+  const activeCategoryData = categoryData && categoryData.length > 0
+    ? categoryData.map(c => ({ name: c.name, value: c.percentage, color: c.color }))
+    : [];
 
   const totalBookingsVal = activeBookingData.reduce((acc, curr) => acc + curr.value, 0);
   const totalRevenueVal = activeRevenueData.reduce((acc, curr) => acc + curr.value, 0);
@@ -227,8 +130,8 @@ export default function DashboardCharts({
             <AreaChart data={activeRevenueData} margin={{ top: 5, right: 5, left: 10, bottom: 5 }}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0F3D30" stopOpacity={0.25}/>
-                  <stop offset="95%" stopColor="#0F3D30" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#0F3D30" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#0F3D30" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="label" stroke="#94a3b8" fontSize={9} tickLine={false} axisLine={false} />
@@ -289,8 +192,8 @@ export default function DashboardCharts({
             <AreaChart data={activeBookingData} margin={{ top: 5, right: 5, left: 10, bottom: 5 }}>
               <defs>
                 <linearGradient id="colorBooking" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#C3AB84" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#C3AB84" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#C3AB84" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#C3AB84" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="label" stroke="#94a3b8" fontSize={9} tickLine={false} axisLine={false} />
@@ -329,12 +232,12 @@ export default function DashboardCharts({
               </PieChart>
             </ResponsiveContainer>
             {/* Absolute Label inside Donut hole */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+            {/* <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
               <span className="text-[14px] font-bold text-primary font-serif leading-none">
-                2,847
+
               </span>
               <span className="text-[8px] text-foreground/40 font-bold uppercase mt-0.5">Bookings</span>
-            </div>
+            </div> */}
           </div>
           {/* Legend Items */}
           <div className="flex-grow space-y-1.5 text-[10px] font-semibold text-foreground/75 min-w-0 pr-1">

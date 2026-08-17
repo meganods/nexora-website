@@ -21,7 +21,7 @@ export default function CategoryDetailPage() {
   const [allCategories, setAllCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // Accordion active FAQ state
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(null);
 
@@ -80,7 +80,7 @@ export default function CategoryDetailPage() {
   useEffect(() => {
     if (category) {
       document.title = category.seoTitle || `${category.name} - Nexora Services`;
-      
+
       let metaDesc = document.querySelector('meta[name="description"]');
       if (!metaDesc) {
         metaDesc = document.createElement('meta');
@@ -132,14 +132,14 @@ export default function CategoryDetailPage() {
 
   // Fallback approved reviews if MongoDB lists are empty
   const reviewsList = category.reviews && category.reviews.length > 0 ? category.reviews : [
-    {
-      _id: 'r1',
-      userId: { name: 'Ritika Sharma', profilePhoto: '' },
-      rating: 5,
-      reviewText: 'Very professional carpenter. Fixed my wardrobe perfectly.',
-      images: [],
-      createdAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString()
-    },
+    // {
+    //   _id: 'r1',
+    //   userId: { name: 'Ritika Sharma', profilePhoto: '' },
+    //   rating: 5,
+    //   reviewText: 'Very professional carpenter. Fixed my wardrobe perfectly.',
+    //   images: [],
+    //   createdAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString()
+    // },
     {
       _id: 'r2',
       userId: { name: 'Arun Verma', profilePhoto: '' },
@@ -167,7 +167,7 @@ export default function CategoryDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF6F0] pb-28 md:pb-36 font-sans">
-      
+
       {/* Category Hero Block */}
       <div className="relative w-full overflow-hidden bg-[#0F3D30] text-[#FAF6F0] py-12 md:py-16">
         {/* Dynamic Banner Image Background */}
@@ -182,7 +182,7 @@ export default function CategoryDetailPage() {
 
         <div className="container mx-auto px-4 sm:px-8 lg:px-12 relative z-10">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
-            
+
             {/* Left side info panel */}
             <div className="w-full lg:w-7/12 space-y-6">
               <div className="flex items-center gap-2 text-white/50 text-[10px] uppercase font-bold tracking-wider">
@@ -302,10 +302,10 @@ export default function CategoryDetailPage() {
 
       {/* Main split grid */}
       <div className="container mx-auto px-4 sm:px-8 lg:px-12 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* Left column content */}
         <div className="lg:col-span-2 space-y-12" id="services-section">
-          
+
           {/* Related categories list (Mobile/Tablet Only, Swapped to Top) */}
           {relatedCategories.length > 0 && (
             <div className="block lg:hidden bg-white border border-[#C3AB84]/15 p-5 rounded-3xl space-y-4 shadow-sm text-center">
@@ -319,7 +319,7 @@ export default function CategoryDetailPage() {
               </button>
             </div>
           )}
-          
+
           {/* Services mapping grid */}
           <div className="space-y-6">
             <div className="flex justify-between items-center border-b border-[#C3AB84]/10 pb-4">
@@ -382,7 +382,7 @@ export default function CategoryDetailPage() {
 
                         <div className="space-y-1 sm:space-y-2">
                           <h3 className="font-serif text-[11px] sm:text-sm font-bold text-[#0F3D30] line-clamp-1 h-4 sm:h-5">{svc.name}</h3>
-                          
+
                           <div className="flex flex-wrap items-center gap-1 sm:gap-3 text-[8px] sm:text-[10px] text-foreground/50">
                             <span className="flex items-center gap-0.5 text-amber-500 font-bold">
                               <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current" />
@@ -442,7 +442,7 @@ export default function CategoryDetailPage() {
           {category.howItWorks && category.howItWorks.length > 0 && (
             <div className="bg-white border border-[#C3AB84]/15 rounded-3xl p-6 shadow-sm space-y-6">
               <h2 className="font-serif text-base font-bold text-[#0F3D30]">How It Works</h2>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
                 {category.howItWorks.map((step: any, idx: number) => (
                   <div key={idx} className="space-y-2 relative group text-center sm:text-left">
@@ -531,7 +531,7 @@ export default function CategoryDetailPage() {
 
         {/* Right column: Reviews feed, categories list recommendations */}
         <div className="space-y-8">
-          
+
           {/* Reviews Widget */}
           <div className="bg-white border border-[#C3AB84]/15 p-5 rounded-3xl space-y-4 shadow-sm">
             <div className="flex justify-between items-center border-b border-gray-50 pb-3">
@@ -804,7 +804,7 @@ export default function CategoryDetailPage() {
       {showServicesModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fadeIn">
           <div className="bg-white rounded-3xl border border-gold/30 w-full max-w-lg max-h-[80vh] flex flex-col justify-between overflow-hidden shadow-2xl animate-scaleIn">
-            
+
             {/* Header */}
             <div className="p-5 border-b border-gray-100 bg-[#FAF6F0]/20 flex justify-between items-center flex-shrink-0">
               <div>
@@ -865,7 +865,7 @@ export default function CategoryDetailPage() {
                           </span>
                         </div>
                       </div>
-                      
+
                       <div className="text-right shrink-0">
                         <span className="text-xs font-serif font-black text-[#0F3D30]">₹{finalPrice}</span>
                         {isDiscounted && (
@@ -895,7 +895,7 @@ export default function CategoryDetailPage() {
       {showCategoriesModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fadeIn">
           <div className="bg-white rounded-3xl border border-gold/30 w-full max-w-lg max-h-[80vh] flex flex-col justify-between overflow-hidden shadow-2xl animate-scaleIn">
-            
+
             {/* Header */}
             <div className="p-5 border-b border-gray-100 bg-[#FAF6F0]/20 flex justify-between items-center flex-shrink-0">
               <div>

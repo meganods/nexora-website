@@ -55,22 +55,41 @@ export default function ServiceDetailPage() {
     if (slug) fetchServiceDetails();
   }, [slug]);
 
-  const toggleWishlist = () => {
+  const toggleWishlist = async () => {
     if (!service) return;
+
+    const role = typeof window !== 'undefined' ? localStorage.getItem('nexora_role') : '';
+    if (role !== 'user') {
+      toast.error('Please login or create an account to wishlist services.');
+      router.push('/login');
+      return;
+    }
+
     const local = localStorage.getItem('user_wishlist');
     let list: string[] = [];
     if (local) list = JSON.parse(local);
 
-    if (list.includes(service._id)) {
+    const isAdded = !list.includes(service._id);
+    if (!isAdded) {
       list = list.filter(id => id !== service._id);
       setIsFav(false);
-      toast.success(`${service.name} removed from wishlist`);
     } else {
       list.push(service._id);
       setIsFav(true);
-      toast.success(`${service.name} added to wishlist`);
     }
     localStorage.setItem('user_wishlist', JSON.stringify(list));
+
+    try {
+      await api.post('/user/dashboard/wishlist/toggle', { serviceId: service._id });
+      toast.success(isAdded ? `${service.name} added to wishlist` : `${service.name} removed from wishlist`);
+    } catch (err) {
+      console.error(err);
+      // Revert UI on failure
+      const reverted = isAdded ? list.filter(id => id !== service._id) : [...list, service._id];
+      setIsFav(!isAdded);
+      localStorage.setItem('user_wishlist', JSON.stringify(reverted));
+      toast.error('Failed to update wishlist. Please try again.');
+    }
   };
 
   const toggleAddon = (addon: any) => {
@@ -143,13 +162,13 @@ export default function ServiceDetailPage() {
     1: Math.round((service.reviewCount || 0) * 0.01) || 0,
   };
   const mockReviews = service.reviews && service.reviews.length > 0 ? service.reviews : [
-    {
-      _id: 'rev1',
-      userId: { name: 'Ritika Sharma', profilePhoto: '' },
-      rating: 5,
-      comment: 'Very relaxing experience. Therapist was very professional and polite.',
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-    },
+    // {
+    //   _id: 'rev1',
+    //   userId: { name: 'Ritika Sharma', profilePhoto: '' },
+    //   rating: 5,
+    //   comment: 'Very relaxing experience. Therapist was very professional and polite.',
+    //   createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+    // },
     {
       _id: 'rev2',
       userId: { name: 'Aman Verma', profilePhoto: '' },
@@ -168,7 +187,7 @@ export default function ServiceDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF6F0] pb-24 font-sans text-foreground">
-      
+
       <div className="container mx-auto px-4 sm:px-8 lg:px-12 pt-4 pb-2">
         <div className="flex items-center gap-2 text-foreground/45 text-xs">
           <Link href="/" className="hover:text-[#0F3D30] transition-colors font-medium">Home</Link>
@@ -189,11 +208,11 @@ export default function ServiceDetailPage() {
 
       <div className="container mx-auto px-4 sm:px-8 lg:px-12 mt-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          
+
           <div className="lg:col-span-2 space-y-8">
-            
+
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 bg-white p-6 rounded-3xl border border-[#C3AB84]/15 shadow-sm">
-              
+
               <div className="md:col-span-6 space-y-3">
                 <div className="relative h-64 md:h-72 w-full rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 group">
                   <img
@@ -201,8 +220,8 @@ export default function ServiceDetailPage() {
                     alt={`${service.name}-${activeImageIndex}`}
                     className="w-full h-full object-cover transition-all duration-300"
                   />
-                  
-                   {/* Category & Promo Badges (Left) */}
+
+                  {/* Category & Promo Badges (Left) */}
                   <div className="absolute top-3.5 left-3.5 flex flex-col items-start gap-1.5 z-10">
                     <span className="bg-[#0F3D30] text-[#C3AB84] text-[8px] font-bold px-2 py-0.5 rounded-md shadow-sm uppercase tracking-wider">
                       {service.categoryId?.name || 'Service'}
@@ -290,7 +309,7 @@ export default function ServiceDetailPage() {
                         <span className="font-bold text-[#0F3D30]">{service.estimatedDurationMins} mins</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 bg-[#FAF6F0] border border-gold/10 p-2.5 rounded-xl">
                       <UserCheck className="w-4 h-4 text-[#C3AB84]" />
                       <div>
@@ -344,70 +363,70 @@ export default function ServiceDetailPage() {
               </div>
 
               {service.vendor && (
-              <div className="bg-white border border-[#C3AB84]/15 rounded-3xl p-6 shadow-sm space-y-4">
-                <h3 className="font-serif text-base font-bold text-[#0F3D30] border-b border-gold/10 pb-2 flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-emerald-600" /> Assigned Service Professional
-                </h3>
-                
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-                  {/* Photo / initials */}
-                  <div className="w-16 h-16 rounded-2xl bg-[#C3AB84]/10 border border-[#C3AB84]/30 flex items-center justify-center text-[#0F3D30] text-xl font-bold font-serif overflow-hidden shrink-0">
-                    {service.vendor.profilePictureUrl ? (
-                      <img src={service.vendor.profilePictureUrl} alt={service.vendor.name} className="w-full h-full object-cover" />
-                    ) : (
-                      service.vendor.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-                    )}
-                  </div>
+                <div className="bg-white border border-[#C3AB84]/15 rounded-3xl p-6 shadow-sm space-y-4">
+                  <h3 className="font-serif text-base font-bold text-[#0F3D30] border-b border-gold/10 pb-2 flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-emerald-600" /> Assigned Service Professional
+                  </h3>
 
-                  <div className="flex-1 text-center sm:text-left space-y-2">
-                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                      <h4 className="font-serif text-sm font-bold text-[#0F3D30]">{service.vendor.name}</h4>
-                      <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 uppercase tracking-wider">
-                        Verified
-                      </span>
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                    {/* Photo / initials */}
+                    <div className="w-16 h-16 rounded-2xl bg-[#C3AB84]/10 border border-[#C3AB84]/30 flex items-center justify-center text-[#0F3D30] text-xl font-bold font-serif overflow-hidden shrink-0">
+                      {service.vendor.profilePictureUrl ? (
+                        <img src={service.vendor.profilePictureUrl} alt={service.vendor.name} className="w-full h-full object-cover" />
+                      ) : (
+                        service.vendor.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                      )}
                     </div>
 
-                    {service.vendor.kycDetails?.businessName && (
-                      <p className="text-[#C3AB84] text-xs font-bold font-serif">{service.vendor.kycDetails.businessName}</p>
-                    )}
+                    <div className="flex-1 text-center sm:text-left space-y-2">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                        <h4 className="font-serif text-sm font-bold text-[#0F3D30]">{service.vendor.name}</h4>
+                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 uppercase tracking-wider">
+                          Verified
+                        </span>
+                      </div>
 
-                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-[11px] text-foreground/60">
-                      <span className="flex items-center gap-0.5 text-amber-500 font-bold">
-                        <Star className="w-3.5 h-3.5 fill-current" />
-                        <span className="text-[#0F3D30]">{(service.vendor.rating || 4.8).toFixed(1)}</span>
-                      </span>
-                      <span>•</span>
-                      <span>{service.vendor.experience || 5}+ Years Exp</span>
-                      <span>•</span>
-                      <span>{service.vendor.totalCompletedJobs || 120}+ Completed Jobs</span>
+                      {service.vendor.kycDetails?.businessName && (
+                        <p className="text-[#C3AB84] text-xs font-bold font-serif">{service.vendor.kycDetails.businessName}</p>
+                      )}
+
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-[11px] text-foreground/60">
+                        <span className="flex items-center gap-0.5 text-amber-500 font-bold">
+                          <Star className="w-3.5 h-3.5 fill-current" />
+                          <span className="text-[#0F3D30]">{(service.vendor.rating || 4.8).toFixed(1)}</span>
+                        </span>
+                        <span>•</span>
+                        <span>{service.vendor.experience || 5}+ Years Exp</span>
+                        <span>•</span>
+                        <span>{service.vendor.totalCompletedJobs || 120}+ Completed Jobs</span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex sm:flex-col gap-2 shrink-0 w-full sm:w-auto">
-                    <Link
-                      href={`/partner/${service.vendor._id}`}
-                      className="flex-1 sm:flex-none text-center px-4 py-2 border border-[#0F3D30]/20 text-[#0F3D30] text-xs font-bold rounded-full hover:bg-[#FAF6F0] transition-colors"
-                    >
-                      View Profile
-                    </Link>
-                    <button
-                      onClick={() => {
-                        window.scrollTo({
-                          top: document.getElementById('checkout-action-box')?.offsetTop || 300,
-                          behavior: 'smooth'
-                        });
-                      }}
-                      className="flex-1 sm:flex-none text-center px-4 py-2 bg-[#0F3D30] text-white text-xs font-bold rounded-full hover:bg-[#0F3D30]/90 transition-colors"
-                    >
-                      Book Service
-                    </button>
+                    {/* Actions */}
+                    <div className="flex sm:flex-col gap-2 shrink-0 w-full sm:w-auto">
+                      <Link
+                        href={`/partner/${service.vendor._id}`}
+                        className="flex-1 sm:flex-none text-center px-4 py-2 border border-[#0F3D30]/20 text-[#0F3D30] text-xs font-bold rounded-full hover:bg-[#FAF6F0] transition-colors"
+                      >
+                        View Profile
+                      </Link>
+                      <button
+                        onClick={() => {
+                          window.scrollTo({
+                            top: document.getElementById('checkout-action-box')?.offsetTop || 300,
+                            behavior: 'smooth'
+                          });
+                        }}
+                        className="flex-1 sm:flex-none text-center px-4 py-2 bg-[#0F3D30] text-white text-xs font-bold rounded-full hover:bg-[#0F3D30]/90 transition-colors"
+                      >
+                        Book Service
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-            
-            {categoryServices.length > 0 && (
+              )}
+
+              {categoryServices.length > 0 && (
                 <div className="bg-white border border-[#C3AB84]/15 rounded-3xl p-6 shadow-sm space-y-4">
                   <h3 className="font-serif text-base font-bold text-[#0F3D30]">Frequently Booked Together</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -417,9 +436,8 @@ export default function ServiceDetailPage() {
                         <div
                           key={s._id}
                           onClick={() => toggleTogether(s)}
-                          className={`bg-white border rounded-2xl p-3 flex flex-col justify-between hover:border-[#0F3D30]/40 transition-all shadow-sm group hover:-translate-y-0.5 cursor-pointer ${
-                            isSelected ? 'border-[#0F3D30] bg-[#0F3D30]/5 ring-1 ring-[#0F3D30]' : 'border-[#C3AB84]/15'
-                          }`}
+                          className={`bg-white border rounded-2xl p-3 flex flex-col justify-between hover:border-[#0F3D30]/40 transition-all shadow-sm group hover:-translate-y-0.5 cursor-pointer ${isSelected ? 'border-[#0F3D30] bg-[#0F3D30]/5 ring-1 ring-[#0F3D30]' : 'border-[#C3AB84]/15'
+                            }`}
                         >
                           <div className="space-y-2">
                             <div className="h-24 w-full rounded-xl overflow-hidden bg-gray-50 border border-gray-100 relative">
@@ -436,9 +454,8 @@ export default function ServiceDetailPage() {
                           </div>
                           <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-50">
                             <span className="text-xs font-serif font-black text-[#0F3D30]">₹{s.basePrice}</span>
-                            <div className={`p-1 rounded-full border transition-all ${
-                              isSelected ? 'bg-[#0F3D30] border-[#0F3D30] text-white' : 'bg-[#FAF6F0] border-gold/15 text-[#0F3D30]'
-                            }`}>
+                            <div className={`p-1 rounded-full border transition-all ${isSelected ? 'bg-[#0F3D30] border-[#0F3D30] text-white' : 'bg-[#FAF6F0] border-gold/15 text-[#0F3D30]'
+                              }`}>
                               {isSelected ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
                             </div>
                           </div>
@@ -452,7 +469,7 @@ export default function ServiceDetailPage() {
 
             <div className="bg-white border border-[#C3AB84]/15 rounded-3xl p-6 shadow-sm space-y-6">
               <h3 className="font-serif text-base font-bold text-[#0F3D30]">How It Works</h3>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative">
                 {[
                   { title: "Book Service", desc: "Select time and slot" },
@@ -592,7 +609,7 @@ export default function ServiceDetailPage() {
           </div>
 
           <div className="sticky top-24 space-y-6">
-            
+
             <div id="checkout-action-box" className="bg-white border border-[#C3AB84]/20 p-6 rounded-3xl space-y-6 shadow-sm">
               <div className="space-y-1">
                 <span className="text-[9px] uppercase tracking-widest font-bold text-foreground/45">Starting from</span>
@@ -615,9 +632,8 @@ export default function ServiceDetailPage() {
                         <div
                           key={idx}
                           onClick={() => toggleAddon(addon)}
-                          className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
-                            isChecked ? 'border-[#0F3D30] bg-[#0F3D30]/5' : 'border-gray-150 hover:bg-[#FAF6F0]/50'
-                          }`}
+                          className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${isChecked ? 'border-[#0F3D30] bg-[#0F3D30]/5' : 'border-gray-150 hover:bg-[#FAF6F0]/50'
+                            }`}
                         >
                           <div className="flex items-center gap-2">
                             {isChecked ? (

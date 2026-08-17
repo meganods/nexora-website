@@ -181,6 +181,13 @@ function ServicesList() {
   };
 
   const toggleWishlist = async (id: string, serviceName: string = 'Service') => {
+    const role = typeof window !== 'undefined' ? localStorage.getItem('nexora_role') : '';
+    if (role !== 'user') {
+      toast.error('Please login or create an account to wishlist services.');
+      router.push('/login');
+      return;
+    }
+
     let updated = [...wishlist];
     const isAdded = !updated.includes(id);
     if (!isAdded) {
@@ -190,11 +197,6 @@ function ServicesList() {
     }
     setWishlist(updated);
     localStorage.setItem('user_wishlist', JSON.stringify(updated));
-    const role = typeof window !== 'undefined' ? localStorage.getItem('nexora_role') : '';
-    if (role !== 'user') {
-      toast.success(isAdded ? `${serviceName} added to wishlist (offline)` : `${serviceName} removed from wishlist (offline)`);
-      return;
-    }
 
     try {
       await api.post('/user/dashboard/wishlist/toggle', { serviceId: id });
@@ -205,7 +207,7 @@ function ServicesList() {
       const reverted = isAdded ? wishlist.filter(x => x !== id) : [...wishlist, id];
       setWishlist(reverted);
       localStorage.setItem('user_wishlist', JSON.stringify(reverted));
-      toast.error('Failed to update wishlist. Please login.');
+      toast.error('Failed to update wishlist. Please try again.');
     }
   };
 

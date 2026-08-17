@@ -143,64 +143,51 @@ export default function CustomerLocationsPage() {
           </div>
         )}
 
-        {/* State Wise Hierarchy Listings */}
+        {/* City Wise Hierarchy Listings */}
         <div className="space-y-6">
           <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#0F3D30]">Browse Locations We Serve</h2>
-          {activeStates.length === 0 ? (
+          {activeCities.length === 0 ? (
             <p className="text-sm text-foreground/40 italic">No locations configured yet.</p>
           ) : (
             <div className="space-y-8">
-              {activeStates.map((state: any) => {
-                const stateCities = activeCities.filter((c: any) => (c.stateId?._id || c.stateId) === state._id);
-                if (stateCities.length === 0) return null;
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {activeCities.map((city: any) => {
+                  const cityAreas = activeAreas.filter((a: any) => (a.cityId?._id || a.cityId) === city._id);
+                  return (
+                    <div key={city._id} className="bg-white rounded-3xl border border-gold/20 p-6 shadow-sm space-y-4">
+                      <h4 className="font-serif font-bold text-[#0F3D30] text-lg flex items-center justify-between border-b pb-3">
+                        <span className="flex items-center gap-2"><Building className="w-5 h-5 text-gold" /> {city.name}</span>
+                        <Link href={`/services?city=${city.name}`} className="text-xs text-primary font-bold hover:underline flex items-center gap-1 bg-primary/5 px-3 py-1.5 rounded-full">
+                          Book Services <ArrowRight className="w-3 h-3" />
+                        </Link>
+                      </h4>
 
-                return (
-                  <div key={state._id} className="bg-white rounded-3xl border border-gold/20 p-6 sm:p-8 space-y-6 shadow-sm">
-                    <h3 className="font-serif text-lg sm:text-xl font-bold text-[#0F3D30] flex items-center gap-2 border-b pb-3">
-                      <Globe className="w-5 h-5 text-gold" /> {state.name}
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {stateCities.map((city: any) => {
-                        const cityAreas = activeAreas.filter((a: any) => (a.cityId?._id || a.cityId) === city._id);
-                        return (
-                          <div key={city._id} className="space-y-3 p-4 border border-gold/10 rounded-2xl bg-[#F8F4EE]/40">
-                            <h4 className="font-serif font-bold text-primary text-base flex items-center justify-between">
-                              <span>{city.name}</span>
-                              <Link href={`/services?city=${city.name}`} className="text-xs text-gold font-bold hover:underline flex items-center gap-0.5">
-                                Book Services <ArrowRight className="w-3 h-3" />
-                              </Link>
-                            </h4>
-
-                            {cityAreas.length > 0 ? (
-                              <div className="space-y-2">
-                                <p className="text-[10px] font-bold text-foreground/50 uppercase tracking-widest">Active Areas</p>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {cityAreas.map((area: any) => {
-                                    const areaPincodes = activePincodes.filter((p: any) => (p.areaId?._id || p.areaId) === area._id);
-                                    const pincodeText = areaPincodes.length > 0 ? ` (${areaPincodes.map((p: any) => p.code).join(', ')})` : '';
-                                    return (
-                                      <Link
-                                        key={area._id}
-                                        href={`/services?city=${city.name}&area=${area.name}`}
-                                        className="bg-white px-3 py-1 rounded-full text-xs font-semibold text-primary border border-gold/15 hover:border-gold/45 transition-colors"
-                                      >
-                                        {area.name}{pincodeText}
-                                      </Link>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            ) : (
-                              <p className="text-xs text-foreground/40 italic">Entire city area serviceable.</p>
-                            )}
+                      {cityAreas.length > 0 ? (
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-bold text-foreground/50 uppercase tracking-widest">Active Areas</p>
+                          <div className="flex flex-wrap gap-2">
+                            {cityAreas.map((area: any) => {
+                              const areaPincodes = activePincodes.filter((p: any) => (p.areaId?._id || p.areaId) === area._id);
+                              const pincodeText = areaPincodes.length > 0 ? ` (${areaPincodes.map((p: any) => p.code).join(', ')})` : '';
+                              return (
+                                <Link
+                                  key={area._id}
+                                  href={`/services?city=${city.name}&area=${area.name}`}
+                                  className="bg-[#F8F4EE] px-3 py-1.5 rounded-full text-xs font-semibold text-primary border border-gold/15 hover:border-gold/45 transition-colors"
+                                >
+                                  {area.name}{pincodeText}
+                                </Link>
+                              );
+                            })}
                           </div>
-                        );
-                      })}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-foreground/40 italic">Entire city area serviceable.</p>
+                      )}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

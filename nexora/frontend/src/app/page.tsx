@@ -738,6 +738,13 @@ export default function Home() {
   };
 
   const toggleWishlist = async (id: string, serviceName: string) => {
+    const role = typeof window !== 'undefined' ? localStorage.getItem('nexora_role') : '';
+    if (!user || role !== 'user') {
+      toast.error('Please login or create an account to wishlist services.');
+      window.location.href = '/login';
+      return;
+    }
+
     let updated = [...wishlist];
     const isAdded = !updated.includes(id);
     if (!isAdded) {
@@ -747,12 +754,6 @@ export default function Home() {
     }
     setWishlist(updated);
     localStorage.setItem('user_wishlist', JSON.stringify(updated));
-
-    const role = typeof window !== 'undefined' ? localStorage.getItem('nexora_role') : '';
-    if (!user || role !== 'user') {
-      toast.success(isAdded ? `${serviceName} added to wishlist (offline)` : `${serviceName} removed from wishlist (offline)`);
-      return;
-    }
 
     try {
       await api.post('/user/dashboard/wishlist/toggle', { serviceId: id });
@@ -850,27 +851,10 @@ export default function Home() {
       if (Array.isArray(data) && data.length > 0) {
         setPopularServices(data);
       } else {
-        // Fallback mock items
-        const items = [
-          { _id: 'ac-service', name: 'AC Service', slug: 'ac-service', description: 'Expert diagnosis and split AC service.', basePrice: 299, estimatedDuration: '60 mins', rating: 4.8, reviewCount: 2500, categoryId: { name: 'AC & Appliance Repair', slug: 'ac-appliance' }, imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=500&q=80' },
-          { _id: 'bathroom-cleaning', name: 'Bathroom Cleaning', slug: 'bathroom-cleaning', description: 'Deep scrubbing and toilet sanitisation.', basePrice: 399, estimatedDuration: '60 mins', rating: 4.9, reviewCount: 3000, categoryId: { name: 'Cleaning & Pest Control', slug: 'cleaning-pest' }, imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=500&q=80' },
-          { _id: 'womens-haircut', name: "Women's Haircut", slug: 'womens-haircut', description: 'Professional haircut with blow-dry styling.', basePrice: 299, estimatedDuration: '60 mins', rating: 4.8, reviewCount: 1800, categoryId: { name: 'Salon for Women', slug: 'salon-women' }, imageUrl: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=500&q=80' },
-          { _id: 'electrician-visit', name: 'Electrician Visit', slug: 'electrician-visit', description: 'Switch, socket, MCB wiring repairs.', basePrice: 99, estimatedDuration: '30 mins', rating: 4.7, reviewCount: 2000, categoryId: { name: 'Electrician & Plumbing', slug: 'electrician-plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80' },
-          { _id: 'sofa-cleaning', name: 'Sofa Cleaning', slug: 'sofa-cleaning', description: 'Deep wet & dry fabric cleaning.', basePrice: 499, estimatedDuration: '90 mins', rating: 4.8, reviewCount: 850, categoryId: { name: 'Cleaning & Pest Control', slug: 'cleaning-pest' }, imageUrl: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=500&q=80' },
-          { _id: 'ro-service', name: 'RO Service', slug: 'ro-service', description: 'Water filter check and servicing.', basePrice: 299, estimatedDuration: '45 mins', rating: 4.7, reviewCount: 650, categoryId: { name: 'Water Purifier Service', slug: 'water-purifier' }, imageUrl: 'https://images.unsplash.com/photo-1585832770485-e68a5dbfad52?auto=format&fit=crop&w=500&q=80' }
-        ];
-        setPopularServices(items);
+        setPopularServices([]);
       }
     } catch (e) {
-      // Mock fallbacks on error
-      setPopularServices([
-        { _id: 'ac-service', name: 'AC Service', slug: 'ac-service', description: 'Expert diagnosis and split AC service.', basePrice: 299, estimatedDuration: '60 mins', rating: 4.8, reviewCount: 2500, categoryId: { name: 'AC & Appliance Repair', slug: 'ac-appliance' }, imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=500&q=80' },
-        { _id: 'bathroom-cleaning', name: 'Bathroom Cleaning', slug: 'bathroom-cleaning', description: 'Deep scrubbing and toilet sanitisation.', basePrice: 399, estimatedDuration: '60 mins', rating: 4.9, reviewCount: 3000, categoryId: { name: 'Cleaning & Pest Control', slug: 'cleaning-pest' }, imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=500&q=80' },
-        { _id: 'womens-haircut', name: "Women's Haircut", slug: 'womens-haircut', description: 'Professional haircut with blow-dry styling.', basePrice: 299, estimatedDuration: '60 mins', rating: 4.8, reviewCount: 1800, categoryId: { name: 'Salon for Women', slug: 'salon-women' }, imageUrl: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=500&q=80' },
-        { _id: 'electrician-visit', name: 'Electrician Visit', slug: 'electrician-visit', description: 'Switch, socket, MCB wiring repairs.', basePrice: 99, estimatedDuration: '30 mins', rating: 4.7, reviewCount: 2000, categoryId: { name: 'Electrician & Plumbing', slug: 'electrician-plumbing' }, imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80' },
-        { _id: 'sofa-cleaning', name: 'Sofa Cleaning', slug: 'sofa-cleaning', description: 'Deep wet & dry fabric cleaning.', basePrice: 499, estimatedDuration: '90 mins', rating: 4.8, reviewCount: 850, categoryId: { name: 'Cleaning & Pest Control', slug: 'cleaning-pest' }, imageUrl: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=500&q=80' },
-        { _id: 'ro-service', name: 'RO Service', slug: 'ro-service', description: 'Water filter check and servicing.', basePrice: 299, estimatedDuration: '45 mins', rating: 4.7, reviewCount: 650, categoryId: { name: 'Water Purifier Service', slug: 'water-purifier' }, imageUrl: 'https://images.unsplash.com/photo-1585832770485-e68a5dbfad52?auto=format&fit=crop&w=500&q=80' }
-      ]);
+      setPopularServices([]);
     } finally {
       setServicesLoading(false);
     }
@@ -903,16 +887,16 @@ export default function Home() {
 
   // ── Promo banner data ──────────────────────────────────────────────────────
   const promoBanners = [
-    {
-      badge: "Limited Time Offer",
-      heading: "20% OFF On Your First Booking",
-      sub: "Professional services at your doorstep. Use code at checkout.",
-      code: promoCode || "FIRST20",
-      codeLabel: promoText || "Get 20% off on your first Nexora booking",
-      cta: "Book Now",
-      href: "/services",
-      gradient: "from-[#0F3D30] to-[#1D6B50]",
-    },
+    // {
+    //   badge: "Limited Time Offer",
+    //   heading: "20% OFF On Your First Booking",
+    //   sub: "Professional services at your doorstep. Use code at checkout.",
+    //   code: promoCode || "FIRST20",
+    //   codeLabel: promoText || "Get 20% off on your first Nexora booking",
+    //   cta: "Book Now",
+    //   href: "/services",
+    //   gradient: "from-[#0F3D30] to-[#1D6B50]",
+    // },
     {
       badge: "New User Offer",
       heading: "Refer & Earn with Nexora",
@@ -940,11 +924,11 @@ export default function Home() {
     return SparkleIcon;
   };
 
-  const displayCategories = dbCategories.length > 0 ? dbCategories.map(cat => ({
+  const displayCategories = dbCategories.map(cat => ({
     name: cat.name,
     icon: getCategoryIcon(cat.slug),
     slug: cat.slug
-  })) : CATEGORIES;
+  }));
 
   const carouselBannersList = dbBanners.filter((b: any) => b.position !== 'PROMO_CARD');
   const activePromoBanners = carouselBannersList.length > 0 ? carouselBannersList.map((b: any) => ({
@@ -1013,74 +997,7 @@ export default function Home() {
     checkoutUrl: d.dealType === 'SERVICE'
       ? `/checkout?serviceId=${d.serviceId?._id || d.serviceId}`
       : `/checkout?packageId=${d.packageId?._id || d.packageId}`
-  })) : [
-    {
-      name: 'AC Service',
-      slug: 'ac-service',
-      description: 'Complete split AC filter cleaning and performance check.',
-      originalPrice: 399,
-      offerPrice: 299,
-      discount: '20% OFF',
-      rating: 4.8,
-      reviewCount: 2500,
-      imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=500&q=80'
-    },
-    {
-      name: 'Bathroom Cleaning',
-      slug: 'bathroom-cleaning',
-      description: 'Deep bathroom scrubbing, stain removal and sanitisation.',
-      originalPrice: 499,
-      offerPrice: 399,
-      discount: '20% OFF',
-      rating: 4.9,
-      reviewCount: 3000,
-      imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=500&q=80'
-    },
-    {
-      name: 'Sofa Cleaning',
-      slug: 'sofa-cleaning',
-      description: 'Professional wet extraction wash for fabric sofas.',
-      originalPrice: 599,
-      offerPrice: 499,
-      discount: '20% OFF',
-      rating: 4.8,
-      reviewCount: 850,
-      imageUrl: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=500&q=80'
-    },
-    {
-      name: "Women's Haircut",
-      slug: 'womens-haircut',
-      description: 'Style consultation and expert split-end haircut.',
-      originalPrice: 399,
-      offerPrice: 299,
-      discount: '20% OFF',
-      rating: 4.8,
-      reviewCount: 1800,
-      imageUrl: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=500&q=80'
-    },
-    {
-      name: 'Electrician',
-      slug: 'electrician-visit',
-      description: 'Switch, socket, regulator or MCB repair and replacement.',
-      originalPrice: 149,
-      offerPrice: 99,
-      discount: '20% OFF',
-      rating: 4.7,
-      reviewCount: 2000,
-      imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80'
-    },
-    {
-      name: 'Plumber',
-      slug: 'plumber',
-      description: 'Leaking tap repair, pipe leak check and sink repair.',
-      originalPrice: 149,
-      offerPrice: 99,
-      discount: '20% OFF',
-      rating: 4.7,
-      reviewCount: 1650,
-      imageUrl: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=500&q=80'
-    }
-  ];
+  })) : [];
 
   const dynamicCategoryServicesMap = dbCategories.map(cat => {
     const matchedServices = allServices.filter(s => {
@@ -1094,7 +1011,7 @@ export default function Home() {
       services: matchedServices.slice(0, 6)
     };
   }).filter(item => item.services.length > 0);
-  const displayCategoryServicesMap = dynamicCategoryServicesMap.length > 0 ? dynamicCategoryServicesMap : CATEGORIES_SERVICES_MAP;
+  const displayCategoryServicesMap = dynamicCategoryServicesMap;
 
   const displayPackages = dbPackages.length > 0 ? dbPackages.map(p => ({
     name: p.name,
@@ -1107,7 +1024,7 @@ export default function Home() {
     includedServices: (p.includedServices || []).map((s: any) => s.name),
     duration: `${(p.includedServices || []).reduce((acc: number, curr: any) => acc + (curr.estimatedDurationMins || 45), 0)} mins total`,
     price: p.basePrice,
-  })) : PACKAGES_DATA;
+  })) : [];
 
   return (
     <div className="flex-1 w-full bg-cream overflow-x-hidden">
@@ -1183,46 +1100,48 @@ export default function Home() {
       {/* ══════════════════════════════════════════════════════════
           2.  CATEGORIES SECTION  (unchanged)
       ══════════════════════════════════════════════════════════ */}
-      <section className="relative w-full pb-20">
-        <div className="absolute inset-0 z-0 flex flex-col">
-          <svg className="w-full h-[150px] md:h-[200px] lg:h-[250px]" viewBox="0 0 1200 250" preserveAspectRatio="none">
-            <path d="M-10,249 L200,249 C350,249 350,20 500,20 L700,20 C850,20 850,249 1000,249 L1210,249" fill="none" stroke="#C3AB84" strokeWidth="2" opacity="0.5" />
-            <path d="M0,250 L200,250 C350,250 350,20 500,20 L700,20 C850,20 850,250 1000,250 L1200,250 L1200,260 L0,260 Z" className="fill-beige" />
-          </svg>
-          <div className="flex-1 bg-beige"></div>
-        </div>
-
-        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 pt-[60px] md:pt-[90px] lg:pt-[110px] z-10">
-          <div className="text-center mb-16 lg:mb-24">
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-primary">What are you looking for?</h2>
-            <p className="mt-4 text-base text-foreground/70">Select a category to find top-rated professionals.</p>
+      {displayCategories.length > 0 && (
+        <section className="relative w-full pb-20">
+          <div className="absolute inset-0 z-0 flex flex-col">
+            <svg className="w-full h-[150px] md:h-[200px] lg:h-[250px]" viewBox="0 0 1200 250" preserveAspectRatio="none">
+              <path d="M-10,249 L200,249 C350,249 350,20 500,20 L700,20 C850,20 850,249 1000,249 L1210,249" fill="none" stroke="#C3AB84" strokeWidth="2" opacity="0.5" />
+              <path d="M0,250 L200,250 C350,250 350,20 500,20 L700,20 C850,20 850,250 1000,250 L1200,250 L1200,260 L0,260 Z" className="fill-beige" />
+            </svg>
+            <div className="flex-1 bg-beige"></div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4 md:gap-6 lg:gap-8 max-w-6xl mx-auto relative z-20">
-            {displayCategories.slice(0, 8).map((cat, i) => (
+          <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 pt-[60px] md:pt-[90px] lg:pt-[110px] z-10">
+            <div className="text-center mb-16 lg:mb-24">
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-primary">What are you looking for?</h2>
+              <p className="mt-4 text-base text-foreground/70">Select a category to find top-rated professionals.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4 md:gap-6 lg:gap-8 max-w-6xl mx-auto relative z-20">
+              {displayCategories.slice(0, 8).map((cat, i) => (
+                <Link
+                  key={i}
+                  href={`/services?category=${encodeURIComponent(cat.name)}`}
+                  className="group flex flex-col items-center justify-center rounded-2xl bg-cream py-7 sm:py-10 px-3 sm:px-4 shadow-sm ring-1 ring-gold/20 hover:shadow-lg transition-all hover:-translate-y-1"
+                >
+                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center mb-3 sm:mb-4 text-secondary group-hover:text-primary transition-colors">
+                    <cat.icon strokeWidth={1.2} className="w-8 h-8 sm:w-10 sm:h-10" />
+                  </div>
+                  <h3 className="text-xs sm:text-sm font-medium text-foreground text-center leading-snug">{cat.name}</h3>
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex justify-center mt-12 relative z-20">
               <Link
-                key={i}
-                href={`/services?category=${encodeURIComponent(cat.name)}`}
-                className="group flex flex-col items-center justify-center rounded-2xl bg-cream py-7 sm:py-10 px-3 sm:px-4 shadow-sm ring-1 ring-gold/20 hover:shadow-lg transition-all hover:-translate-y-1"
+                href="/services"
+                className="flex items-center gap-2 px-6 py-3 bg-primary text-white text-sm font-semibold rounded-full hover:bg-primary/95 transition-all shadow-md"
               >
-                <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center mb-3 sm:mb-4 text-secondary group-hover:text-primary transition-colors">
-                  <cat.icon strokeWidth={1.2} className="w-8 h-8 sm:w-10 sm:h-10" />
-                </div>
-                <h3 className="text-xs sm:text-sm font-medium text-foreground text-center leading-snug">{cat.name}</h3>
+                View All Categories <ArrowRight className="w-4 h-4" />
               </Link>
-            ))}
+            </div>
           </div>
-
-          <div className="flex justify-center mt-12 relative z-20">
-            <Link
-              href="/services"
-              className="flex items-center gap-2 px-6 py-3 bg-primary text-white text-sm font-semibold rounded-full hover:bg-primary/95 transition-all shadow-md"
-            >
-              View All Categories <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ══════════════════════════════════════════════════════════
           3.  POPULAR SERVICES
@@ -1308,70 +1227,72 @@ export default function Home() {
       {/* ══════════════════════════════════════════════════════════
           3.5.  BEST DEALS FOR YOU SECTION
       ══════════════════════════════════════════════════════════ */}
-      <section className="bg-beige/40 py-20 border-t border-b border-gold/10 relative group/deals">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          {/* Header */}
-          <div className="flex justify-between items-end mb-12 gap-4">
-            <div>
-              <span className="text-xs font-bold text-red-500 uppercase tracking-wider bg-red-500/10 px-3 py-1 rounded-full">Special Offers</span>
-              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-primary mt-3">🔥 Best Deals For You</h2>
-              <p className="text-sm sm:text-base text-foreground/60 mt-2 max-w-lg">Claim exclusive limited-time discounts on top premium services.</p>
+      {displayDeals.length > 0 && (
+        <section className="bg-beige/40 py-20 border-t border-b border-gold/10 relative group/deals">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+            {/* Header */}
+            <div className="flex justify-between items-end mb-12 gap-4">
+              <div>
+                <span className="text-xs font-bold text-red-500 uppercase tracking-wider bg-red-500/10 px-3 py-1 rounded-full">Special Offers</span>
+                <h2 className="font-serif text-3xl sm:text-4xl font-bold text-primary mt-3">🔥 Best Deals For You</h2>
+                <p className="text-sm sm:text-base text-foreground/60 mt-2 max-w-lg">Claim exclusive limited-time discounts on top premium services.</p>
+              </div>
+              <Link
+                href="/deals"
+                className="flex items-center gap-2 text-sm font-semibold text-primary border border-primary/20 px-5 py-2.5 rounded-full hover:bg-primary hover:text-white transition-all flex-shrink-0"
+              >
+                View All Deals <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
-            <Link
-              href="/deals"
-              className="flex items-center gap-2 text-sm font-semibold text-primary border border-primary/20 px-5 py-2.5 rounded-full hover:bg-primary hover:text-white transition-all flex-shrink-0"
-            >
-              View All Deals <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
 
-          {/* Cards Grid / Slider */}
-          <div className="relative px-2">
-            {/* Left arrow — only visible after scrolling */}
-            {dealsCanScrollLeft && (
+            {/* Cards Grid / Slider */}
+            <div className="relative px-2">
+              {/* Left arrow — only visible after scrolling */}
+              {dealsCanScrollLeft && (
+                <button
+                  onClick={() => {
+                    if (dealsScrollRef.current) dealsScrollRef.current.scrollBy({ left: -350, behavior: 'smooth' });
+                  }}
+                  className="absolute left-[-5px] sm:left-[-20px] top-[96px] -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white border border-gold/30 rounded-full hover:bg-beige text-primary transition-all shadow-md group-hover/deals:scale-105"
+                  aria-label="Slide Left"
+                >
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              )}
+
               <button
                 onClick={() => {
-                  if (dealsScrollRef.current) dealsScrollRef.current.scrollBy({ left: -350, behavior: 'smooth' });
+                  if (dealsScrollRef.current) dealsScrollRef.current.scrollBy({ left: 350, behavior: 'smooth' });
                 }}
-                className="absolute left-[-5px] sm:left-[-20px] top-[96px] -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white border border-gold/30 rounded-full hover:bg-beige text-primary transition-all shadow-md group-hover/deals:scale-105"
-                aria-label="Slide Left"
+                className="absolute right-[-5px] sm:right-[-20px] top-[96px] -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white border border-gold/30 rounded-full hover:bg-beige text-primary transition-all shadow-md group-hover/deals:scale-105"
+                aria-label="Slide Right"
               >
-                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
-            )}
 
-            <button
-              onClick={() => {
-                if (dealsScrollRef.current) dealsScrollRef.current.scrollBy({ left: 350, behavior: 'smooth' });
-              }}
-              className="absolute right-[-5px] sm:right-[-20px] top-[96px] -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white border border-gold/30 rounded-full hover:bg-beige text-primary transition-all shadow-md group-hover/deals:scale-105"
-              aria-label="Slide Right"
-            >
-              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-
-            <div
-              ref={dealsScrollRef}
-              onScroll={() => setDealsCanScrollLeft((dealsScrollRef.current?.scrollLeft ?? 0) > 0)}
-              className="flex overflow-x-auto gap-4 pb-4 scrollbar-none snap-x snap-mandatory scroll-smooth"
-            >
-              {displayDeals.map((deal, idx) => (
-                <div
-                  key={deal.slug}
-                  className="w-[calc(50%-8px)] sm:w-[calc(33.33%-11px)] lg:w-[calc(25%-12px)] flex-shrink-0 snap-start"
-                >
-                  <DealCard
-                    deal={deal}
-                    wishlist={wishlist}
-                    onToggleWishlist={toggleWishlist}
-                  />
-                </div>
-              ))}
+              <div
+                ref={dealsScrollRef}
+                onScroll={() => setDealsCanScrollLeft((dealsScrollRef.current?.scrollLeft ?? 0) > 0)}
+                className="flex overflow-x-auto gap-4 pb-4 scrollbar-none snap-x snap-mandatory scroll-smooth"
+              >
+                {displayDeals.map((deal, idx) => (
+                  <div
+                    key={deal.slug}
+                    className="w-[calc(50%-8px)] sm:w-[calc(33.33%-11px)] lg:w-[calc(25%-12px)] flex-shrink-0 snap-start"
+                  >
+                    <DealCard
+                      deal={deal}
+                      wishlist={wishlist}
+                      onToggleWishlist={toggleWishlist}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
 
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       {/* ══════════════════════════════════════════════════════════
           3.5.5. CUSTOM VALUE BANNER
@@ -1470,137 +1391,137 @@ export default function Home() {
 
                 {/* Dynamically insert Top-Rated Professionals under Home Painting */}
                 {catSection.title === 'Home Painting' && (
-      <div className="my-8 py-10 bg-white rounded-3xl border border-gold/15 shadow-sm px-6 sm:px-10">
-      {/* ══════════════════════════════════════════════════════════
+                  <div className="my-8 py-10 bg-white rounded-3xl border border-gold/15 shadow-sm px-6 sm:px-10">
+                    {/* ══════════════════════════════════════════════════════════
           7.  TOP-RATED PROFESSIONALS
       ══════════════════════════════════════════════════════════ */}
-          <div className="text-center mb-12">
-            <span className="text-xs font-bold text-gold uppercase tracking-wider bg-gold/10 px-3 py-1 rounded-full">Our Team</span>
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-primary mt-3">Top-Rated Professionals</h2>
-            <p className="text-sm sm:text-base text-foreground/60 mt-3 max-w-md mx-auto">
-              Meet some of the trusted professionals available on Nexora.
-            </p>
-          </div>
+                    <div className="text-center mb-12">
+                      <span className="text-xs font-bold text-gold uppercase tracking-wider bg-gold/10 px-3 py-1 rounded-full">Our Team</span>
+                      <h2 className="font-serif text-3xl sm:text-4xl font-bold text-primary mt-3">Top-Rated Professionals</h2>
+                      <p className="text-sm sm:text-base text-foreground/60 mt-3 max-w-md mx-auto">
+                        Meet some of the trusted professionals available on Nexora.
+                      </p>
+                    </div>
 
-          {partnersLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-            </div>
-          ) : approvedPartners.length === 0 ? (
-            <div className="relative">
-              {/* Static placeholder cards when no DB data */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[
-                  { name: "Amit Sharma", category: "AC Repair & Installation", city: "Delhi", rating: "4.9", reviews: 124, exp: "8 Years" },
-                  { name: "Priya Nair", category: "Salon for Women", city: "Mumbai", rating: "4.8", reviews: 98, exp: "5 Years" },
-                  { name: "Rahul Singh", category: "Electrician & Plumber", city: "Bengaluru", rating: "4.7", reviews: 76, exp: "6 Years" },
-                ].map((p, i) => (
-                  <div key={i} className="bg-cream rounded-3xl p-6 border border-gold/20 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className={`w-14 h-14 rounded-2xl ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white font-bold text-lg flex-shrink-0`}>
-                        {p.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    {partnersLoading ? (
+                      <div className="flex justify-center py-12">
+                        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
                       </div>
-                      <div className="min-w-0">
-                        <h3 className="font-serif font-bold text-primary text-base truncate">{p.name}</h3>
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <Star className="w-3.5 h-3.5 fill-gold text-gold" />
-                          <span className="text-sm font-bold text-primary">{p.rating}</span>
-                          <span className="text-xs text-foreground/50">({p.reviews} reviews)</span>
+                    ) : approvedPartners.length === 0 ? (
+                      <div className="relative">
+                        {/* Static placeholder cards when no DB data */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {[
+                            { name: "Amit Sharma", category: "AC Repair & Installation", city: "Delhi", rating: "4.9", reviews: 124, exp: "8 Years" },
+                            { name: "Priya Nair", category: "Salon for Women", city: "Mumbai", rating: "4.8", reviews: 98, exp: "5 Years" },
+                            { name: "Rahul Singh", category: "Electrician & Plumber", city: "Bengaluru", rating: "4.7", reviews: 76, exp: "6 Years" },
+                          ].map((p, i) => (
+                            <div key={i} className="bg-cream rounded-3xl p-6 border border-gold/20 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+                              <div className="flex items-start gap-4 mb-4">
+                                <div className={`w-14 h-14 rounded-2xl ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white font-bold text-lg flex-shrink-0`}>
+                                  {p.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                </div>
+                                <div className="min-w-0">
+                                  <h3 className="font-serif font-bold text-primary text-base truncate">{p.name}</h3>
+                                  <div className="flex items-center gap-1 mt-0.5">
+                                    <Star className="w-3.5 h-3.5 fill-gold text-gold" />
+                                    <span className="text-sm font-bold text-primary">{p.rating}</span>
+                                    <span className="text-xs text-foreground/50">({p.reviews} reviews)</span>
+                                  </div>
+                                </div>
+                                <div className="ml-auto flex-shrink-0">
+                                  <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+                                    <BadgeCheck className="w-3 h-3" /> Verified
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2 mb-5 text-xs text-foreground/60">
+                                <div className="flex items-center gap-2">
+                                  <Wrench className="w-3.5 h-3.5 text-gold flex-shrink-0" />
+                                  <span className="truncate">{p.category}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Award className="w-3.5 h-3.5 text-gold flex-shrink-0" />
+                                  <span>{p.exp} Experience</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="w-3.5 h-3.5 text-gold flex-shrink-0" />
+                                  <span>{p.city}</span>
+                                </div>
+                              </div>
+
+                              <Link
+                                href="/services"
+                                className="block w-full py-2.5 text-center border border-primary/25 text-primary text-xs font-bold rounded-full hover:bg-primary hover:text-white transition-all"
+                              >
+                                View Profile
+                              </Link>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                      <div className="ml-auto flex-shrink-0">
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
-                          <BadgeCheck className="w-3 h-3" /> Verified
-                        </span>
-                      </div>
-                    </div>
+                    ) : (
+                      <div className="relative">
+                        {/* Scroll buttons on mobile */}
+                        <button onClick={() => scrollPartners('left')} className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white border border-gold/30 rounded-full shadow-md flex items-center justify-center hover:bg-cream transition-all lg:hidden">
+                          <ChevronLeft className="w-5 h-5 text-primary" />
+                        </button>
+                        <button onClick={() => scrollPartners('right')} className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white border border-gold/30 rounded-full shadow-md flex items-center justify-center hover:bg-cream transition-all lg:hidden">
+                          <ChevronRight className="w-5 h-5 text-primary" />
+                        </button>
 
-                    <div className="space-y-2 mb-5 text-xs text-foreground/60">
-                      <div className="flex items-center gap-2">
-                        <Wrench className="w-3.5 h-3.5 text-gold flex-shrink-0" />
-                        <span className="truncate">{p.category}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Award className="w-3.5 h-3.5 text-gold flex-shrink-0" />
-                        <span>{p.exp} Experience</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-3.5 h-3.5 text-gold flex-shrink-0" />
-                        <span>{p.city}</span>
-                      </div>
-                    </div>
+                        <div
+                          ref={partnersScrollRef}
+                          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                        >
+                          {approvedPartners.map((p, i) => (
+                            <div key={p._id} className="bg-cream rounded-3xl p-6 border border-gold/20 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+                              <div className="flex items-start gap-4 mb-4">
+                                <div className={`w-14 h-14 rounded-2xl ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white font-bold text-lg flex-shrink-0`}>
+                                  {p.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                                </div>
+                                <div className="min-w-0">
+                                  <h3 className="font-serif font-bold text-primary text-base truncate">{p.name}</h3>
+                                  <div className="flex items-center gap-1 mt-0.5">
+                                    <Star className="w-3.5 h-3.5 fill-gold text-gold" />
+                                    <span className="text-sm font-bold text-primary">{(p.rating || 4.8).toFixed(1)}</span>
+                                    <span className="text-xs text-foreground/50">({p.totalCompletedJobs || 0} jobs)</span>
+                                  </div>
+                                </div>
+                                <div className="ml-auto flex-shrink-0">
+                                  <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+                                    <BadgeCheck className="w-3 h-3" /> Verified
+                                  </span>
+                                </div>
+                              </div>
 
-                    <Link
-                      href="/services"
-                      className="block w-full py-2.5 text-center border border-primary/25 text-primary text-xs font-bold rounded-full hover:bg-primary hover:text-white transition-all"
-                    >
-                      View Profile
-                    </Link>
+                              <div className="space-y-2 mb-5 text-xs text-foreground/60">
+                                <div className="flex items-center gap-2">
+                                  <Wrench className="w-3.5 h-3.5 text-gold flex-shrink-0" />
+                                  <span className="truncate">{p.category}</span>
+                                </div>
+                                {p.location?.city && (
+                                  <div className="flex items-center gap-2">
+                                    <MapPin className="w-3.5 h-3.5 text-gold flex-shrink-0" />
+                                    <span>{p.location.city}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <Link
+                                href={`/partner/${p._id}`}
+                                className="block w-full py-2.5 text-center border border-primary/25 text-primary text-xs font-bold rounded-full hover:bg-primary hover:text-white transition-all"
+                              >
+                                View Profile
+                              </Link>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                   </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="relative">
-              {/* Scroll buttons on mobile */}
-              <button onClick={() => scrollPartners('left')} className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white border border-gold/30 rounded-full shadow-md flex items-center justify-center hover:bg-cream transition-all lg:hidden">
-                <ChevronLeft className="w-5 h-5 text-primary" />
-              </button>
-              <button onClick={() => scrollPartners('right')} className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white border border-gold/30 rounded-full shadow-md flex items-center justify-center hover:bg-cream transition-all lg:hidden">
-                <ChevronRight className="w-5 h-5 text-primary" />
-              </button>
-
-              <div
-                ref={partnersScrollRef}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                {approvedPartners.map((p, i) => (
-                  <div key={p._id} className="bg-cream rounded-3xl p-6 border border-gold/20 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className={`w-14 h-14 rounded-2xl ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white font-bold text-lg flex-shrink-0`}>
-                        {p.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-serif font-bold text-primary text-base truncate">{p.name}</h3>
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <Star className="w-3.5 h-3.5 fill-gold text-gold" />
-                          <span className="text-sm font-bold text-primary">{(p.rating || 4.8).toFixed(1)}</span>
-                          <span className="text-xs text-foreground/50">({p.totalCompletedJobs || 0} jobs)</span>
-                        </div>
-                      </div>
-                      <div className="ml-auto flex-shrink-0">
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
-                          <BadgeCheck className="w-3 h-3" /> Verified
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 mb-5 text-xs text-foreground/60">
-                      <div className="flex items-center gap-2">
-                        <Wrench className="w-3.5 h-3.5 text-gold flex-shrink-0" />
-                        <span className="truncate">{p.category}</span>
-                      </div>
-                      {p.location?.city && (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-3.5 h-3.5 text-gold flex-shrink-0" />
-                          <span>{p.location.city}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <Link
-                      href={`/partner/${p._id}`}
-                      className="block w-full py-2.5 text-center border border-primary/25 text-primary text-xs font-bold rounded-full hover:bg-primary hover:text-white transition-all"
-                    >
-                      View Profile
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-      </div>
                 )}
               </React.Fragment>
             ))}
@@ -1654,17 +1575,8 @@ export default function Home() {
           3b.  MOST BOOKED SERVICES — Live API data
       ══════════════════════════════════════════════════════════ */}
       {(() => {
-        // Static fallback used when API returns no data
-        const STATIC_MOST_BOOKED = [
-          { slug: 'ac-service', name: 'AC Service', description: 'Complete AC cleaning, gas top-up and performance check.', imageUrl: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=700&q=80', rating: 4.8, reviewCount: 12400, basePrice: 299 },
-          { slug: 'bathroom-cleaning', name: 'Bathroom Cleaning', description: 'Deep scrub and sanitization of tiles, fixtures and toilet.', imageUrl: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?auto=format&fit=crop&w=700&q=80', rating: 4.9, reviewCount: 9800, basePrice: 399 },
-          { slug: 'sofa-cleaning', name: 'Sofa Cleaning', description: 'Foam extraction and stain treatment for all sofa types.', imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=700&q=80', rating: 4.8, reviewCount: 7600, basePrice: 499 },
-          { slug: 'electrician-visit', name: 'Electrician Visit', description: 'Fault diagnosis, wiring repairs and MCB fixes.', imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=700&q=80', rating: 4.7, reviewCount: 14200, basePrice: 99 },
-          { slug: 'womens-haircut', name: "Women's Haircut", description: 'Stylish cuts, blow-dry and hair treatment at home.', imageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=700&q=80', rating: 4.8, reviewCount: 11300, basePrice: 299 },
-          { slug: 'ro-service', name: 'RO Service', description: 'RO membrane flush, filter replacement and TDS check.', imageUrl: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=700&q=80', rating: 4.7, reviewCount: 8100, basePrice: 299 },
-        ];
-
-        const displayServices = mostBookedServices.length > 0 ? mostBookedServices : STATIC_MOST_BOOKED;
+        const displayServices = mostBookedServices;
+        if (displayServices.length === 0) return null;
 
         return (
           <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">

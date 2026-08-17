@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Power, Wallet, IndianRupee, Briefcase, FileText, Wrench, Calendar, Tag, Percent, 
+import {
+  Power, Wallet, IndianRupee, Briefcase, FileText, Wrench, Calendar, Tag, Percent,
   Star, ArrowRight, CheckCircle2, ChevronDown, Clock, Activity, ShieldCheck, Bell, TrendingUp
 } from 'lucide-react';
-import { 
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, 
-  CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+import {
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis,
+  CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import api from '@/lib/api';
 import Link from 'next/link';
@@ -24,21 +24,21 @@ const STATUS_COLORS = {
 
 export default function PartnerDashboard() {
   const router = useRouter();
-  
+
   const [vendor, setVendor] = useState<any>(null);
   const [isOnline, setIsOnline] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   // Dropdown states
   const [timePeriod, setTimePeriod] = useState('This Month');
   const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
-  
+
   const [bookingsPeriod, setBookingsPeriod] = useState('Daily');
   const [showBookingsDropdown, setShowBookingsDropdown] = useState(false);
-  
+
   const [earningsPeriod, setEarningsPeriod] = useState('Weekly');
   const [showEarningsDropdown, setShowEarningsDropdown] = useState(false);
-  
+
   const [requests, setRequests] = useState<any[]>([]);
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function PartnerDashboard() {
         ]);
 
         let data = reqsRes.data || [];
-        
+
         // TEMPORARY: Inject exactly matching dummy data for visual parity with reference image
         if (data.length < 50) {
           data = generateDummyData();
@@ -83,7 +83,7 @@ export default function PartnerDashboard() {
   const generateDummyData = () => {
     const dummy = [];
     const now = new Date();
-    
+
     // Generate 128 total bookings
     for (let i = 0; i < 128; i++) {
       let status = 'COMPLETED';
@@ -94,10 +94,10 @@ export default function PartnerDashboard() {
       // Spread dates over the last 30 days
       const daysAgo = Math.floor(Math.random() * 30);
       const createdAt = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
-      
+
       const services = ['AC Repair', 'Electrical Work', 'Plumbing', 'Home Painting', 'Deep Cleaning'];
       const customers = ['Rahul Sharma', 'Priya Verma', 'Amit Kumar', 'Neha Singh', 'Sanjay Gupta'];
-      
+
       dummy.push({
         _id: `BK${12456 - i}`,
         status,
@@ -261,7 +261,7 @@ export default function PartnerDashboard() {
         <div className="flex items-center gap-6">
           {/* Time Period Filter */}
           <div className="relative">
-            <button 
+            <button
               onClick={() => setShowPeriodDropdown(!showPeriodDropdown)}
               className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-xl text-sm font-semibold hover:border-gray-300 transition-colors shadow-sm"
             >
@@ -270,8 +270,8 @@ export default function PartnerDashboard() {
             {showPeriodDropdown && (
               <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg py-2 z-50">
                 {['Today', 'This Week', 'This Month', 'Last Month', 'All Time'].map(p => (
-                  <button 
-                    key={p} 
+                  <button
+                    key={p}
                     onClick={() => { setTimePeriod(p); setShowPeriodDropdown(false); }}
                     className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${timePeriod === p ? 'font-bold text-primary' : 'text-gray-600'}`}
                   >
@@ -281,18 +281,18 @@ export default function PartnerDashboard() {
               </div>
             )}
           </div>
-          
+
           <NotificationBell tokenKey="nexora_token" theme="light" userRole="vendor" />
-          
+
           <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm cursor-pointer">
-             <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${vendor?.name || 'Partner'}`} alt="avatar" className="w-full h-full object-cover" />
+            <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${vendor?.name || 'Partner'}`} alt="avatar" className="w-full h-full object-cover" />
           </div>
         </div>
       </div>
 
       {/* KPI Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        
+
         <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between h-[140px]">
           <div className="flex items-start justify-between">
             <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-orange-50 text-orange-600">
@@ -383,13 +383,13 @@ export default function PartnerDashboard() {
 
       {/* Main Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Bookings Overview (Area Chart) */}
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] lg:col-span-5 flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h2 className="font-serif text-[15px] font-bold text-primary">Bookings Overview</h2>
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setShowBookingsDropdown(!showBookingsDropdown)}
                 className="flex items-center gap-1 text-[11px] font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded border border-gray-100"
               >
@@ -398,8 +398,8 @@ export default function PartnerDashboard() {
               {showBookingsDropdown && (
                 <div className="absolute right-0 mt-1 w-24 bg-white border border-gray-200 rounded-md shadow-lg py-1 z-50">
                   {['Daily', 'Weekly', 'Monthly'].map(p => (
-                    <button 
-                      key={p} 
+                    <button
+                      key={p}
                       onClick={() => { setBookingsPeriod(p); setShowBookingsDropdown(false); }}
                       className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 transition-colors ${bookingsPeriod === p ? 'font-bold text-primary' : 'text-gray-600'}`}
                     >
@@ -415,12 +415,12 @@ export default function PartnerDashboard() {
               <AreaChart data={getBookingsChartData()} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorBookings" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#1F4037" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#1F4037" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#1F4037" stopOpacity={0.1} />
+                    <stop offset="95%" stopColor="#1F4037" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#C3AB84" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#C3AB84" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#C3AB84" stopOpacity={0.1} />
+                    <stop offset="95%" stopColor="#C3AB84" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -440,7 +440,7 @@ export default function PartnerDashboard() {
           <div className="flex justify-between items-center mb-6">
             <h2 className="font-serif text-[15px] font-bold text-primary">Earnings Overview</h2>
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setShowEarningsDropdown(!showEarningsDropdown)}
                 className="flex items-center gap-1 text-[11px] font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded border border-gray-100"
               >
@@ -449,8 +449,8 @@ export default function PartnerDashboard() {
               {showEarningsDropdown && (
                 <div className="absolute right-0 mt-1 w-24 bg-white border border-gray-200 rounded-md shadow-lg py-1 z-50">
                   {['Today', 'Weekly', 'Monthly', 'Yearly'].map(p => (
-                    <button 
-                      key={p} 
+                    <button
+                      key={p}
                       onClick={() => { setEarningsPeriod(p); setShowEarningsDropdown(false); }}
                       className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 transition-colors ${earningsPeriod === p ? 'font-bold text-primary' : 'text-gray-600'}`}
                     >
@@ -462,17 +462,18 @@ export default function PartnerDashboard() {
             </div>
           </div>
           <div className="flex-1 min-h-[250px]">
-             <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={getEarningsChartData()} margin={{ top: 5, right: 0, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => earningsPeriod === 'Today' ? `${val/1000}k` : `${val/1000}k`} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => earningsPeriod === 'Today' ? `${val / 1000}k` : `${val / 1000}k`} />
                 <Tooltip cursor={{ fill: '#f9fafb' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                 {/* @ts-ignore - Recharts TS types missing payload definition but it works perfectly at runtime */}
                 <Legend verticalAlign="top" height={36} iconType="circle" payload={[{ value: 'Earnings (₹)', type: 'circle', color: '#1F4037' }]} wrapperStyle={{ fontSize: '11px', fontWeight: 600 }} />
                 <Bar dataKey="Earnings1" fill="#1F4037" radius={[2, 2, 0, 0]} barSize={12} />
                 {earningsPeriod === 'Weekly' && <Bar dataKey="Earnings2" fill="#C3AB84" radius={[2, 2, 0, 0]} barSize={12} />}
               </BarChart>
+              <h2 className="font-serif text-[15px] font-bold text-primary">Earnings Overview</h2>
             </ResponsiveContainer>
           </div>
         </div>
@@ -507,7 +508,7 @@ export default function PartnerDashboard() {
 
       {/* Tables Row 1 */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        
+
         {/* Recent Bookings */}
         <div className="bg-white border border-gray-100 rounded-3xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] xl:col-span-7 flex flex-col overflow-hidden p-6">
           <h2 className="font-serif text-[15px] font-bold text-primary mb-4">Recent Bookings</h2>
@@ -588,12 +589,12 @@ export default function PartnerDashboard() {
 
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Top Services */}
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] lg:col-span-4 flex flex-col">
           <div className="flex justify-between items-center mb-6">
-             <h2 className="font-serif text-[15px] font-bold text-primary">Top Services</h2>
-             <button className="flex items-center gap-1 text-[11px] font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded border border-gray-100">
+            <h2 className="font-serif text-[15px] font-bold text-primary">Top Services</h2>
+            <button className="flex items-center gap-1 text-[11px] font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded border border-gray-100">
               This Month <ChevronDown className="w-3 h-3" />
             </button>
           </div>
@@ -622,7 +623,7 @@ export default function PartnerDashboard() {
                     <td className="py-3 text-[11px] font-medium text-gray-600">{s.customer}</td>
                     <td className="py-3 text-[11px] font-medium text-gray-600">{s.service}</td>
                     <td className="py-3 text-right">
-                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${s.statusColor}`}>
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${s.statusColor}`}>
                         {s.status}
                       </span>
                     </td>
@@ -648,7 +649,7 @@ export default function PartnerDashboard() {
               { label: 'Create Offer', sub: 'New promotion', icon: Percent, href: '/partner/offers/new', color: 'text-orange-500', bg: 'bg-orange-50' },
               { label: 'Availability', sub: 'Set your schedule', icon: Calendar, href: '/partner/availability', color: 'text-green-600', bg: 'bg-green-50' }
             ].map((act, i) => (
-              <Link 
+              <Link
                 key={i}
                 href={act.href}
                 className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-3 transition-all hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:-translate-y-0.5"
@@ -668,7 +669,7 @@ export default function PartnerDashboard() {
         </div>
 
       </div>
-      
+
     </div>
   );
 }

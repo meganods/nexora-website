@@ -320,9 +320,10 @@ export default function NotificationBell({ tokenKey, theme = "dark", userRole = 
             </p>
             <button onClick={() => { 
                 setOpen(false); 
-                // Trust explicit userRole prop or fallback to token/role checks in storage
-                const isAdmin = userRole === 'admin' || (typeof window !== 'undefined' && localStorage.getItem('admin_token') !== null);
-                const isVendor = userRole === 'vendor' || (typeof window !== 'undefined' && localStorage.getItem('nexora_role') === 'vendor');
+                // Trust explicit userRole prop or fallback to current URL path
+                const path = typeof window !== 'undefined' ? window.location.pathname : '';
+                const isAdmin = userRole === 'admin' || path.startsWith('/admin');
+                const isVendor = userRole === 'vendor' || path.startsWith('/partner');
                 
                 if (isAdmin) {
                   router.push('/admin/dashboard?tab=notifications'); // Redirect to admin notification tab

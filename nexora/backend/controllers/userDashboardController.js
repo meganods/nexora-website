@@ -368,7 +368,7 @@ exports.toggleWishlist = asyncHandler(async (req, res) => {
   }
 
   const userWishlist = user.wishlist || [];
-  const index = userWishlist.findIndex(id => id.toString() === serviceId.toString());
+  const index = userWishlist.findIndex(id => id && id.toString() === serviceId.toString());
   let added = false;
   
   if (index > -1) {

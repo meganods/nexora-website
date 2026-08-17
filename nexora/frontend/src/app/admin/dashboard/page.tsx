@@ -516,8 +516,16 @@ function AdminDashboardContent() {
     return () => clearInterval(interval);
   }, []);
 
-  const [metrics, setMetrics] = useState({ revenue: 0, commission: 0, activeBookings: 0, verifiedPartners: 0, totalUsers: 0, totalServices: 0, totalBookings: 0 });
+  const [metrics, setMetrics] = useState({ revenue: 0, commission: 0, activeBookings: 0, completedBookings: 0, cancelledBookings: 0, verifiedPartners: 0, totalPartners: 0, pendingApprovals: 0, totalUsers: 0, totalServices: 0, totalBookings: 0 });
   const [locationMetrics, setLocationMetrics] = useState<any>(null);
+  const [chartBookingData, setChartBookingData] = useState<any[]>([]);
+  const [chartRevenueData, setChartRevenueData] = useState<any[]>([]);
+  const [chartCategoryData, setChartCategoryData] = useState<any[]>([]);
+  const [recentBookings, setRecentBookings] = useState<any[]>([]);
+  const [topPartnersList, setTopPartnersList] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [recentPayouts, setRecentPayouts] = useState<any[]>([]);
+  const [walletPayoutOverview, setWalletPayoutOverview] = useState<any>({ totalPayouts: 0, pendingPayouts: 0, availableBalance: 0 });
   const [pendingVendors, setPendingVendors] = useState<any[]>([]);
   const [selectedReviewVendor, setSelectedReviewVendor] = useState<any | null>(null);
   const [editingPartner, setEditingPartner] = useState<any | null>(null);
@@ -1022,7 +1030,11 @@ function AdminDashboardContent() {
         revenue: data.totalRevenue || 0,
         commission: data.totalCommission || 0,
         activeBookings: data.activeBookings || 0,
+        completedBookings: data.completedBookings || 0,
+        cancelledBookings: data.cancelledBookings || 0,
         verifiedPartners: data.verifiedVendors || 0,
+        totalPartners: data.totalPartners || 0,
+        pendingApprovals: data.pendingApprovals || 0,
         totalUsers: data.totalUsers || 0,
         totalServices: data.totalServices || 0,
         totalBookings: data.totalBookings || 0,
@@ -1030,6 +1042,14 @@ function AdminDashboardContent() {
       if (data.locationMetrics) {
         setLocationMetrics(data.locationMetrics);
       }
+      if (data.chartBookingData) setChartBookingData(data.chartBookingData);
+      if (data.chartRevenueData) setChartRevenueData(data.chartRevenueData);
+      if (data.chartCategoryData) setChartCategoryData(data.chartCategoryData);
+      if (data.recentBookings) setRecentBookings(data.recentBookings);
+      if (data.topPartnersList) setTopPartnersList(data.topPartnersList);
+      if (data.recentActivity) setRecentActivity(data.recentActivity);
+      if (data.recentPayouts) setRecentPayouts(data.recentPayouts);
+      if (data.walletPayoutOverview) setWalletPayoutOverview(data.walletPayoutOverview);
     } catch (e) { console.error(e); }
   };
 
@@ -1075,7 +1095,7 @@ function AdminDashboardContent() {
   const fetchBookings = async () => {
     setBookingsLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(bookingsPage), limit: '15' });
+      const params = new URLSearchParams({ page: String(bookingsPage), limit: '8' });
       if (bookingStatusFilter !== 'ALL') params.set('status', bookingStatusFilter);
       if (bookingSearch) params.set('q', bookingSearch);
       if (bookingServiceFilter) params.set('serviceId', bookingServiceFilter);
@@ -1494,19 +1514,19 @@ function AdminDashboardContent() {
         {activeTab === 'metrics' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              <DashboardKPICard label="Total Revenue" value={metrics.revenue ? `₹${metrics.revenue.toLocaleString('en-IN')}` : "₹12,45,680"} icon={IndianRupee} bg="bg-green-100" text="text-green-700" trend="+18.6%" />
-              <DashboardKPICard label="Platform Commission" value={metrics.commission ? `₹${metrics.commission.toLocaleString('en-IN')}` : "₹1,86,852"} icon={IndianRupee} bg="bg-gold/20" text="text-primary" trend="+16.2%" />
-              <DashboardKPICard label="Total Bookings" value={metrics.totalBookings || 2847} icon={BookOpen} bg="bg-indigo-100" text="text-indigo-700" trend="+15.7%" />
-              <DashboardKPICard label="Active Bookings" value={metrics.activeBookings || 124} icon={ShoppingBag} bg="bg-blue-100" text="text-blue-700" trend="+8.3%" />
-              <DashboardKPICard label="Completed Bookings" value={(metrics.totalBookings - metrics.activeBookings) || 2523} icon={CheckCircle2} bg="bg-green-100" text="text-green-700" trend="+20.1%" />
-              <DashboardKPICard label="Cancelled Bookings" value={Math.floor(metrics.totalBookings * 0.04) || 200} icon={X} bg="bg-red-100" text="text-red-700" trend="-6.4%" />
-              <DashboardKPICard label="Total Customers" value={metrics.totalUsers || 5200} icon={Users} bg="bg-pink-100" text="text-pink-700" trend="+22.8%" />
-              <DashboardKPICard label="Total Service Partners" value={(metrics.verifiedPartners + 50) || 430} icon={UserCheck} bg="bg-purple-100" text="text-purple-700" trend="+14.3%" />
-              <DashboardKPICard label="Verified Partners" value={metrics.verifiedPartners || 358} icon={ShieldCheck} bg="bg-emerald-100" text="text-emerald-700" trend="+18.9%" />
-              <DashboardKPICard label="Pending Approvals" value={72} icon={AlertCircle} bg="bg-amber-100" text="text-amber-700" trend="-4.7%" />
+              <DashboardKPICard label="Total Revenue" value={`₹${(metrics.revenue || 0).toLocaleString('en-IN')}`} icon={IndianRupee} bg="bg-green-100" text="text-green-700" />
+              <DashboardKPICard label="Platform Commission" value={`₹${(metrics.commission || 0).toLocaleString('en-IN')}`} icon={IndianRupee} bg="bg-gold/20" text="text-primary" />
+              <DashboardKPICard label="Total Bookings" value={metrics.totalBookings || 0} icon={BookOpen} bg="bg-indigo-100" text="text-indigo-700" />
+              <DashboardKPICard label="Active Bookings" value={metrics.activeBookings || 0} icon={ShoppingBag} bg="bg-blue-100" text="text-blue-700" />
+              <DashboardKPICard label="Completed Bookings" value={metrics.completedBookings || 0} icon={CheckCircle2} bg="bg-green-100" text="text-green-700" />
+              <DashboardKPICard label="Cancelled Bookings" value={metrics.cancelledBookings || 0} icon={X} bg="bg-red-100" text="text-red-700" />
+              <DashboardKPICard label="Total Customers" value={metrics.totalUsers || 0} icon={Users} bg="bg-pink-100" text="text-pink-700" />
+              <DashboardKPICard label="Total Service Partners" value={metrics.totalPartners || 0} icon={UserCheck} bg="bg-purple-100" text="text-purple-700" />
+              <DashboardKPICard label="Verified Partners" value={metrics.verifiedPartners || 0} icon={ShieldCheck} bg="bg-emerald-100" text="text-emerald-700" />
+              <DashboardKPICard label="Pending Approvals" value={metrics.pendingApprovals || 0} icon={AlertCircle} bg="bg-amber-100" text="text-amber-700" />
             </div>
 
-            <DashboardCharts />
+            <DashboardCharts revenueData={chartRevenueData} bookingData={chartBookingData} categoryData={chartCategoryData} />
 
             {/* Location Analytics Section */}
             {locationMetrics && (
@@ -1573,21 +1593,17 @@ function AdminDashboardContent() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gold/5">
-                      {[
-                        { id: '#BKB492', customer: 'Rahul Sharma', service: 'Home Cleaning', status: 'Confirmed', amount: '₹1,299', statusColor: 'bg-green-100 text-green-700' },
-                        { id: '#BKB491', customer: 'Priya Patel', service: 'AC Repair', status: 'Pending', amount: '₹899', statusColor: 'bg-amber-100 text-amber-700' },
-                        { id: '#BKB490', customer: 'Amit Verma', service: 'Salon at Home', status: 'Confirmed', amount: '₹1,199', statusColor: 'bg-green-100 text-green-700' },
-                        { id: '#BKB489', customer: 'Neha Singh', service: 'Pest Control', status: 'Completed', amount: '₹999', statusColor: 'bg-emerald-100 text-emerald-700' },
-                        { id: '#BKB488', customer: 'Vikram Joshi', service: 'Bathroom Cleaning', status: 'Confirmed', amount: '₹1,499', statusColor: 'bg-green-100 text-green-700' }
-                      ].map((b, idx) => (
-                        <tr key={idx} className="hover:bg-cream/10">
-                          <td className="py-3 text-primary">{b.id}</td>
-                          <td className="py-3">{b.customer}</td>
-                          <td className="py-3 font-medium text-foreground">{b.service}</td>
+                      {recentBookings.length === 0 ? (
+                        <tr><td colSpan={5} className="py-6 text-center text-foreground/45">No bookings yet.</td></tr>
+                      ) : recentBookings.map((b: any) => (
+                        <tr key={b._id} className="hover:bg-cream/10">
+                          <td className="py-3 text-primary">#{b._id.slice(-6).toUpperCase()}</td>
+                          <td className="py-3">{b.userId?.name || 'Unknown'}</td>
+                          <td className="py-3 font-medium text-foreground">{b.serviceId?.name || 'Unknown Service'}</td>
                           <td className="py-3">
-                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${b.statusColor}`}>{b.status}</span>
+                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${b.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : b.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{b.status}</span>
                           </td>
-                          <td className="py-3 text-right text-primary font-bold">{b.amount}</td>
+                          <td className="py-3 text-right text-primary font-bold">₹{b.paymentDetails?.amount || 0}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1602,14 +1618,7 @@ function AdminDashboardContent() {
                   <button onClick={() => setActiveTab('service_approvals')} className="text-xs text-primary font-semibold hover:underline">View All</button>
                 </div>
                 {(() => {
-                  const allPending = [
-                    { id: 'Rohit Services', type: 'Service Partner', name: 'Rohit Services', date: '31 May 2024' },
-                    { id: 'CleanPro Solutions', type: 'Service Partner', name: 'CleanPro Solutions', date: '31 May 2024' },
-                    { id: 'Deep Cleaning', type: 'Service', name: 'Deep Cleaning', date: '30 May 2024' },
-                    { id: 'Sofa Cleaning', type: 'Service', name: 'Sofa Cleaning', date: '30 May 2024' },
-                    { id: 'Summer Special Offer', type: 'Deal', name: 'Summer Special Offer', date: '30 May 2024' }
-                  ];
-                  const visible = allPending.filter(p => !approvedItems.includes(p.id));
+                  const visible = pendingVendors.filter(p => !approvedItems.includes(p._id)).slice(0, 5);
                   return visible.length === 0 ? (
                     <div className="text-center py-6 text-foreground/40 text-xs font-semibold">
                       <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-green-500 opacity-60" />
@@ -1627,26 +1636,26 @@ function AdminDashboardContent() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gold/5">
-                          {visible.map((p) => (
-                            <tr key={p.id} className="hover:bg-cream/10 transition-colors">
+                          {visible.map((p: any) => (
+                            <tr key={p._id} className="hover:bg-cream/10 transition-colors">
                               <td className="py-2.5">
-                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${p.type === 'Service Partner' ? 'bg-purple-100 text-purple-700' : p.type === 'Service' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>{p.type}</span>
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Service Partner</span>
                               </td>
-                              <td className="py-2.5 text-primary">{p.name}</td>
-                              <td className="py-2.5 text-foreground/50">{p.date}</td>
+                              <td className="py-2.5 text-primary">{p.businessName || p.userId?.name}</td>
+                              <td className="py-2.5 text-foreground/50">{new Date(p.createdAt).toLocaleDateString()}</td>
                               <td className="py-2.5 text-right">
                                 <div className="flex items-center justify-end gap-1.5">
                                   <button
-                                    onClick={() => setApprovedItems(prev => [...prev, p.id])}
+                                    onClick={() => handleVerify(p._id, 'verify')}
                                     className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-[9px] font-bold transition-all active:scale-95"
                                   >
                                     Approve
                                   </button>
                                   <button
-                                    onClick={() => setApprovedItems(prev => [...prev, p.id])}
+                                    onClick={() => handleVerify(p._id, 'reject')}
                                     className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-[9px] font-bold transition-all active:scale-95"
                                   >
-                                    Delete
+                                    Reject
                                   </button>
                                 </div>
                               </td>
@@ -1665,18 +1674,14 @@ function AdminDashboardContent() {
                   <h3 className="font-serif font-bold text-primary text-sm">Recent Activity</h3>
                 </div>
                 <div className="space-y-4 text-xs font-semibold text-foreground/75 pr-1">
-                  {[
-                    { text: "New service partner \"Rohit Services\" registered", time: "5 mins ago", color: "text-green-600 bg-green-50" },
-                    { text: "Booking #BKB492 confirmed by partner", time: "15 mins ago", color: "text-blue-600 bg-blue-50" },
-                    { text: "Payment of ₹1,299 received for booking #BKB487", time: "1 hour ago", color: "text-amber-600 bg-amber-50" },
-                    { text: "Service \"Deep Cleaning\" submitted for approval", time: "2 hours ago", color: "text-purple-600 bg-purple-50" },
-                    { text: "New deal \"Summer Special Offer\" created", time: "3 hours ago", color: "text-pink-600 bg-pink-50" }
-                  ].map((act, idx) => (
+                  {recentActivity.length === 0 ? (
+                    <div className="py-6 text-center text-foreground/45">No recent activity.</div>
+                  ) : recentActivity.map((act: any, idx) => (
                     <div key={idx} className="flex items-start gap-3">
-                      <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${act.color.split(' ')[0]}`} style={{ backgroundColor: 'currentColor' }} />
+                      <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 text-primary bg-primary/20" style={{ backgroundColor: 'currentColor' }} />
                       <div className="min-w-0 flex-grow">
-                        <p className="text-foreground/80 leading-normal">{act.text}</p>
-                        <span className="text-[10px] text-foreground/45 font-medium block mt-0.5">{act.time}</span>
+                        <p className="text-foreground/80 leading-normal">{act.body || act.title}</p>
+                        <span className="text-[10px] text-foreground/45 font-medium block mt-0.5">{new Date(act.createdAt).toLocaleString()}</span>
                       </div>
                     </div>
                   ))}
@@ -1702,18 +1707,14 @@ function AdminDashboardContent() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gold/5">
-                      {[
-                        { name: 'CleanPro Solutions', bookings: '320', rating: '4.8', earnings: '₹1,25,430' },
-                        { name: 'HomeShine Services', bookings: '280', rating: '4.7', earnings: '₹95,760' },
-                        { name: 'FixWell Experts', bookings: '260', rating: '4.6', earnings: '₹87,540' },
-                        { name: 'QuickFix Support', bookings: '210', rating: '4.5', earnings: '₹68,320' },
-                        { name: 'Zaika Home Services', bookings: '190', rating: '4.4', earnings: '₹55,980' }
-                      ].map((p, idx) => (
+                      {topPartnersList.length === 0 ? (
+                        <tr><td colSpan={4} className="py-6 text-center text-foreground/45">No service partners yet.</td></tr>
+                      ) : topPartnersList.map((p: any, idx) => (
                         <tr key={idx} className="hover:bg-cream/10">
-                          <td className="py-3 text-primary">{p.name}</td>
-                          <td className="py-3">{p.bookings}</td>
-                          <td className="py-3 text-gold">★ {p.rating}</td>
-                          <td className="py-3 text-right text-emerald-600 font-bold">{p.earnings}</td>
+                          <td className="py-3 text-primary">{p.businessName || 'Unknown'}</td>
+                          <td className="py-3">{p.totalBookings || 0}</td>
+                          <td className="py-3 text-gold">★ {p.rating || 'N/A'}</td>
+                          <td className="py-3 text-right text-emerald-600 font-bold">₹{p.totalEarnings?.toLocaleString('en-IN') || 0}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1730,15 +1731,15 @@ function AdminDashboardContent() {
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   <div className="bg-cream/30 p-2.5 rounded-2xl border border-gold/15 text-center">
                     <span className="text-[8px] text-foreground/45 uppercase tracking-wider block font-bold mb-0.5">Total Payouts</span>
-                    <span className="text-xs font-bold text-primary">₹8,75,430</span>
+                    <span className="text-xs font-bold text-primary">₹{(walletPayoutOverview.totalPayouts || 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className="bg-cream/30 p-2.5 rounded-2xl border border-gold/15 text-center">
                     <span className="text-[8px] text-foreground/45 uppercase tracking-wider block font-bold mb-0.5">Pending Payouts</span>
-                    <span className="text-xs font-bold text-amber-600">₹1,24,680</span>
+                    <span className="text-xs font-bold text-amber-600">₹{(walletPayoutOverview.pendingPayouts || 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className="bg-cream/30 p-2.5 rounded-2xl border border-gold/15 text-center">
                     <span className="text-[8px] text-foreground/45 uppercase tracking-wider block font-bold mb-0.5">Available Bal</span>
-                    <span className="text-xs font-bold text-emerald-600">₹62,750</span>
+                    <span className="text-xs font-bold text-emerald-600">₹{(walletPayoutOverview.availableBalance || 0).toLocaleString('en-IN')}</span>
                   </div>
                 </div>
                 <div className="overflow-x-auto flex-grow">
@@ -1752,17 +1753,15 @@ function AdminDashboardContent() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gold/5">
-                      {[
-                        { name: 'CleanPro Solutions', date: '31 May 2024', amount: '₹25,000', status: 'Completed', color: 'bg-green-100 text-green-700' },
-                        { name: 'HomeShine Services', date: '31 May 2024', amount: '₹18,750', status: 'Completed', color: 'bg-green-100 text-green-700' },
-                        { name: 'FixWell Experts', date: '30 May 2024', amount: '₹15,500', status: 'Processing', color: 'bg-blue-100 text-blue-700' }
-                      ].map((p, idx) => (
+                      {recentPayouts.length === 0 ? (
+                        <tr><td colSpan={4} className="py-6 text-center text-foreground/45">No recent payouts.</td></tr>
+                      ) : recentPayouts.map((p: any, idx) => (
                         <tr key={idx} className="hover:bg-cream/10">
-                          <td className="py-2.5 text-primary">{p.name}</td>
-                          <td className="py-2.5 text-foreground/50">{p.date}</td>
-                          <td className="py-2.5 font-bold">{p.amount}</td>
+                          <td className="py-2.5 text-primary">{p.vendorId?.businessName || 'Unknown'}</td>
+                          <td className="py-2.5 text-foreground/50">{new Date(p.createdAt).toLocaleDateString()}</td>
+                          <td className="py-2.5 font-bold">₹{p.amount?.toLocaleString('en-IN') || 0}</td>
                           <td className="py-2.5 text-right">
-                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${p.color}`}>{p.status}</span>
+                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${p.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{p.status}</span>
                           </td>
                         </tr>
                       ))}
@@ -2256,7 +2255,7 @@ function AdminDashboardContent() {
                 </div>
               )}
             </div>
-            <PaginationBar page={bookingsPage} total={bookingsTotal} limit={15} onPage={p => setBookingsPage(p)} />
+            <PaginationBar page={bookingsPage} total={bookingsTotal} limit={8} onPage={p => setBookingsPage(p)} />
           </div>
         )}
 
@@ -2799,8 +2798,8 @@ function AdminDashboardContent() {
               ) : (
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <DashboardKPICard label="Total Sales" value={`₹${totalRevenue.toLocaleString('en-IN')}`} icon={IndianRupee} bg="bg-green-100" text="text-green-700" trend="+12%" />
-                    <DashboardKPICard label="Commission" value={`₹${commissionEarned.toLocaleString('en-IN')}`} icon={TrendingUp} bg="bg-gold/20" text="text-primary" trend="+8%" />
+                    <DashboardKPICard label="Total Sales" value={`₹${totalRevenue.toLocaleString('en-IN')}`} icon={IndianRupee} bg="bg-green-100" text="text-green-700" />
+                    <DashboardKPICard label="Commission" value={`₹${commissionEarned.toLocaleString('en-IN')}`} icon={TrendingUp} bg="bg-gold/20" text="text-primary" />
                     <DashboardKPICard label="Avg Order Value" value={`₹${avgValue.toLocaleString('en-IN')}`} icon={ShoppingBag} bg="bg-blue-100" text="text-blue-700" />
                     <DashboardKPICard label="Active Jobs" value={String(activeCount)} icon={Clock} bg="bg-indigo-100" text="text-indigo-700" />
                     <DashboardKPICard label="Total Bookings" value={String(filteredBookings.length)} icon={BookOpen} bg="bg-emerald-100" text="text-emerald-700" />
