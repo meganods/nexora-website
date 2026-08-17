@@ -286,7 +286,8 @@ router.get('/settings', async (req, res) => {
     res.json({
       success: true,
       promoCode: settings.promoCode,
-      promoText: settings.promoText
+      promoText: settings.promoText,
+      platformFee: settings.platformFee
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching settings' });

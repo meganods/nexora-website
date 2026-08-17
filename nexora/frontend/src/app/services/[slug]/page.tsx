@@ -21,6 +21,7 @@ export default function ServiceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isFav, setIsFav] = useState(false);
+  const [platformFee, setPlatformFee] = useState(15);
 
   // Redesign state variables
   const [selectedAddons, setSelectedAddons] = useState<any[]>([]);
@@ -45,6 +46,11 @@ export default function ServiceDetailPage() {
         if (local) {
           const list = JSON.parse(local);
           setIsFav(list.includes(data._id));
+        }
+
+        const settingsRes = await api.get('/public/settings').catch(() => null);
+        if (settingsRes?.data?.success) {
+          setPlatformFee(settingsRes.data.platformFee?.minRupees ?? 15);
         }
       } catch (err) {
         setError('Service not found or failed to retrieve details.');
@@ -140,7 +146,6 @@ export default function ServiceDetailPage() {
   const addonsTotal = selectedAddons.reduce((sum, a) => sum + a.price, 0);
   const togetherTotal = selectedTogether.reduce((sum, s) => sum + s.basePrice, 0);
   const subtotal = (baseFinalPrice * quantity) + addonsTotal + togetherTotal;
-  const platformFee = 15;
   const totalAmount = subtotal + platformFee;
 
   const galleryUrls = service.serviceImages && service.serviceImages.length > 0

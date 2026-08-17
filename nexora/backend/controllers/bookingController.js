@@ -29,7 +29,7 @@ exports.createOrder = async (req, res) => {
 
     const AdminSettings = require('../models/AdminSettings');
     const settings = await AdminSettings.getSingleton();
-    const platformFee = settings.platformFee?.minRupees || 15;
+    const platformFee = settings.platformFee?.minRupees ?? 15;
 
     let basePrice = 0;
     let commissionAmount = 0;

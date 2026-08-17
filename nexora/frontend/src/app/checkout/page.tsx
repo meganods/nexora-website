@@ -184,7 +184,7 @@ function CheckoutForm() {
       // Platform settings
       const settingsRes = await api.get('/public/settings');
       if (settingsRes.data?.success) {
-        setPlatformFee(15);
+        setPlatformFee(settingsRes.data.platformFee?.minRupees ?? 15);
       }
 
       // User saved addresses
