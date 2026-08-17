@@ -102,6 +102,15 @@ const servicePartnerSchema = new mongoose.Schema(
       trim: true,
       maxlength: [150, "Name cannot exceed 150 characters"],
     },
+    dob: {
+      type: Date,
+      required: [true, "Date of Birth is required"],
+    },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+      required: [true, "Gender is required"],
+    },
     category: {
       type: String,
       required: [true, "Service category is required"],

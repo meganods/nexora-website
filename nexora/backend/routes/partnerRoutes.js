@@ -1,6 +1,7 @@
 const express = require("express");
 const {
-  loginVendor,
+  requestLoginOtp,
+  verifyLoginOtp,
   registerVendor,
   submitAadhar,
   verifyAadharOtp,
@@ -39,7 +40,9 @@ const { protect, authorize, requireApprovedVendor } = require("../middlewares/au
 
 const router = express.Router();
 
-router.post("/login", loginVendor);
+router.post("/login", requestLoginOtp);
+router.post("/request-login-otp", requestLoginOtp);
+router.post("/verify-login-otp", verifyLoginOtp);
 router.post("/signup", registerVendor);
 
 router.post("/kyc/aadhar", protect, authorize("vendor"), submitAadhar);

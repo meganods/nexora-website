@@ -1,7 +1,8 @@
 const express = require("express");
 const {
   loginUser,
-  signupUser,
+  requestSignupOtp,
+  verifySignupOtp,
   loginUserPassword,
   loginGoogle,
   getProfile,
@@ -16,7 +17,8 @@ const { protect, authorize } = require("../middlewares/auth");
 const router = express.Router();
 
 router.post("/login", loginUser);
-router.post("/signup", signupUser);
+router.post("/request-signup-otp", requestSignupOtp);
+router.post("/verify-signup-otp", verifySignupOtp);
 router.post("/login-password", loginUserPassword);
 router.post("/login-google", loginGoogle);
 

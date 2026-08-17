@@ -23,6 +23,8 @@ export default function PartnerRegisterWizard() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [dob, setDob] = useState('');
+  const [gender, setGender] = useState('Male');
   const [businessName, setBusinessName] = useState('');
   const [businessType, setBusinessType] = useState('Individual');
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -327,6 +329,8 @@ export default function PartnerRegisterWizard() {
         name,
         email,
         phone,
+        dob,
+        gender,
         category: 'Home Painting', // Default initial category placeholder
         password
       });
@@ -555,6 +559,27 @@ export default function PartnerRegisterWizard() {
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Date of Birth *</label>
+                  <input 
+                    type="date" required value={dob} onChange={e => setDob(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Gender *</label>
+                  <select 
+                    value={gender} onChange={e => setGender(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-white focus:outline-none"
+                  >
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
               </div>
 

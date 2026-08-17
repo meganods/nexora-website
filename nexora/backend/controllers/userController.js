@@ -7,10 +7,14 @@ const asyncHandler = require("../utils/asyncHandler");
 
 const PHONE_REGEX = /^[6-9]\d{9}$/;
 
-// @desc    Register a new customer using password
-// @route   POST /api/user/signup
+const { sendOTP } = require("../services/emailService");
+
+const pendingUsers = new Map();
+
+// @desc    Request OTP for User Signup
+// @route   POST /api/user/request-signup-otp
 // @access  Public
-const signupUser = asyncHandler(async (req, res) => {
+const requestSignupOtp = asyncHandler(async (req, res) => {
   const { name, email, phone, password } = req.body;
 
   if (!name || !email || !password) {
@@ -30,20 +34,53 @@ const signupUser = asyncHandler(async (req, res) => {
     }
   }
 
+  const generatedOtp = storeOtp(email.toLowerCase());
+  pendingUsers.set(email.toLowerCase(), { name, email: email.toLowerCase(), phone, password });
+  
+  const emailSent = await sendOTP(email.toLowerCase(), generatedOtp);
+  if (!emailSent) {
+    return res.status(500).json({ success: false, message: "Failed to send OTP to email. Please try again." });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "OTP sent to email successfully.",
+    ...(process.env.NODE_ENV !== "production" && { otp: generatedOtp }),
+  });
+});
+
+// @desc    Verify OTP and Create User
+// @route   POST /api/user/verify-signup-otp
+// @access  Public
+const verifySignupOtp = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ success: false, message: "Email and OTP are required." });
+  }
+
+  const otpResult = verifyOtp(email.toLowerCase(), otp);
+  if (!otpResult.valid) {
+    return res.status(400).json({ success: false, message: otpResult.message });
+  }
+
+  const pendingUserData = pendingUsers.get(email.toLowerCase());
+  if (!pendingUserData) {
+    return res.status(400).json({ success: false, message: "Signup session expired. Please register again." });
+  }
+
   const user = await User.create({
-    name: name.trim(),
-    email: email.toLowerCase(),
-    phone: phone || undefined,
-    password
+    name: pendingUserData.name.trim(),
+    email: pendingUserData.email,
+    phone: pendingUserData.phone || undefined,
+    password: pendingUserData.password
   });
 
-  const token = generateToken({ id: user._id, role: "user" });
+  pendingUsers.delete(email.toLowerCase());
 
   res.status(201).json({
     success: true,
     message: "Registration successful.",
-    token,
-    user
   });
 });
 
@@ -346,14 +383,15 @@ const loginGoogle = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  loginUser,
-  signupUser,
+  requestSignupOtp,
+  verifySignupOtp,
   loginUserPassword,
-  loginGoogle,
+  loginUser,
   getProfile,
   updateProfile,
   getAddresses,
   addAddress,
   updateAddress,
   deleteAddress,
+  loginGoogle
 };

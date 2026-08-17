@@ -34,6 +34,9 @@ function SignupPageContent() {
     if (user) router.replace(redirectTo);
   }, [user, router, redirectTo]);
 
+  const [step, setStep] = useState<'form' | 'otp'>('form');
+  const [otp, setOtp] = useState('');
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -68,13 +71,37 @@ function SignupPageContent() {
         password
       };
 
-      const { data } = await api.post('/user/signup', payload);
+      const { data } = await api.post('/user/request-signup-otp', payload);
       if (data.success) {
-        // Redirect to login page instead of auto login, passing the redirect intent
+        setStep('otp');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to send OTP.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    if (!otp.trim() || otp.length < 4) {
+      setError('Please enter a valid OTP.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data } = await api.post('/user/verify-signup-otp', {
+        email: email.toLowerCase(),
+        otp: otp.trim()
+      });
+      if (data.success) {
         router.push(`/login?signup_success=true&redirect=${encodeURIComponent(redirectTo)}`);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed.');
+      setError(err.response?.data?.message || 'Invalid OTP.');
     } finally {
       setIsLoading(false);
     }
@@ -145,119 +172,152 @@ function SignupPageContent() {
             <p className="mt-1.5 text-xs sm:text-sm text-foreground/50">Start booking premium home services today</p>
           </div>
 
-          <form onSubmit={handleSignup} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Full Name *</label>
-              <div className="relative">
-                <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/45" />
-                <input
-                  type="text" value={name} onChange={e => setName(e.target.value)}
-                  placeholder="Enter your name"
-                  className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-gold/30 bg-cream text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
-                  required
-                />
-              </div>
-            </div>
+          {step === 'form' ? (
+            <>
+              <form onSubmit={handleSignup} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Full Name *</label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/45" />
+                    <input
+                      type="text" value={name} onChange={e => setName(e.target.value)}
+                      placeholder="Enter your name"
+                      className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-gold/30 bg-cream text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                      required
+                    />
+                  </div>
+                </div>
 
-            <div>
-              <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Email Address *</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/45" />
-                <input
-                  type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-gold/30 bg-cream text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
-                  required
-                />
-              </div>
-            </div>
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Email Address *</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/45" />
+                    <input
+                      type="email" value={email} onChange={e => setEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-gold/30 bg-cream text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                      required
+                    />
+                  </div>
+                </div>
 
-            <div>
-              <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Mobile Number *</label>
-              <div className="relative">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/45" />
-                <input
-                  type="tel" maxLength={10} value={phone}
-                  onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Enter your mobile number"
-                  className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-gold/30 bg-cream text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all font-mono"
-                  required
-                />
-              </div>
-            </div>
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Mobile Number *</label>
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/45" />
+                    <input
+                      type="tel" maxLength={10} value={phone}
+                      onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
+                      placeholder="Enter your mobile number"
+                      className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-gold/30 bg-cream text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all font-mono"
+                      required
+                    />
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider font-sans">Password *</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/45" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider font-sans">Password *</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/45" />
+                      <input
+                        type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                        placeholder="••••••"
+                        className="w-full pl-10 pr-10 py-2.5 rounded-2xl border border-gold/30 bg-cream text-foreground text-sm focus:outline-none focus:border-primary font-mono"
+                        required
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-primary">
+                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider font-sans">Confirm Password *</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/45" />
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                        placeholder="••••••"
+                        className="w-full pl-10 pr-10 py-2.5 rounded-2xl border border-gold/30 bg-cream text-foreground text-sm focus:outline-none focus:border-primary font-mono"
+                        required
+                      />
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-primary">
+                        {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5 pt-1.5">
                   <input
-                    type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-2xl border border-gold/30 bg-cream text-foreground text-sm focus:outline-none focus:border-primary font-mono"
+                    id="terms" type="checkbox" checked={termsAccepted} onChange={e => setTermsAccepted(e.target.checked)}
+                    className="h-4.5 w-4.5 rounded border-gold/30 text-primary focus:ring-primary/20 accent-primary mt-0.5 cursor-pointer"
+                  />
+                  <label htmlFor="terms" className="text-xs text-foreground/60 leading-normal cursor-pointer select-none">
+                    I accept and agree to Nexora's{' '}
+                    <Link href="/terms" className="underline font-semibold hover:text-primary">Terms &amp; Conditions</Link>{' '}
+                    and{' '}
+                    <Link href="/privacy" className="underline font-semibold hover:text-primary">Privacy Policy</Link>.
+                  </label>
+                </div>
+
+                {error && <p className="text-red-500 text-xs font-semibold bg-red-50 rounded-xl p-3 border border-red-100">{error}</p>}
+
+                <button type="submit" disabled={isLoading}
+                  className="w-full py-3.5 bg-primary text-white rounded-full font-bold hover:bg-primary/95 transition-all text-sm shadow-sm flex items-center justify-center gap-2">
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
+                </button>
+              </form>
+
+              <div className="relative flex py-4 items-center">
+                <div className="flex-grow border-t border-gold/15"></div>
+                <span className="flex-shrink mx-3.5 text-[10px] font-bold text-foreground/40 uppercase tracking-widest">or</span>
+                <div className="flex-grow border-t border-gold/15"></div>
+              </div>
+
+              <div className="flex justify-center w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError('Google signup failed')}
+                  shape="pill"
+                  width="100%"
+                />
+              </div>
+            </>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <p className="text-sm text-foreground/70 text-center mb-6">
+                We've sent a 6-digit code to <strong>{email}</strong>. Please enter it below to verify your account.
+              </p>
+              <div>
+                <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Verification Code *</label>
+                <div className="relative">
+                  <input
+                    type="text" maxLength={6} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                    placeholder="Enter 6-digit OTP"
+                    className="w-full text-center tracking-[0.2em] sm:tracking-[0.5em] placeholder:tracking-normal font-bold text-xl py-3 rounded-2xl border border-gold/30 bg-cream text-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
                     required
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-primary">
-                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider font-sans">Confirm Password *</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/45" />
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="••••••"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-2xl border border-gold/30 bg-cream text-foreground text-sm focus:outline-none focus:border-primary font-mono"
-                    required
-                  />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-primary">
-                    {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
+              {error && <p className="text-red-500 text-xs font-semibold bg-red-50 rounded-xl p-3 border border-red-100">{error}</p>}
+
+              <button type="submit" disabled={isLoading || otp.length < 4}
+                className="w-full py-3.5 bg-primary text-white rounded-full font-bold hover:bg-primary/95 transition-all text-sm shadow-sm flex items-center justify-center gap-2">
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify & Continue'}
+              </button>
+              
+              <div className="text-center mt-4">
+                <button type="button" onClick={() => setStep('form')} className="text-xs text-foreground/60 hover:text-primary underline">
+                  Back to Registration
+                </button>
               </div>
-            </div>
-
-            <div className="flex items-start gap-2.5 pt-1.5">
-              <input
-                id="terms" type="checkbox" checked={termsAccepted} onChange={e => setTermsAccepted(e.target.checked)}
-                className="h-4.5 w-4.5 rounded border-gold/30 text-primary focus:ring-primary/20 accent-primary mt-0.5 cursor-pointer"
-              />
-              <label htmlFor="terms" className="text-xs text-foreground/60 leading-normal cursor-pointer select-none">
-                I accept and agree to Nexora's{' '}
-                <Link href="/terms" className="underline font-semibold hover:text-primary">Terms &amp; Conditions</Link>{' '}
-                and{' '}
-                <Link href="/privacy" className="underline font-semibold hover:text-primary">Privacy Policy</Link>.
-              </label>
-            </div>
-
-            {error && <p className="text-red-500 text-xs font-semibold bg-red-50 rounded-xl p-3 border border-red-100">{error}</p>}
-
-            <button type="submit" disabled={isLoading}
-              className="w-full py-3.5 bg-primary text-white rounded-full font-bold hover:bg-primary/95 transition-all text-sm shadow-sm flex items-center justify-center gap-2">
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
-            </button>
-          </form>
-
-          {/* Social separator */}
-          <div className="relative flex py-4 items-center">
-            <div className="flex-grow border-t border-gold/15"></div>
-            <span className="flex-shrink mx-3.5 text-[10px] font-bold text-foreground/40 uppercase tracking-widest">or</span>
-            <div className="flex-grow border-t border-gold/15"></div>
-          </div>
-
-          <div className="flex justify-center w-full">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => setError('Google signup failed')}
-              shape="pill"
-              width="100%"
-            />
-          </div>
+            </form>
+          )}
 
           <div className="mt-8 text-center text-xs text-foreground/60">
             Already have an account?{' '}

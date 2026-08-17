@@ -4,17 +4,19 @@ const { storeOtp, verifyOtp } = require("../utils/mockOtp");
 const asyncHandler = require("../utils/asyncHandler");
 const { createNotification } = require('./notificationController');
 const Admin = require('../models/Admin');
+const { sendOTP } = require('../services/emailService');
 
 const PHONE_REGEX = /^[6-9]\d{9}$/;
+const pendingPartnerLogins = new Map();
 
 // @desc    Register a new partner/vendor with password
 // @route   POST /api/partner/signup
 // @access  Public
 const registerVendor = asyncHandler(async (req, res) => {
-  const { name, email, phone, category, password } = req.body;
+  const { name, email, phone, category, password, dob, gender } = req.body;
 
-  if (!name || !email || !phone || !category || !password) {
-    return res.status(400).json({ success: false, message: "Required fields: name, email, phone, category, password" });
+  if (!name || !email || !phone || !category || !password || !dob || !gender) {
+    return res.status(400).json({ success: false, message: "Required fields: name, email, phone, category, password, dob, gender" });
   }
 
   // Check unique constraints
@@ -35,6 +37,8 @@ const registerVendor = asyncHandler(async (req, res) => {
     phone,
     category,
     password,
+    dob,
+    gender,
     kycStatus: "KYC_NOT_STARTED",
     kycDetails: {
       aadharNumber: "",
@@ -54,10 +58,10 @@ const registerVendor = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Verify partner password & login
-// @route   POST /api/partner/login
+// @desc    Request OTP for partner login
+// @route   POST /api/partner/request-login-otp
 // @access  Public
-const loginVendor = asyncHandler(async (req, res) => {
+const requestLoginOtp = asyncHandler(async (req, res) => {
   const { identifier, password } = req.body;
 
   if (!identifier || !password) {
@@ -90,15 +94,57 @@ const loginVendor = asyncHandler(async (req, res) => {
     });
   }
 
+  const generatedOtp = storeOtp(vendor.email);
+  pendingPartnerLogins.set(vendor.email, { vendorId: vendor._id });
+
+  const emailSent = await sendOTP(vendor.email, generatedOtp);
+  if (!emailSent) {
+    return res.status(500).json({ success: false, message: "Failed to send OTP to email. Please try again." });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "OTP sent to email successfully.",
+    email: vendor.email,
+    ...(process.env.NODE_ENV !== "production" && { otp: generatedOtp }),
+  });
+});
+
+// @desc    Verify partner login OTP
+// @route   POST /api/partner/verify-login-otp
+// @access  Public
+const verifyLoginOtp = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ success: false, message: "Email and OTP are required." });
+  }
+
+  const otpResult = verifyOtp(email, otp);
+  if (!otpResult.valid) {
+    return res.status(400).json({ success: false, message: otpResult.message });
+  }
+
+  const pendingLoginData = pendingPartnerLogins.get(email);
+  if (!pendingLoginData) {
+    return res.status(400).json({ success: false, message: "Login session expired. Please log in again." });
+  }
+
+  const vendor = await ServicePartner.findById(pendingLoginData.vendorId);
+  if (!vendor) {
+    return res.status(404).json({ success: false, message: "Vendor not found." });
+  }
+
   // Generate JWT token
   const token = generateToken({ id: vendor._id, role: "vendor" });
 
-  // Allow login so they can access the KYC dashboard wizard, but restrict actual dashboard access on the client unless APPROVED
+  pendingPartnerLogins.delete(email);
+
   res.status(200).json({
     success: true,
     message: "Login successful.",
     token,
-    vendor,
+    vendor
   });
 });
 
@@ -1209,7 +1255,8 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  loginVendor,
+  requestLoginOtp,
+  verifyLoginOtp,
   registerVendor,
   submitAadhar,
   verifyAadharOtp,
