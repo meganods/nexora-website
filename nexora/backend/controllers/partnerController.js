@@ -94,6 +94,20 @@ const requestLoginOtp = asyncHandler(async (req, res) => {
     });
   }
 
+  if (vendor.kycStatus === "PENDING_ADMIN_APPROVAL") {
+    return res.status(403).json({
+      success: false,
+      message: "Your account is not approved yet.",
+    });
+  }
+
+  if (vendor.kycStatus === "REJECTED") {
+    return res.status(403).json({
+      success: false,
+      message: "Your account application has been rejected.",
+    });
+  }
+
   const generatedOtp = storeOtp(vendor.email);
   pendingPartnerLogins.set(vendor.email, { vendorId: vendor._id });
 
