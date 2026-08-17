@@ -154,11 +154,11 @@ export default function PartnerProfilePage() {
               <img 
                 src={profilePictureUrl} 
                 alt="profile" 
-                className="w-20 h-20 rounded-full mx-auto object-cover border-2 border-gold"
+                className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-gold shadow-md"
               />
             ) : (
-              <div className="w-20 h-20 bg-gold/15 border border-gold/30 text-gold rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
-                {name.charAt(0)}
+              <div className="w-32 h-32 bg-gold/15 border-2 border-dashed border-gold/40 text-gold rounded-full flex items-center justify-center mx-auto text-4xl font-bold shadow-inner">
+                {name ? name.charAt(0).toUpperCase() : 'U'}
               </div>
             )}
             <div>

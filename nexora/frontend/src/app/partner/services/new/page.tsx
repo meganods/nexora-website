@@ -6,12 +6,14 @@ import { ArrowLeft, Loader2, Check, Plus } from 'lucide-react';
 import api from '@/lib/api';
 import ImageUpload from '@/app/admin/_components/ImageUpload';
 import MultiImageUpload from '@/app/admin/_components/MultiImageUpload';
+import { useAuth } from '@/lib/auth';
 
 const inp = 'w-full border border-[#C3AB84]/30 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#0F3D30] bg-[#F8F4EE] transition-colors';
 const lbl = 'block text-xs font-semibold text-foreground/60 mb-1.5 uppercase tracking-wider';
 
 export default function PartnerNewServicePage() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   
   const [categories, setCategories] = useState<any[]>([]);
   const [name, setName] = useState('');
@@ -27,6 +29,13 @@ export default function PartnerNewServicePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    if (!authLoading && user && !user.profilePictureUrl && !user.profilePhoto) {
+      alert('Please upload your profile photo before adding a new service.');
+      router.push('/partner/profile');
+    }
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     api.get('/public/categories')

@@ -303,7 +303,7 @@ exports.verifyPayment = async (req, res) => {
         createNotification(
           updatedBooking.customerId, 'user',
           'Payment Confirmed 🎉',
-          'Your payment was successful! We are finding the best service partner for you.',
+          'Your payment was successful!',
           'payment', { bookingId: updatedBooking._id }
         );
       }

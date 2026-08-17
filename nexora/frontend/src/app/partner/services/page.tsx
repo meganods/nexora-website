@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Wrench, CheckCircle2, AlertTriangle, Loader2, Plus, Edit2, Trash2, PlusCircle, Check } from 'lucide-react';
 import api from '@/lib/api';
 import ImageUpload from '@/app/admin/_components/ImageUpload';
+import { useAuth } from '@/lib/auth';
 
 export default function PartnerServicesPage() {
   const router = useRouter();
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'standard' | 'custom'>('standard');
   const [categories, setCategories] = useState<any[]>([]);
@@ -62,6 +64,11 @@ export default function PartnerServicesPage() {
   };
 
   const handleOpenAdd = () => {
+    if (!user?.profilePictureUrl && !user?.profilePhoto) {
+      alert('Please upload your profile photo in the Profile section before adding services.');
+      router.push('/partner/profile');
+      return;
+    }
     router.push('/partner/services/new');
   };
 
@@ -103,6 +110,11 @@ export default function PartnerServicesPage() {
   };
 
   const handleSavePlatformServices = async () => {
+    if (!user?.profilePictureUrl && !user?.profilePhoto) {
+      alert('Please upload your profile photo in the Profile section before adding services.');
+      router.push('/partner/profile');
+      return;
+    }
     try {
       setPlatformSaving(true);
       setErrorMsg('');
