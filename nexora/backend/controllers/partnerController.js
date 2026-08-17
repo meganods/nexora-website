@@ -1063,6 +1063,151 @@ const updateTripLocation = asyncHandler(async (req, res) => {
   res.json({ success: true, tripLocation: booking.tripLocation });
 });
 
+
+// @desc    Get dashboard metrics for partner
+// @route   GET /api/partner/dashboard-stats
+// @access  Private (vendor)
+const getDashboardStats = asyncHandler(async (req, res) => {
+  const vendorId = req.user.userId;
+  const vendor = await ServicePartner.findById(vendorId);
+  if (!vendor) return res.status(404).json({ success: false, message: 'Vendor not found' });
+
+  // Get bookings for this vendor
+  const bookings = await Booking.find({ vendorId })
+    .populate('serviceId', 'name category')
+    .populate('customerId', 'name')
+    .sort({ createdAt: -1 });
+
+  // KPIs
+  const totalBookings = bookings.length;
+  const activeStatuses = ['ASSIGNED', 'PARTNER_ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'OTP_VERIFICATION', 'IN_PROGRESS'];
+  const activeBookings = bookings.filter(b => activeStatuses.includes(b.status)).length;
+  const completedBookingsList = bookings.filter(b => b.status === 'COMPLETED');
+  const completedBookings = completedBookingsList.length;
+
+  // Calculate earnings (Base Price - Commission) for completed bookings
+  let totalEarnings = 0;
+  completedBookingsList.forEach(b => {
+    const platformFee = b.customerPlatformFee || 0;
+    const basePrice = (b.paymentDetails?.amount || 0) - platformFee;
+    const earning = basePrice - (b.commissionAmount || 0);
+    if (earning > 0) totalEarnings += earning;
+  });
+
+  // Wait, some earnings might be from `vendor.walletBalance`. We can just compute total historical earnings from DB or use a mix.
+  // Actually, we'll just return what's in the DB for completed.
+
+  // Recent Bookings (last 5)
+  const recentBookings = bookings.slice(0, 5).map(b => ({
+    id: `#${b._id.toString().substring(0, 8).toUpperCase()}`,
+    customer: b.customerId?.name || 'Unknown',
+    service: b.serviceId?.name || 'Unknown',
+    date: new Date(b.scheduledDate || b.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
+    status: b.status,
+    amount: `₹${b.finalPrice || b.paymentDetails?.amount || 0}`
+  }));
+
+  // Upcoming Schedule (active bookings)
+  const upcomingSchedule = bookings
+    .filter(b => activeStatuses.includes(b.status))
+    .slice(0, 5)
+    .map(b => ({
+      time: new Date(b.scheduledDate || b.createdAt).toLocaleString('en-IN', { timeStyle: 'short' }),
+      customer: b.customerId?.name || 'Unknown',
+      service: b.serviceId?.name || 'Unknown',
+      status: b.status
+    }));
+
+  // Transactions (mix of completed bookings and payouts)
+  const Payout = require('../models/Payout');
+  const payouts = await Payout.find({ vendorId }).sort({ createdAt: -1 }).limit(5);
+
+  let recentTransactions = [];
+  
+  completedBookingsList.slice(0, 5).forEach(b => {
+    const platformFee = b.customerPlatformFee || 0;
+    const earning = (b.paymentDetails?.amount || 0) - platformFee - (b.commissionAmount || 0);
+    recentTransactions.push({
+      type: 'Booking Earnings',
+      amount: `+₹${earning}`,
+      amountColor: 'text-green-600',
+      date: new Date(b.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }),
+      status: 'Success',
+      createdAt: b.updatedAt
+    });
+  });
+
+  payouts.forEach(p => {
+    recentTransactions.push({
+      type: 'Withdrawal',
+      amount: `-₹${p.amount}`,
+      amountColor: 'text-gray-700',
+      date: new Date(p.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }),
+      status: p.status === 'COMPLETED' ? 'Success' : p.status,
+      createdAt: p.createdAt
+    });
+  });
+
+  recentTransactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  recentTransactions = recentTransactions.slice(0, 5);
+
+  // Status Chart Data
+  const statusCounts = {
+    ASSIGNED: bookings.filter(b => b.status === 'ASSIGNED' || b.status === 'PARTNER_ACCEPTED').length,
+    IN_PROGRESS: bookings.filter(b => ['ON_THE_WAY', 'ARRIVED', 'OTP_VERIFICATION', 'IN_PROGRESS'].includes(b.status)).length,
+    COMPLETED: completedBookings,
+    CANCELLED: bookings.filter(b => b.status === 'CANCELLED' || b.status === 'REJECTED' || b.status === 'NO_SHOW').length
+  };
+
+  const statusChartData = [
+    { name: `Assigned (${statusCounts.ASSIGNED})`, value: statusCounts.ASSIGNED, color: '#1F4037', rawStatus: 'ASSIGNED' },
+    { name: `In Progress (${statusCounts.IN_PROGRESS})`, value: statusCounts.IN_PROGRESS, color: '#F59E0B', rawStatus: 'IN_PROGRESS' },
+    { name: `Completed (${statusCounts.COMPLETED})`, value: statusCounts.COMPLETED, color: '#7BA07A', rawStatus: 'COMPLETED' },
+    { name: `Canceled (${statusCounts.CANCELLED})`, value: statusCounts.CANCELLED, color: '#EF4444', rawStatus: 'CANCELLED' }
+  ].filter(s => s.value > 0);
+
+  // Top Services
+  const topServicesMap = {};
+  bookings.forEach(b => {
+    if (b.serviceId?.name) {
+      topServicesMap[b.serviceId.name] = (topServicesMap[b.serviceId.name] || 0) + 1;
+    }
+  });
+
+  const topServicesData = Object.entries(topServicesMap)
+    .map(([name, count]) => ({ name, Bookings: count }))
+    .sort((a, b) => b.Bookings - a.Bookings)
+    .slice(0, 5);
+
+  // Return raw bookings to frontend so it can calculate bookings over time (charts)
+  // We send only necessary fields to reduce payload
+  const bookingsForCharts = bookings.map(b => ({
+    _id: b._id,
+    createdAt: b.createdAt,
+    status: b.status,
+    earning: b.status === 'COMPLETED' ? ((b.paymentDetails?.amount || 0) - (b.customerPlatformFee || 0) - (b.commissionAmount || 0)) : 0
+  }));
+
+  res.json({
+    success: true,
+    kpis: {
+      total: { count: totalBookings, trend: '+0%' },
+      active: { count: activeBookings, trend: '+0%' },
+      completed: { count: completedBookings, trend: '+0%' },
+      earnings: { count: totalEarnings, trend: '+0%' },
+      wallet: vendor.walletBalance || 0,
+      rating: (vendor.rating || 4.8).toFixed(1),
+      reviews: vendor.reviewCount || 0
+    },
+    recentBookings,
+    upcomingSchedule,
+    recentTransactions,
+    statusChartData,
+    topServicesData,
+    bookingsForCharts
+  });
+});
+
 module.exports = {
   loginVendor,
   registerVendor,
@@ -1095,6 +1240,6 @@ module.exports = {
   updatePartnerService,
   deletePartnerService,
   getPartnerReviews,
-  replyToReview
+  replyToReview,
+  getDashboardStats
 };
-

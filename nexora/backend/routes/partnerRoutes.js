@@ -31,7 +31,8 @@ const {
   updatePartnerService,
   deletePartnerService,
   getPartnerReviews,
-  replyToReview
+  replyToReview,
+  getDashboardStats
 } = require("../controllers/partnerController");
 const { getMyDeals, createVendorDeal, updateVendorDeal } = require("../controllers/dealController");
 const { protect, authorize, requireApprovedVendor } = require("../middlewares/auth");
@@ -51,6 +52,9 @@ router.put("/location", protect, authorize("vendor"), updateLocation);
 
 // Onboarding progress (accessible before full KYC approval)
 router.put("/onboarding", protect, authorize("vendor"), updateOnboarding);
+
+// Dashboard Stats
+router.get("/dashboard-stats", protect, authorize("vendor"), requireApprovedVendor, getDashboardStats);
 
 // Request Management (Operational - requires approval)
 router.get("/available-requests", protect, authorize("vendor"), requireApprovedVendor, getAvailableRequests);

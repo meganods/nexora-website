@@ -516,7 +516,7 @@ function AdminDashboardContent() {
     return () => clearInterval(interval);
   }, []);
 
-  const [metrics, setMetrics] = useState({ revenue: 0, commission: 0, activeBookings: 0, completedBookings: 0, cancelledBookings: 0, verifiedPartners: 0, totalPartners: 0, pendingApprovals: 0, totalUsers: 0, totalServices: 0, totalBookings: 0 });
+  const [metrics, setMetrics] = useState({ revenue: 0, commission: 0, activeBookings: 0, completedBookings: 0, cancelledBookings: 0, pendingPaymentBookings: 0, verifiedPartners: 0, totalPartners: 0, pendingApprovals: 0, totalUsers: 0, totalServices: 0, totalBookings: 0 });
   const [locationMetrics, setLocationMetrics] = useState<any>(null);
   const [chartBookingData, setChartBookingData] = useState<any[]>([]);
   const [chartRevenueData, setChartRevenueData] = useState<any[]>([]);
@@ -689,7 +689,7 @@ function AdminDashboardContent() {
   const fetchAdminNotifications = async () => {
     try {
       setAdminNotificationsLoading(true);
-      const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+      const token = localStorage.getItem('admin_token');
       const { data } = await api.get('/notifications', {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -704,7 +704,7 @@ function AdminDashboardContent() {
   };
 
   const markAdminNotificationRead = async (id: string) => {
-    const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+    const token = localStorage.getItem('admin_token');
     try {
       await api.patch(`/notifications/${id}/read`, {}, {
         headers: { Authorization: `Bearer ${token}` }
@@ -718,7 +718,7 @@ function AdminDashboardContent() {
   };
 
   const markAllAdminNotificationsRead = async () => {
-    const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+    const token = localStorage.getItem('admin_token');
     try {
       await api.patch('/notifications/read-all', {}, {
         headers: { Authorization: `Bearer ${token}` }
@@ -731,7 +731,7 @@ function AdminDashboardContent() {
 
   const deleteAdminNotification = async (id: string) => {
     if (!confirm('Are you sure you want to delete this notification?')) return;
-    const token = localStorage.getItem('admin_token') || localStorage.getItem('nexora_token');
+    const token = localStorage.getItem('admin_token');
     try {
       await api.delete(`/notifications/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -1032,6 +1032,7 @@ function AdminDashboardContent() {
         activeBookings: data.activeBookings || 0,
         completedBookings: data.completedBookings || 0,
         cancelledBookings: data.cancelledBookings || 0,
+        pendingPaymentBookings: data.pendingPaymentBookings || 0,
         verifiedPartners: data.verifiedVendors || 0,
         totalPartners: data.totalPartners || 0,
         pendingApprovals: data.pendingApprovals || 0,
@@ -1520,6 +1521,7 @@ function AdminDashboardContent() {
               <DashboardKPICard label="Active Bookings" value={metrics.activeBookings || 0} icon={ShoppingBag} bg="bg-blue-100" text="text-blue-700" />
               <DashboardKPICard label="Completed Bookings" value={metrics.completedBookings || 0} icon={CheckCircle2} bg="bg-green-100" text="text-green-700" />
               <DashboardKPICard label="Cancelled Bookings" value={metrics.cancelledBookings || 0} icon={X} bg="bg-red-100" text="text-red-700" />
+              <DashboardKPICard label="Pending Payments" value={metrics.pendingPaymentBookings || 0} icon={AlertCircle} bg="bg-orange-100" text="text-orange-700" />
               <DashboardKPICard label="Total Customers" value={metrics.totalUsers || 0} icon={Users} bg="bg-pink-100" text="text-pink-700" />
               <DashboardKPICard label="Total Service Partners" value={metrics.totalPartners || 0} icon={UserCheck} bg="bg-purple-100" text="text-purple-700" />
               <DashboardKPICard label="Verified Partners" value={metrics.verifiedPartners || 0} icon={ShieldCheck} bg="bg-emerald-100" text="text-emerald-700" />

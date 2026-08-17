@@ -14,7 +14,6 @@ import api from '@/lib/api';
 import Link from 'next/link';
 import NotificationBell from '@/components/NotificationBell';
 
-// Using exact colors from the reference image
 const STATUS_COLORS = {
   'ASSIGNED': '#1F4037',     // Dark green
   'IN_PROGRESS': '#F59E0B',  // Orange/gold
@@ -39,7 +38,7 @@ export default function PartnerDashboard() {
   const [earningsPeriod, setEarningsPeriod] = useState('Weekly');
   const [showEarningsDropdown, setShowEarningsDropdown] = useState(false);
 
-  const [requests, setRequests] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
     fetchDashboardDetails();
@@ -59,18 +58,10 @@ export default function PartnerDashboard() {
           return;
         }
 
-        const [reqsRes] = await Promise.all([
-          api.get('/partner/my-requests').catch(() => ({ data: [] }))
-        ]);
-
-        let data = reqsRes.data || [];
-
-        // TEMPORARY: Inject exactly matching dummy data for visual parity with reference image
-        if (data.length < 50) {
-          data = generateDummyData();
+        const statsRes = await api.get('/partner/dashboard-stats');
+        if (statsRes.data?.success) {
+          setStats(statsRes.data);
         }
-
-        setRequests(data);
       }
     } catch (err) {
       console.error("Failed to load dashboard metrics", err);
@@ -79,158 +70,83 @@ export default function PartnerDashboard() {
     }
   };
 
-  // --- EXACT REFERENCE DATA GENERATOR ---
-  const generateDummyData = () => {
-    const dummy = [];
-    const now = new Date();
-
-    // Generate 128 total bookings
-    for (let i = 0; i < 128; i++) {
-      let status = 'COMPLETED';
-      if (i < 5) status = 'ASSIGNED';
-      else if (i < 18) status = 'IN_PROGRESS';
-      else if (i < 32) status = 'CANCELLED';
-
-      // Spread dates over the last 30 days
-      const daysAgo = Math.floor(Math.random() * 30);
-      const createdAt = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
-
-      const services = ['AC Repair', 'Electrical Work', 'Plumbing', 'Home Painting', 'Deep Cleaning'];
-      const customers = ['Rahul Sharma', 'Priya Verma', 'Amit Kumar', 'Neha Singh', 'Sanjay Gupta'];
-
-      dummy.push({
-        _id: `BK${12456 - i}`,
-        status,
-        createdAt,
-        updatedAt: createdAt,
-        finalPrice: status === 'CANCELLED' ? 0 : Math.floor(Math.random() * 1000) + 300,
-        serviceId: { name: services[i % services.length] },
-        customerName: customers[i % customers.length]
-      });
-    }
-    return dummy.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  };
-
-  // KPI Metrics matching the reference exactly
-  const kpis = {
-    total: { count: 128, trend: '+18%' },
-    active: { count: 18, trend: '+22%' },
-    completed: { count: 96, trend: '+25%' },
-    earnings: { count: 24860, trend: '+28%' },
-    wallet: 8750,
-    rating: 4.8,
-    reviews: 128
-  };
-
-  // Chart 1: Bookings Overview Data (Dynamic based on bookingsPeriod)
   const getBookingsChartData = () => {
-    if (bookingsPeriod === 'Weekly') {
-      return [
-        { name: 'Week 1', Bookings: 45, Completed: 30 },
-        { name: 'Week 2', Bookings: 55, Completed: 40 },
-        { name: 'Week 3', Bookings: 40, Completed: 25 },
-        { name: 'Week 4', Bookings: 60, Completed: 50 },
-      ];
-    }
-    if (bookingsPeriod === 'Monthly') {
-      return [
-        { name: 'Jan', Bookings: 120, Completed: 90 },
-        { name: 'Feb', Bookings: 145, Completed: 110 },
-        { name: 'Mar', Bookings: 130, Completed: 105 },
-        { name: 'Apr', Bookings: 160, Completed: 140 },
-        { name: 'May', Bookings: 180, Completed: 155 },
-      ];
-    }
-    return [
-      { name: 'May 5', Bookings: 10, Completed: 5 },
-      { name: 'May 6', Bookings: 22, Completed: 12 },
-      { name: 'May 7', Bookings: 35, Completed: 20 },
-      { name: 'May 8', Bookings: 28, Completed: 25 },
-      { name: 'May 9', Bookings: 42, Completed: 22 },
-      { name: 'May 10', Bookings: 32, Completed: 28 },
-      { name: 'May 11', Bookings: 45, Completed: 35 }
-    ];
+    if (!stats || !stats.bookingsForCharts) return [];
+    const data = stats.bookingsForCharts;
+    
+    // Grouping helper
+    const grouped: Record<string, { Bookings: number, Completed: number }> = {};
+    
+    data.forEach((b: any) => {
+      const d = new Date(b.createdAt);
+      let key = '';
+      if (bookingsPeriod === 'Monthly') {
+        key = d.toLocaleString('en-US', { month: 'short' });
+      } else if (bookingsPeriod === 'Weekly') {
+        // Simple week grouping for demo
+        key = `Week ${Math.ceil(d.getDate() / 7)}`;
+      } else {
+        key = d.toLocaleString('en-US', { month: 'short', day: 'numeric' });
+      }
+      
+      if (!grouped[key]) grouped[key] = { Bookings: 0, Completed: 0 };
+      grouped[key].Bookings++;
+      if (b.status === 'COMPLETED') grouped[key].Completed++;
+    });
+
+    return Object.entries(grouped).map(([name, counts]) => ({ name, ...counts }));
   };
 
-  // Chart 2: Earnings Overview Data (Dynamic based on earningsPeriod)
   const getEarningsChartData = () => {
-    if (earningsPeriod === 'Today') {
-      return [
-        { name: '8 AM', Earnings1: 1000 },
-        { name: '10 AM', Earnings1: 2500 },
-        { name: '12 PM', Earnings1: 1500 },
-        { name: '2 PM', Earnings1: 3000 },
-        { name: '4 PM', Earnings1: 2000 }
-      ];
-    }
-    if (earningsPeriod === 'Monthly') {
-      return [
-        { name: 'Jan', Earnings1: 35000 },
-        { name: 'Feb', Earnings1: 42000 },
-        { name: 'Mar', Earnings1: 38000 },
-        { name: 'Apr', Earnings1: 45000 },
-        { name: 'May', Earnings1: 52000 }
-      ];
-    }
-    if (earningsPeriod === 'Yearly') {
-      return [
-        { name: '2022', Earnings1: 250000 },
-        { name: '2023', Earnings1: 420000 },
-        { name: '2024', Earnings1: 580000 }
-      ];
-    }
-    // Default Weekly
-    return [
-      { name: 'Week 1', Earnings1: 9000, Earnings2: 4000 },
-      { name: 'Week 2', Earnings1: 14000, Earnings2: 6000 },
-      { name: 'Week 3', Earnings1: 9000, Earnings2: 4500 },
-      { name: 'Week 4', Earnings1: 8500, Earnings2: 5500 },
-      { name: 'This Week', Earnings1: 15000, Earnings2: 6000 }
-    ];
+    if (!stats || !stats.bookingsForCharts) return [];
+    const data = stats.bookingsForCharts;
+    
+    const grouped: Record<string, { Earnings1: number }> = {};
+    
+    data.forEach((b: any) => {
+      const d = new Date(b.createdAt);
+      let key = '';
+      if (earningsPeriod === 'Monthly') {
+        key = d.toLocaleString('en-US', { month: 'short' });
+      } else if (earningsPeriod === 'Weekly') {
+        key = `Week ${Math.ceil(d.getDate() / 7)}`;
+      } else if (earningsPeriod === 'Yearly') {
+        key = d.getFullYear().toString();
+      } else {
+        // Today (hourly)
+        key = `${d.getHours()} ${d.getHours() >= 12 ? 'PM' : 'AM'}`;
+      }
+      
+      if (!grouped[key]) grouped[key] = { Earnings1: 0 };
+      grouped[key].Earnings1 += (b.earning || 0);
+    });
+
+    return Object.entries(grouped).map(([name, counts]) => ({ name, ...counts }));
   };
 
-  // Chart 3: Bookings by Status (Donut Chart)
-  const statusChartData = [
-    { name: 'Assigned (5)', value: 5, color: STATUS_COLORS.ASSIGNED },
-    { name: 'In Progress (13)', value: 13, color: STATUS_COLORS.IN_PROGRESS },
-    { name: 'Completed (60)', value: 60, color: STATUS_COLORS.COMPLETED },
-    { name: 'Canceled (14)', value: 14, color: STATUS_COLORS.CANCELLED }
-  ];
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ASSIGNED':
+      case 'PARTNER_ACCEPTED':
+      case 'REQUESTED':
+        return 'bg-blue-100 text-blue-700';
+      case 'ON_THE_WAY':
+      case 'ARRIVED':
+      case 'OTP_VERIFICATION':
+      case 'IN_PROGRESS':
+        return 'bg-orange-100 text-orange-700';
+      case 'COMPLETED':
+        return 'bg-green-100 text-green-700';
+      case 'CANCELLED':
+      case 'REJECTED':
+      case 'NO_SHOW':
+        return 'bg-red-100 text-red-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
 
-  // Chart 4: Top Services
-  const topServicesData = [
-    { name: 'AC Repair', Bookings: 85 },
-    { name: 'Electrical Work', Bookings: 45 },
-    { name: 'Plumbing', Bookings: 35 },
-    { name: 'Home Painting', Bookings: 20 },
-    { name: 'Deep Cleaning', Bookings: 10 }
-  ];
-
-  // Table Data (Exact Matches)
-  const recentBookings = [
-    { id: '#BK12456', customer: 'Rahul Sharma', service: 'AC Repair', date: '11 May 2024, 10:30 AM', status: 'In Progress', amount: '₹499', statusColor: 'bg-orange-100 text-orange-700' },
-    { id: '#BK12455', customer: 'Priya Verma', service: 'Electrical Work', date: '11 May 2024, 09:00 AM', status: 'Assigned', amount: '₹299', statusColor: 'bg-blue-100 text-blue-700' },
-    { id: '#BK12454', customer: 'Amit Kumar', service: 'Plumbing', date: '10 May 2024, 06:30 PM', status: 'Completed', amount: '₹349', statusColor: 'bg-green-100 text-green-700' },
-    { id: '#BK12453', customer: 'Neha Singh', service: 'Home Painting', date: '10 May 2024, 02:00 PM', status: 'Completed', amount: '₹899', statusColor: 'bg-green-100 text-green-700' },
-    { id: '#BK12452', customer: 'Sanjay Gupta', service: 'Deep Cleaning', date: '10 May 2024, 11:00 AM', status: 'Canceled', amount: '₹399', statusColor: 'bg-red-100 text-red-700' }
-  ];
-
-  const recentTransactions = [
-    { type: 'Booking Earnings', amount: '+₹499', amountColor: 'text-green-600', date: '11 May 2024', status: 'Success' },
-    { type: 'Booking Earnings', amount: '+₹299', amountColor: 'text-green-600', date: '11 May 2024', status: 'Success' },
-    { type: 'Withdrawal', amount: '-₹5,000', amountColor: 'text-gray-700', date: '10 May 2024', status: 'Success' },
-    { type: 'Booking Earnings', amount: '+₹349', amountColor: 'text-green-600', date: '10 May 2024', status: 'Success' },
-    { type: 'Booking Earnings', amount: '+₹899', amountColor: 'text-green-600', date: '10 May 2024', status: 'Success' }
-  ];
-
-  const upcomingSchedule = [
-    { time: '10:30 AM', customer: 'Rahul Sharma', service: 'AC Repair', status: 'In Progress', statusColor: 'bg-green-100 text-green-700' },
-    { time: '02:00 PM', customer: 'Amit Kumar', service: 'Electrical Work', status: 'Assigned', statusColor: 'bg-blue-100 text-blue-700' },
-    { time: '04:30 PM', customer: 'Priya Verma', service: 'Plumbing', status: 'Assigned', statusColor: 'bg-blue-100 text-blue-700' },
-    { time: '07:00 PM', customer: 'Neha Singh', service: 'Home Painting', status: 'Assigned', statusColor: 'bg-blue-100 text-blue-700' }
-  ];
-
-  if (loading) {
+  if (loading || !stats) {
     return (
       <div className="space-y-8 animate-pulse">
         <div className="h-20 bg-cream rounded-3xl" />
@@ -240,6 +156,8 @@ export default function PartnerDashboard() {
       </div>
     );
   }
+
+  const { kpis, recentBookings, upcomingSchedule, recentTransactions, statusChartData, topServicesData } = stats;
 
   return (
     <div className="space-y-6 pb-10 max-w-[1600px] mx-auto text-foreground/80">
@@ -411,27 +329,31 @@ export default function PartnerDashboard() {
             </div>
           </div>
           <div className="flex-1 min-h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={getBookingsChartData()} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorBookings" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#1F4037" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#1F4037" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#C3AB84" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#C3AB84" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
-                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 600, color: '#4b5563', paddingTop: '20px' }} />
-                <Area type="monotone" dataKey="Bookings" stroke="#1F4037" strokeWidth={2} fillOpacity={1} fill="url(#colorBookings)" />
-                <Area type="monotone" dataKey="Completed" stroke="#D4AF37" strokeWidth={2} fillOpacity={1} fill="url(#colorCompleted)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {getBookingsChartData().length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={getBookingsChartData()} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorBookings" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#1F4037" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#1F4037" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#C3AB84" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#C3AB84" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
+                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 600, color: '#4b5563', paddingTop: '20px' }} />
+                  <Area type="monotone" dataKey="Bookings" stroke="#1F4037" strokeWidth={2} fillOpacity={1} fill="url(#colorBookings)" />
+                  <Area type="monotone" dataKey="Completed" stroke="#D4AF37" strokeWidth={2} fillOpacity={1} fill="url(#colorCompleted)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+               <div className="h-full flex items-center justify-center text-xs text-gray-400">No data available</div>
+            )}
           </div>
         </div>
 
@@ -462,19 +384,20 @@ export default function PartnerDashboard() {
             </div>
           </div>
           <div className="flex-1 min-h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={getEarningsChartData()} margin={{ top: 5, right: 0, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => earningsPeriod === 'Today' ? `${val / 1000}k` : `${val / 1000}k`} />
-                <Tooltip cursor={{ fill: '#f9fafb' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                {/* @ts-ignore - Recharts TS types missing payload definition but it works perfectly at runtime */}
-                <Legend verticalAlign="top" height={36} iconType="circle" payload={[{ value: 'Earnings (₹)', type: 'circle', color: '#1F4037' }]} wrapperStyle={{ fontSize: '11px', fontWeight: 600 }} />
-                <Bar dataKey="Earnings1" fill="#1F4037" radius={[2, 2, 0, 0]} barSize={12} />
-                {earningsPeriod === 'Weekly' && <Bar dataKey="Earnings2" fill="#C3AB84" radius={[2, 2, 0, 0]} barSize={12} />}
-              </BarChart>
-              <h2 className="font-serif text-[15px] font-bold text-primary">Earnings Overview</h2>
-            </ResponsiveContainer>
+             {getEarningsChartData().length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={getEarningsChartData()} margin={{ top: 5, right: 0, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => `${(val / 1000).toFixed(1)}k`} />
+                    <Tooltip cursor={{ fill: '#f9fafb' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                    <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 600 }} />
+                    <Bar dataKey="Earnings1" name="Earnings (₹)" fill="#1F4037" radius={[2, 2, 0, 0]} barSize={12} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-xs text-gray-400">No data available</div>
+              )}
           </div>
         </div>
 
@@ -482,26 +405,30 @@ export default function PartnerDashboard() {
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] lg:col-span-3 flex flex-col overflow-hidden">
           <h2 className="font-serif text-[15px] font-bold text-primary mb-6">Bookings by Status</h2>
           <div className="flex-1 min-h-[220px] flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={statusChartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={80}
-                  paddingAngle={0}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {statusChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Legend layout="vertical" verticalAlign="middle" align="right" iconType="circle" wrapperStyle={{ fontSize: '11px', color: '#4b5563', fontWeight: 500 }} />
-              </PieChart>
-            </ResponsiveContainer>
+            {statusChartData && statusChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={statusChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={80}
+                    paddingAngle={0}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {statusChartData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <Legend layout="vertical" verticalAlign="middle" align="right" iconType="circle" wrapperStyle={{ fontSize: '11px', color: '#4b5563', fontWeight: 500 }} />
+                </PieChart>
+              </ResponsiveContainer>
+             ) : (
+              <div className="text-xs text-gray-400">No data available</div>
+             )}
           </div>
         </div>
       </div>
@@ -526,23 +453,28 @@ export default function PartnerDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {recentBookings.map((r, i) => (
+                {recentBookings.map((r: any, i: number) => (
                   <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                     <td className="py-3.5 font-bold text-[11px] text-gray-700">{r.id}</td>
                     <td className="py-3.5 text-xs text-gray-700 font-medium">{r.customer}</td>
                     <td className="py-3.5 text-xs text-gray-700">{r.service}</td>
                     <td className="py-3.5 text-[11px] text-gray-600 font-medium">{r.date}</td>
                     <td className="py-3.5">
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md ${r.statusColor}`}>
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md ${getStatusColor(r.status)}`}>
                         {r.status}
                       </span>
                     </td>
                     <td className="py-3.5 text-xs text-gray-700">{r.amount}</td>
                     <td className="py-3.5">
-                      <button className="text-[10px] font-bold bg-gray-100 text-gray-600 px-3 py-1 rounded hover:bg-gray-200">View</button>
+                      <Link href="/partner/bookings" className="text-[10px] font-bold bg-gray-100 text-gray-600 px-3 py-1 rounded hover:bg-gray-200">View</Link>
                     </td>
                   </tr>
                 ))}
+                {recentBookings.length === 0 && (
+                   <tr>
+                     <td colSpan={7} className="py-8 text-center text-xs text-gray-400">No recent bookings found</td>
+                   </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -565,18 +497,23 @@ export default function PartnerDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {recentTransactions.map((tx, i) => (
+                {recentTransactions.map((tx: any, i: number) => (
                   <tr key={i} className="border-b border-gray-50 last:border-0">
                     <td className="py-3.5 text-xs font-medium text-gray-700">{tx.type}</td>
                     <td className={`py-3.5 text-xs font-bold ${tx.amountColor}`}>{tx.amount}</td>
                     <td className="py-3.5 text-[11px] font-medium text-gray-600">{tx.date}</td>
                     <td className="py-3.5 text-right">
-                      <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${tx.status === 'Success' ? 'text-green-700 bg-green-100' : 'text-gray-700 bg-gray-100'}`}>
                         {tx.status}
                       </span>
                     </td>
                   </tr>
                 ))}
+                {recentTransactions.length === 0 && (
+                   <tr>
+                     <td colSpan={4} className="py-8 text-center text-xs text-gray-400">No recent transactions found</td>
+                   </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -595,19 +532,23 @@ export default function PartnerDashboard() {
           <div className="flex justify-between items-center mb-6">
             <h2 className="font-serif text-[15px] font-bold text-primary">Top Services</h2>
             <button className="flex items-center gap-1 text-[11px] font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded border border-gray-100">
-              This Month <ChevronDown className="w-3 h-3" />
+              All Time <ChevronDown className="w-3 h-3" />
             </button>
           </div>
           <div className="flex-1 min-h-[220px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topServicesData} layout="vertical" margin={{ top: 0, right: 10, left: 15, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
-                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
-                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#4b5563', fontWeight: 600 }} width={90} />
-                <Tooltip cursor={{ fill: '#f9fafb' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Bar dataKey="Bookings" fill="#1F4037" radius={[0, 2, 2, 0]} barSize={12} />
-              </BarChart>
-            </ResponsiveContainer>
+            {topServicesData && topServicesData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topServicesData} layout="vertical" margin={{ top: 0, right: 10, left: 15, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
+                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#4b5563', fontWeight: 600 }} width={90} />
+                  <Tooltip cursor={{ fill: '#f9fafb' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <Bar dataKey="Bookings" fill="#1F4037" radius={[0, 2, 2, 0]} barSize={12} />
+                </BarChart>
+              </ResponsiveContainer>
+             ) : (
+                <div className="h-full flex items-center justify-center text-xs text-gray-400">No data available</div>
+             )}
           </div>
         </div>
 
@@ -617,18 +558,23 @@ export default function PartnerDashboard() {
           <div className="flex-1">
             <table className="w-full text-left border-collapse">
               <tbody>
-                {upcomingSchedule.map((s, i) => (
+                {upcomingSchedule.map((s: any, i: number) => (
                   <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                     <td className="py-3 text-[11px] font-bold text-gray-700 w-20">{s.time}</td>
                     <td className="py-3 text-[11px] font-medium text-gray-600">{s.customer}</td>
                     <td className="py-3 text-[11px] font-medium text-gray-600">{s.service}</td>
                     <td className="py-3 text-right">
-                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${s.statusColor}`}>
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${getStatusColor(s.status)}`}>
                         {s.status}
                       </span>
                     </td>
                   </tr>
                 ))}
+                {upcomingSchedule.length === 0 && (
+                  <tr>
+                     <td colSpan={4} className="py-8 text-center text-xs text-gray-400">No upcoming active bookings</td>
+                   </tr>
+                )}
               </tbody>
             </table>
           </div>

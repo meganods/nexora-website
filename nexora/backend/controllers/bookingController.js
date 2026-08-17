@@ -5,6 +5,8 @@ const Service = require('../models/Service');
 const Category = require('../models/Category');
 const { createNotification } = require('./notificationController');
 const Admin = require('../models/Admin');
+const AdminSettings = require('../models/AdminSettings');
+const { findBestPartner } = require('../services/assignmentEngine');
 
 const cf = new Cashfree();
 cf.XClientId = process.env.CASHFREE_APP_ID || 'dummy_id';
@@ -281,7 +283,20 @@ exports.verifyPayment = async (req, res) => {
           }
         },
         { new: true }
-      );
+      ).populate('serviceId').populate('packageId');
+
+      if (updatedBooking) {
+        // Auto-assign logic
+        const settings = await AdminSettings.getSingleton();
+        if (settings.autoAssignEnabled) {
+          const best = await findBestPartner(updatedBooking);
+          if (best) {
+            updatedBooking.vendorId = best.partner._id;
+            updatedBooking.status = 'ASSIGNED';
+            await updatedBooking.save();
+          }
+        }
+      }
 
       // ── Notify user: payment confirmed ──
       if (updatedBooking?.customerId) {
