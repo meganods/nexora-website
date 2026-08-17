@@ -747,6 +747,21 @@ const adminCancelBooking = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Booking cancelled', booking });
 });
 
+// @desc    Admin delete a booking
+// @route   DELETE /api/admin/bookings/:id
+// @access  Private (admin)
+const adminDeleteBooking = asyncHandler(async (req, res) => {
+  const booking = await Booking.findById(req.params.id);
+  if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+  
+  if (booking.status !== 'CANCELLED') {
+    return res.status(400).json({ success: false, message: 'Only cancelled bookings can be deleted.' });
+  }
+
+  await Booking.findByIdAndDelete(req.params.id);
+  res.json({ success: true, message: 'Booking permanently deleted' });
+});
+
 // ─── Categories CRUD ──────────────────────────────────────────────────────────
 
 // @desc    Update a category
@@ -1131,6 +1146,7 @@ module.exports = {
   reviewPartnerService,
   listAllBookings,
   adminCancelBooking,
+  adminDeleteBooking,
   toggleUserStatus,
   getSettings,
   updateSettings,

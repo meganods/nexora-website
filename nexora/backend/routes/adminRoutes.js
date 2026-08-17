@@ -19,6 +19,7 @@ const {
   reviewPartnerService,
   listAllBookings,
   adminCancelBooking,
+  adminDeleteBooking,
   toggleUserStatus,
   getSettings,
   updateSettings,
@@ -112,6 +113,7 @@ router.delete("/packages/:id", protect, authorize("super_admin", "admin"), delet
 // ─── Bookings ─────────────────────────────────────────────────────────────────
 router.get("/bookings", protect, authorize("super_admin", "admin", "support"), listAllBookings);
 router.post("/bookings/:id/cancel", protect, authorize("super_admin", "admin"), adminCancelBooking);
+router.delete("/bookings/:id", protect, authorize("super_admin", "admin"), adminDeleteBooking);
 
 // ─── Promotions: Coupons ───────────────────────────────────────────────────
 router.get("/coupons", protect, authorize("super_admin", "admin"), listCoupons);

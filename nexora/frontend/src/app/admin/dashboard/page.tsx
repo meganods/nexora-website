@@ -1160,6 +1160,14 @@ function AdminDashboardContent() {
     } catch (err: any) { alert(err.response?.data?.message || 'Cancel failed'); }
   };
 
+  const handleDeleteBooking = async (id: string) => {
+    if (!confirm('Permanently delete this booking? This action cannot be undone.')) return;
+    try {
+      await api.delete(`/admin/bookings/${id}`);
+      fetchBookings(); fetchMetrics();
+    } catch (err: any) { alert(err.response?.data?.message || 'Delete failed'); }
+  };
+
   const handleToggleUser = async (id: string) => {
     try {
       await api.patch(`/admin/users/${id}/toggle`);
@@ -2247,6 +2255,11 @@ function AdminDashboardContent() {
                                   </button>
                                   <button onClick={() => handleCancelBooking(bk._id)} className="text-[10px] font-bold text-red-600 hover:text-red-700 bg-red-50 px-2.5 py-1 rounded-lg">Cancel</button>
                                 </>
+                              )}
+                              {bk.status === 'CANCELLED' && (
+                                <button onClick={() => handleDeleteBooking(bk._id)} className="text-[10px] font-bold text-red-600 hover:text-red-700 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100 hover:bg-red-100 transition-all">
+                                  Delete
+                                </button>
                               )}
                             </div>
                           </td>
