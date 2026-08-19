@@ -37,8 +37,8 @@ export default function PartnerRegisterWizard() {
   const [primaryContact, setPrimaryContact] = useState('');
   const [businessDescription, setBusinessDescription] = useState('');
   const [address, setAddress] = useState('');
-  const [city, setCity] = useState('Delhi');
-  const [state, setState] = useState('Delhi');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
 
   // Step 3: Services
@@ -690,7 +690,7 @@ export default function PartnerRegisterWizard() {
                   <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Pincode *</label>
                   <input 
                     type="text" value={pincode} onChange={e => setPincode(e.target.value)}
-                    placeholder="110001" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                    placeholder="Enter pincode" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
                   />
                 </div>
               </div>
