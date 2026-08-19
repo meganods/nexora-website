@@ -19,7 +19,7 @@ const {
   saveSearchHistory,
   clearSearchHistory,
 } = require("../controllers/userDashboardController");
-const { protect } = require("../middlewares/auth");
+const { protect, authorize } = require("../middlewares/auth");
 
 const router = express.Router();
 
@@ -37,9 +37,9 @@ router.delete("/addresses/:addressId", deleteAddress);
 router.get("/reviews", getUserReviews);
 router.post("/reviews", submitReview);
 
-// Wishlist
-router.get("/wishlist", getUserWishlist);
-router.post("/wishlist/toggle", toggleWishlist);
+// Wishlist — user accounts only
+router.get("/wishlist", authorize('user'), getUserWishlist);
+router.post("/wishlist/toggle", authorize('user'), toggleWishlist);
 
 // Search History
 router.get("/search-history", getSearchHistory);

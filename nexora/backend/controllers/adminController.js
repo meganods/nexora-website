@@ -871,7 +871,7 @@ const listSupportTickets = asyncHandler(async (req, res) => {
   if (status) filter.status = status;
 
   const tickets = await SupportTicket.find(filter)
-    .populate("userId", "name email phone")
+    .populate({ path: "userId", select: "name email phone", strictPopulate: false })
     .sort({ updatedAt: -1 })
     .lean();
 
@@ -880,7 +880,7 @@ const listSupportTickets = asyncHandler(async (req, res) => {
 
 const getSupportTicketDetails = asyncHandler(async (req, res) => {
   const ticket = await SupportTicket.findById(req.params.id)
-    .populate("userId", "name email phone")
+    .populate({ path: "userId", select: "name email phone", strictPopulate: false })
     .lean();
 
   if (!ticket) return res.status(404).json({ success: false, message: "Ticket not found." });
@@ -1027,9 +1027,9 @@ const createPayout = asyncHandler(async (req, res) => {
 // ─── Reviews Approvals (Admin) ─────────────────────────────────────────────────
 const getPendingReviews = asyncHandler(async (req, res) => {
   const reviews = await Review.find({ approvalStatus: "PENDING" })
-    .populate("userId", "name email")
-    .populate("vendorId", "name")
-    .populate("serviceId", "name")
+    .populate({ path: "userId", select: "name email", strictPopulate: false })
+    .populate({ path: "vendorId", select: "name", strictPopulate: false })
+    .populate({ path: "serviceId", select: "name", strictPopulate: false })
     .sort({ createdAt: -1 })
     .lean();
 

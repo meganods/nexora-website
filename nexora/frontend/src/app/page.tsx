@@ -749,9 +749,10 @@ export default function Home() {
   };
 
   const toggleWishlist = async (id: string, serviceName: string) => {
-    const role = typeof window !== 'undefined' ? localStorage.getItem('nexora_role') : '';
-    if (!user || role !== 'user') {
-      toast.error('Please login or create an account to wishlist services.');
+    const token = typeof window !== 'undefined' ? localStorage.getItem('nexora_token') : '';
+    
+    if (!token || !user) {
+      toast.error('Please login to save services to your wishlist.');
       window.location.href = '/login';
       return;
     }
@@ -769,12 +770,24 @@ export default function Home() {
     try {
       await api.post('/user/dashboard/wishlist/toggle', { serviceId: id });
       toast.success(isAdded ? `${serviceName} added to wishlist` : `${serviceName} removed from wishlist`);
-    } catch {
+    } catch (err: any) {
       // Revert UI on failure
       const reverted = isAdded ? wishlist.filter(x => x !== id) : [...wishlist, id];
       setWishlist(reverted);
       localStorage.setItem('user_wishlist', JSON.stringify(reverted));
-      toast.error('Failed to update wishlist on database.');
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.message;
+      if (status === 401) {
+        toast.error('Session expired. Please login again.');
+        localStorage.removeItem('nexora_token');
+        localStorage.removeItem('nexora_role');
+        localStorage.removeItem('nexora_user');
+        window.location.href = '/login';
+      } else if (status === 403) {
+        toast.error('Only customer accounts can save to wishlist.');
+      } else {
+        toast.error(msg || 'Failed to update wishlist.');
+      }
     }
   };
 

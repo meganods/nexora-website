@@ -362,9 +362,15 @@ exports.toggleWishlist = asyncHandler(async (req, res) => {
   const { serviceId } = req.body;
   if (!serviceId) return res.status(400).json({ success: false, message: "Service ID is required." });
 
-  const user = await User.findById(req.user.id);
+  // Only regular users (not vendors/admins) can use the wishlist
+  if (req.user?.role !== 'user') {
+    return res.status(403).json({ success: false, message: "Only customer accounts can use the wishlist." });
+  }
+
+  const userId = req.user?.id || req.user?.userId;
+  const user = await User.findById(userId);
   if (!user) {
-    return res.status(400).json({ success: false, message: "Only customer accounts can use the wishlist." });
+    return res.status(404).json({ success: false, message: "User not found." });
   }
 
   const userWishlist = user.wishlist || [];
@@ -372,13 +378,13 @@ exports.toggleWishlist = asyncHandler(async (req, res) => {
   let added = false;
   
   if (index > -1) {
-    await User.findByIdAndUpdate(req.user.id, { $pull: { wishlist: serviceId } });
+    await User.findByIdAndUpdate(userId, { $pull: { wishlist: serviceId } });
   } else {
-    await User.findByIdAndUpdate(req.user.id, { $addToSet: { wishlist: serviceId } });
+    await User.findByIdAndUpdate(userId, { $addToSet: { wishlist: serviceId } });
     added = true;
   }
 
-  const updatedUser = await User.findById(req.user.id).select('wishlist');
+  const updatedUser = await User.findById(userId).select('wishlist');
   return res.json({ success: true, wishlist: updatedUser.wishlist, added });
 });
 

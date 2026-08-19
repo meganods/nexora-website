@@ -23,9 +23,8 @@ function PartnerLoginForm() {
   const [step, setStep] = useState<'credentials' | 'otp'>('credentials');
   const [otp, setOtp] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleLogin = async (e?: any) => {
+    if (e?.preventDefault) e.preventDefault();
 
     if (!identifier.trim() || !password) {
       toast.error('Please fill in both email/phone and password fields.');
@@ -49,9 +48,8 @@ function PartnerLoginForm() {
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleVerifyOtp = async (e?: any) => {
+    if (e?.preventDefault) e.preventDefault();
 
     if (!otp.trim() || otp.length < 4) {
       toast.error('Please enter a valid OTP.');
@@ -127,7 +125,12 @@ function PartnerLoginForm() {
           )}
 
           {step === 'credentials' ? (
-            <form onSubmit={handleLogin} className="space-y-4">
+            <div 
+              className="space-y-4"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleLogin(e as any);
+              }}
+            >
               <div>
                 <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Email or Phone Number</label>
                 <div className="relative">
@@ -165,7 +168,7 @@ function PartnerLoginForm() {
                 </div>
               </div>
 
-              <button type="submit" disabled={isLoading}
+              <button type="button" onClick={handleLogin} disabled={isLoading}
                 className="w-full py-3.5 bg-primary text-white rounded-full font-bold hover:bg-primary/95 transition-all text-sm shadow-sm flex items-center justify-center gap-2">
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Login'}
               </button>
@@ -175,9 +178,14 @@ function PartnerLoginForm() {
                 <span className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest">OR</span>
                 <div className="flex-1 h-px bg-[#C3AB84]/40" />
               </div>
-            </form>
+            </div>
           ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
+            <div 
+              className="space-y-4"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleVerifyOtp(e as any);
+              }}
+            >
               <p className="text-sm text-foreground/70 text-center mb-6">
                 We've sent a 6-digit code to <strong>{identifier}</strong>. Please enter it below to verify your login.
               </p>
@@ -193,7 +201,7 @@ function PartnerLoginForm() {
                 </div>
               </div>
 
-              <button type="submit" disabled={isLoading || otp.length < 4}
+              <button type="button" onClick={handleVerifyOtp} disabled={isLoading || otp.length < 4}
                 className="w-full py-3.5 bg-primary text-white rounded-full font-bold hover:bg-primary/95 transition-all text-sm shadow-sm flex items-center justify-center gap-2">
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify & Login'}
               </button>
@@ -203,7 +211,7 @@ function PartnerLoginForm() {
                   Back to Login
                 </button>
               </div>
-            </form>
+            </div>
           )}
 
           <div className="mt-8 text-center text-xs text-foreground/60">

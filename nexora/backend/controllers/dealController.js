@@ -333,12 +333,12 @@ const createVendorDeal = asyncHandler(async (req, res) => {
     createdBy: vendorId,
     createdByRole: 'vendor',
     vendorId,
-    requiresAdminApproval: true,
-    approvalStatus: 'PENDING',
+    requiresAdminApproval: false,
+    approvalStatus: 'APPROVED',
     termsAndConditions: termsAndConditions || '',
   });
 
-  res.status(201).json({ success: true, deal, message: 'Deal submitted for admin approval.' });
+  res.status(201).json({ success: true, deal, message: 'Deal created successfully.' });
 });
 
 // @desc   Vendor updates own deal (only if PENDING or REJECTED)
@@ -348,9 +348,6 @@ const updateVendorDeal = asyncHandler(async (req, res) => {
   const deal = await Deal.findOne({ _id: req.params.id, vendorId });
   if (!deal) return res.status(404).json({ success: false, message: 'Deal not found or not your deal.' });
 
-  if (deal.approvalStatus === 'APPROVED') {
-    return res.status(403).json({ success: false, message: 'Approved deals cannot be modified. Please contact admin.' });
-  }
 
   // Vendor cannot change approvalStatus or admin-controlled fields
   const {
@@ -389,15 +386,15 @@ const updateVendorDeal = asyncHandler(async (req, res) => {
     endDate: endDate !== undefined ? endDate : deal.endDate,
     isActive: isActive !== undefined ? isActive : deal.isActive,
     termsAndConditions: termsAndConditions !== undefined ? termsAndConditions : deal.termsAndConditions,
-    // Reset to PENDING after edit so admin re-reviews
-    approvalStatus: 'PENDING',
+    // Auto-approve after edit
+    approvalStatus: 'APPROVED',
     approvedBy: null,
     approvedAt: null,
     rejectionReason: null,
   });
 
   await deal.save();
-  res.json({ success: true, deal, message: 'Deal updated and resubmitted for admin approval.' });
+  res.json({ success: true, deal, message: 'Deal updated successfully.' });
 });
 
 // ════════════════════════════════════════════════════════════════════════════

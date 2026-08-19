@@ -25,11 +25,19 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
-      // Use admin token for admin routes, otherwise use the regular user token
-      const isAdminRoute = config.url?.startsWith('/admin') || config.url?.includes('/admin') || (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin'));
+      // Use admin token for admin routes only, never mix tokens
+      const isAdminRoute = config.url?.startsWith('/admin') || config.url?.includes('/admin') || window.location.pathname.startsWith('/admin');
       const adminToken = localStorage.getItem('admin_token');
       const userToken = localStorage.getItem('nexora_token');
-      const token = (isAdminRoute && adminToken) ? adminToken : (userToken || adminToken);
+      
+      let token: string | null = null;
+      if (isAdminRoute && adminToken) {
+        token = adminToken;
+      } else if (userToken) {
+        token = userToken;
+      }
+      // NOTE: Do NOT fall back to adminToken for user routes — that causes 403s
+      
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

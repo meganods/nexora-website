@@ -182,9 +182,15 @@ function ServicesList() {
 
   const toggleWishlist = async (id: string, serviceName: string = 'Service') => {
     const role = typeof window !== 'undefined' ? localStorage.getItem('nexora_role') : '';
-    if (role !== 'user') {
-      toast.error('Please login or create an account to wishlist services.');
+    const token = typeof window !== 'undefined' ? localStorage.getItem('nexora_token') : '';
+    
+    if (!token) {
+      toast.error('Please login to save services to your wishlist.');
       router.push('/login');
+      return;
+    }
+    if (role !== 'user') {
+      toast.error('Only customer accounts can use the wishlist.');
       return;
     }
 
@@ -592,9 +598,11 @@ function ServicesList() {
                         </div>
 
                         <div className="mt-1.5 flex flex-wrap gap-1">
-                          <span className="text-[8px] sm:text-[10px] text-gold font-bold bg-[#FAF6F0] border border-gold/15 px-1.5 py-0.5 rounded-md shrink-0">
-                            🔥 {service.name.length * 2 + 10}+ Booked this week
-                          </span>
+                          {service.isMostBooked && (
+                            <span className="text-[8px] sm:text-[10px] text-gold font-bold bg-[#FAF6F0] border border-gold/15 px-1.5 py-0.5 rounded-md shrink-0">
+                              🔥 Most Booked
+                            </span>
+                          )}
                         </div>
 
                         {service.description && (

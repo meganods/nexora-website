@@ -845,11 +845,12 @@ const createPartnerOffer = asyncHandler(async (req, res) => {
     endDate: endDate || null,
     source: 'VENDOR',
     vendorId: req.user.userId,
-    requiresAdminApproval: true,
-    approvalStatus: 'PENDING'
+    requiresAdminApproval: false,
+    approvalStatus: 'APPROVED',
+    isActive: true
   });
 
-  res.status(201).json({ success: true, message: 'Offer submitted for admin approval', offer });
+  res.status(201).json({ success: true, message: 'Offer created successfully', offer });
 });
 
 // @desc    Update a vendor offer and re-submit for approval
@@ -873,13 +874,13 @@ const updatePartnerOffer = asyncHandler(async (req, res) => {
   if (startDate !== undefined) offer.startDate = startDate;
   if (endDate !== undefined) offer.endDate = endDate;
 
-  // Force it back to pending approval when edited by vendor and clear rejection reason
-  offer.approvalStatus = 'PENDING';
-  offer.isActive = false;
+  // Auto-approve offer when edited by vendor
+  offer.approvalStatus = 'APPROVED';
+  offer.isActive = true;
   offer.rejectionReason = null;
 
   await offer.save();
-  res.json({ success: true, message: "Offer updated and re-submitted for approval.", offer });
+  res.json({ success: true, message: "Offer updated successfully.", offer });
 });
 
 
@@ -988,11 +989,11 @@ const createPartnerCoupon = asyncHandler(async (req, res) => {
     endDate: endDate || null,
     usageLimit: usageLimit || null,
     vendorId: req.user.userId,
-    approvalStatus: 'PENDING',
-    isActive: false // Deactivated until approved by Admin
+    approvalStatus: 'APPROVED',
+    isActive: true
   });
 
-  res.status(201).json({ success: true, message: "Coupon created and submitted for Admin approval.", coupon });
+  res.status(201).json({ success: true, message: "Coupon created successfully.", coupon });
 });
 
 // @desc    Update a coupon owned by this vendor (forces it back to PENDING)
@@ -1017,13 +1018,13 @@ const updatePartnerCoupon = asyncHandler(async (req, res) => {
   if (endDate !== undefined) coupon.endDate = endDate;
   if (usageLimit !== undefined) coupon.usageLimit = usageLimit;
 
-  // Force it back to pending approval when edited by vendor
-  coupon.approvalStatus = 'PENDING';
-  coupon.isActive = false;
+  // Auto-approve when edited by vendor
+  coupon.approvalStatus = 'APPROVED';
+  coupon.isActive = true;
   coupon.rejectionReason = null;
 
   await coupon.save();
-  res.json({ success: true, message: "Coupon updated and re-submitted for approval.", coupon });
+  res.json({ success: true, message: "Coupon updated successfully.", coupon });
 });
 
 // @desc    Get services created by this Service Partner
@@ -1070,8 +1071,8 @@ const createPartnerService = asyncHandler(async (req, res) => {
     serviceImages: Array.isArray(serviceImages) ? serviceImages : [],
     bannerImageUrl: bannerImageUrl || null,
     createdByPartnerId: req.user.userId,
-    approvalStatus: 'PENDING_APPROVAL',
-    isActive: false,
+    approvalStatus: 'APPROVED',
+    isActive: true,
     isDeleted: false
   });
 
@@ -1090,7 +1091,7 @@ const createPartnerService = asyncHandler(async (req, res) => {
     ).catch(() => {});
   }
 
-  res.status(201).json({ success: true, message: "Service submitted for Admin approval.", service });
+  res.status(201).json({ success: true, message: "Service created successfully.", service });
 });
 
 // @desc    Update partner created service (resets approval status)
@@ -1127,13 +1128,13 @@ const updatePartnerService = asyncHandler(async (req, res) => {
   if (Array.isArray(serviceImages)) service.serviceImages = serviceImages;
   if (bannerImageUrl !== undefined) service.bannerImageUrl = bannerImageUrl;
 
-  // Reset approval status on edit
-  service.approvalStatus = 'PENDING_APPROVAL';
+  // Auto approve on edit
+  service.approvalStatus = 'APPROVED';
   service.rejectionReason = null;
-  service.isActive = false;
+  service.isActive = true;
 
   await service.save();
-  res.json({ success: true, message: "Service updated and resubmitted for approval.", service });
+  res.json({ success: true, message: "Service updated successfully.", service });
 });
 
 // @desc    Soft delete partner created service

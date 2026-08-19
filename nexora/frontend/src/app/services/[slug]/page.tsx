@@ -173,35 +173,13 @@ export default function ServiceDetailPage() {
   };
 
   const ratingBreakdown = {
-    5: Math.round((service.reviewCount || 0) * 0.7) || 28,
-    4: Math.round((service.reviewCount || 0) * 0.2) || 8,
-    3: Math.round((service.reviewCount || 0) * 0.06) || 2,
-    2: Math.round((service.reviewCount || 0) * 0.03) || 1,
-    1: Math.round((service.reviewCount || 0) * 0.01) || 0,
+    5: Math.round((service.reviewCount || 0) * 0.7),
+    4: Math.round((service.reviewCount || 0) * 0.2),
+    3: Math.round((service.reviewCount || 0) * 0.06),
+    2: Math.round((service.reviewCount || 0) * 0.03),
+    1: Math.round((service.reviewCount || 0) * 0.01),
   };
-  const mockReviews = service.reviews && service.reviews.length > 0 ? service.reviews : [
-    // {
-    //   _id: 'rev1',
-    //   userId: { name: 'Ritika Sharma', profilePhoto: '' },
-    //   rating: 5,
-    //   comment: 'Very relaxing experience. Therapist was very professional and polite.',
-    //   createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-    // },
-    {
-      _id: 'rev2',
-      userId: { name: 'Aman Verma', profilePhoto: '' },
-      rating: 5,
-      comment: 'Helped a lot with my neck pain and stress. Highly recommended.',
-      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      _id: 'rev3',
-      userId: { name: 'Neha Iyer', profilePhoto: '' },
-      rating: 4.5,
-      comment: 'Great service and ambience. Will book again.',
-      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ];
+  const liveReviews = (service.reviews && service.reviews.length > 0) ? service.reviews : [];
 
   return (
     <div className="min-h-screen bg-[#FAF6F0] pb-24 font-sans text-foreground">
@@ -310,11 +288,17 @@ export default function ServiceDetailPage() {
                       <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
                       {service.rating || '4.8'}
                     </span>
-                    <span>({service.reviewCount || 15} reviews)</span>
+                    <span>({service.reviewCount || 0} reviews)</span>
+                    {service.totalBookings > 0 && (
+                      <>
+                        <span className="text-foreground/20">•</span>
+                        <span>🔥 Booked {service.totalBookings} times</span>
+                      </>
+                    )}
                     <span className="text-foreground/20">•</span>
-                    <span>🔥 Booked {service.totalBookings || 12} times this week</span>
-                    <span className="text-foreground/20">•</span>
-                    <span className="text-emerald-700 font-bold">✓ {service.totalBookings * 7 + 140 || 1250} bookings completed</span>
+                    {service.totalBookings > 0 && (
+                      <span className="text-emerald-700 font-bold">✓ {service.totalBookings} bookings completed</span>
+                    )}
                   </div>
                 </div>
 
@@ -586,7 +570,9 @@ export default function ServiceDetailPage() {
               </div>
 
               <div className="space-y-5">
-                {mockReviews.map((rev: any) => (
+                {liveReviews.length === 0 ? (
+                  <p className="text-xs text-foreground/50 text-center py-6">No reviews yet. Be the first to review!</p>
+                ) : liveReviews.map((rev: any) => (
                   <div key={rev._id} className="border-b border-gray-100 pb-5 last:border-b-0 space-y-2">
                     <div className="flex justify-between items-start gap-4">
                       <div>
