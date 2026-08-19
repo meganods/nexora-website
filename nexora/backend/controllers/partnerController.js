@@ -5,6 +5,16 @@ const asyncHandler = require("../utils/asyncHandler");
 const { createNotification } = require('./notificationController');
 const Admin = require('../models/Admin');
 const { sendOTP } = require('../services/emailService');
+const axios = require('axios');
+
+const getCfHeaders = () => ({
+  'x-client-id': process.env.CASHFREE_APP_ID,
+  'x-client-secret': process.env.CASHFREE_SECRET_KEY,
+  'Content-Type': 'application/json'
+});
+const getCfBaseUrl = () => process.env.CASHFREE_ENV === 'PRODUCTION' 
+  ? 'https://api.cashfree.com/verification' 
+  : 'https://sandbox.cashfree.com/verification';
 
 const PHONE_REGEX = /^[6-9]\d{9}$/;
 const pendingPartnerLogins = new Map();
@@ -179,12 +189,37 @@ const submitAadhar = asyncHandler(async (req, res) => {
   vendor.kycStatus = "KYC_IN_PROGRESS";
   await vendor.save();
 
-  // Return a mock OTP code for the wizard verification
-  res.json({
-    success: true,
-    message: "Aadhaar verification OTP sent successfully.",
-    otp: "1234"
-  });
+  try {
+    const url = `${getCfBaseUrl()}/offline-aadhaar/otp`;
+    console.log(`[Diagnostic] Cashfree Aadhaar OTP Request URL: ${url}`);
+    console.log(`[Diagnostic] Headers present: client-id=${!!process.env.CASHFREE_APP_ID}, client-secret=${!!process.env.CASHFREE_SECRET_KEY}`);
+
+    const cfRes = await axios.post(url, {
+      aadhaar_number: aadharNumber
+    }, { headers: getCfHeaders() });
+
+    console.log(`[Diagnostic] Cashfree Response Status: ${cfRes.status}`);
+
+    vendor.kycDetails.aadharRefId = cfRes.data.ref_id;
+    await vendor.save();
+
+    res.json({
+      success: true,
+      message: "Aadhaar verification OTP sent successfully.",
+      ref_id: cfRes.data.ref_id
+    });
+  } catch (error) {
+    const status = error.response?.status;
+    const cfData = error.response?.data;
+    console.error(`[Diagnostic] Cashfree Aadhaar OTP Error Status: ${status}, Code: ${cfData?.code || 'UNKNOWN'}, Message: ${cfData?.message || error.message}`);
+    
+    res.status(500).json({ 
+      success: false, 
+      message: cfData?.message || "Aadhaar OTP request failed",
+      provider: "cashfree",
+      code: cfData?.code || 'CASHFREE_ERROR'
+    });
+  }
 });
 
 // @desc    Confirm Aadhaar OTP
@@ -194,22 +229,42 @@ const verifyAadharOtp = asyncHandler(async (req, res) => {
   const vendor = await ServicePartner.findById(req.user.userId);
   if (!vendor) return res.status(404).json({ success: false, message: "Service Partner not found" });
 
-  const { otp } = req.body;
-  if (otp !== "1234") {
-    return res.status(400).json({ success: false, message: "Invalid Aadhaar Verification OTP. Please try again." });
+  const { otp, ref_id } = req.body;
+  if (!otp || !ref_id) {
+    return res.status(400).json({ success: false, message: "OTP and ref_id are required." });
   }
 
-  vendor.kycDetails = vendor.kycDetails || {};
-  vendor.kycDetails.aadharVerified = true;
-  vendor.kycDetails.aadharName = vendor.name;
-  vendor.kycDetails.aadharDob = "15-08-1990";
-  await vendor.save();
+  // Security check: ensure the ref_id belongs to the authenticated vendor
+  if (vendor.kycDetails?.aadharRefId !== ref_id) {
+    return res.status(403).json({ success: false, message: "Invalid reference ID or session mismatch. Please request a new OTP." });
+  }
 
-  res.json({
-    success: true,
-    message: "Aadhaar successfully verified.",
-    vendor
-  });
+  try {
+    const cfRes = await axios.post(`${getCfBaseUrl()}/offline-aadhaar/verify`, {
+      otp,
+      ref_id
+    }, { headers: getCfHeaders() });
+
+    if (cfRes.data.status !== "SUCCESS" && cfRes.data.status !== "VALID") {
+      return res.status(400).json({ success: false, message: cfRes.data.message || "Aadhaar verification failed." });
+    }
+
+    vendor.kycDetails = vendor.kycDetails || {};
+    vendor.kycDetails.aadharVerified = true;
+    vendor.kycDetails.aadharName = cfRes.data.name || vendor.name;
+    vendor.kycDetails.aadharDob = cfRes.data.dob || "";
+    vendor.kycDetails.aadharRefId = undefined;
+    await vendor.save();
+
+    res.json({
+      success: true,
+      message: "Aadhaar successfully verified.",
+      vendor
+    });
+  } catch (error) {
+    console.error("Cashfree Aadhaar Verify Error:", error.response?.data || error.message);
+    res.status(500).json({ success: false, message: error.response?.data?.message || "Failed to verify Aadhaar OTP with provider." });
+  }
 });
 
 // @desc    Submit and Validate PAN
@@ -224,17 +279,31 @@ const submitPan = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: "Please provide a valid PAN number format (e.g. ABCDE1234F)." });
   }
 
-  vendor.kycDetails = vendor.kycDetails || {};
-  vendor.kycDetails.panNumber = panNumber;
-  vendor.kycDetails.panVerified = true;
-  vendor.kycDetails.panName = vendor.name.toUpperCase();
-  await vendor.save();
+  try {
+    const cfRes = await axios.post(`${getCfBaseUrl()}/pan`, {
+      pan: panNumber,
+      name: vendor.name
+    }, { headers: getCfHeaders() });
 
-  res.json({
-    success: true,
-    message: "PAN details verified and saved successfully.",
-    vendor
-  });
+    if (!cfRes.data.valid) {
+      return res.status(400).json({ success: false, message: cfRes.data.message || "Invalid PAN card details." });
+    }
+
+    vendor.kycDetails = vendor.kycDetails || {};
+    vendor.kycDetails.panNumber = panNumber;
+    vendor.kycDetails.panVerified = true;
+    vendor.kycDetails.panName = cfRes.data.registered_name || vendor.name.toUpperCase();
+    await vendor.save();
+
+    res.json({
+      success: true,
+      message: "PAN details verified and saved successfully.",
+      vendor
+    });
+  } catch (error) {
+    console.error("Cashfree PAN Verify Error:", error.response?.data || error.message);
+    res.status(500).json({ success: false, message: error.response?.data?.message || "Failed to verify PAN with provider." });
+  }
 });
 
 // @desc    Submit GST Details

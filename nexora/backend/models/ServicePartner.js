@@ -136,6 +136,7 @@ const servicePartnerSchema = new mongoose.Schema(
       aadharName: { type: String, default: "" },
       aadharDob: { type: String, default: "" },
       panName: { type: String, default: "" },
+      aadharRefId: { type: String },
       submittedAt: { type: Date },
       reviewedAt: { type: Date },
       reviewNote: { type: String, trim: true },

@@ -55,7 +55,7 @@ api.get = async function (url: string, config?: any) {
     }
   }
 
-  const response = await originalGet.call(api, url, config);
+  const response: any = await originalGet.call(api, url, config);
   
   if (response.status >= 200 && response.status < 300) {
     // Only cache public routes or data that is safe to cache

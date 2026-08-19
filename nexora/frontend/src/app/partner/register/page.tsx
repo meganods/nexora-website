@@ -8,14 +8,15 @@ import {
   FileText, Briefcase, Users, MapPin, Calendar, Clock, CreditCard, Landmark, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft, Search 
 } from 'lucide-react';
 import api from '@/lib/api';
-import toast from 'react-hot-toast';
 
 export default function PartnerRegisterWizard() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [apiLoading, setApiLoading] = useState(false);
-    
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
   // Step 1: Account
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -36,8 +37,8 @@ export default function PartnerRegisterWizard() {
   const [primaryContact, setPrimaryContact] = useState('');
   const [businessDescription, setBusinessDescription] = useState('');
   const [address, setAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
+  const [city, setCity] = useState('Delhi');
+  const [state, setState] = useState('Delhi');
   const [pincode, setPincode] = useState('');
 
   // Step 3: Services
@@ -55,6 +56,7 @@ export default function PartnerRegisterWizard() {
 
   // Step 5: KYC details
   const [aadharNumber, setAadharNumber] = useState('');
+  const [aadharRefId, setAadharRefId] = useState('');
   const [panNumber, setPanNumber] = useState('');
   const [gstNumber, setGstNumber] = useState('');
   const [isGstRegistered, setIsGstRegistered] = useState(false);
@@ -166,7 +168,7 @@ export default function PartnerRegisterWizard() {
   };
 
   const saveProgress = async (step: number) => {
-    
+    setErrorMsg('');
     setApiLoading(true);
     try {
       // Build custom services payload for Step 3
@@ -217,7 +219,7 @@ export default function PartnerRegisterWizard() {
       await api.put('/partner/onboarding', payload);
       setCurrentStep(step);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to save progress.');
+      setErrorMsg(err.response?.data?.message || 'Failed to save progress.');
     } finally {
       setApiLoading(false);
     }
@@ -234,8 +236,9 @@ export default function PartnerRegisterWizard() {
     try {
       const { data } = await api.post('/partner/kyc/aadhar', { aadharNumber });
       if (data.success) {
+        setAadharRefId(data.ref_id);
         setShowOtpField(true);
-        toast.success("Mock verification OTP '1234' sent to registered mobile number!");
+        setSuccessMsg("Verification OTP sent to Aadhaar-linked mobile number!");
       }
     } catch (err: any) {
       setAadharError(err.response?.data?.message || "Failed to start Aadhaar verification.");
@@ -245,20 +248,20 @@ export default function PartnerRegisterWizard() {
   };
 
   const handleVerifyAadharOtp = async () => {
-    if (otpInput !== "1234") {
-      setAadharError("Invalid Mock OTP. Use '1234'.");
+    if (!otpInput || otpInput.length !== 6) {
+      setAadharError("Invalid OTP format. Please enter the 6-digit OTP.");
       return;
     }
     setAadharError('');
     setApiLoading(true);
     try {
-      const { data } = await api.post('/partner/kyc/aadhar/verify', { otp: otpInput });
+      const { data } = await api.post('/partner/kyc/aadhar/verify', { otp: otpInput, ref_id: aadharRefId });
       if (data.success) {
         setAadharVerified(true);
         setAadharName(data.vendor?.kycDetails?.aadharName || name);
         setAadharDob(data.vendor?.kycDetails?.aadharDob || "15-08-1990");
         setShowOtpField(false);
-        toast.success('Aadhaar verified successfully!');
+        setSuccessMsg("Aadhaar verified successfully!");
       }
     } catch (err: any) {
       setAadharError(err.response?.data?.message || "Aadhaar verification failed.");
@@ -279,7 +282,7 @@ export default function PartnerRegisterWizard() {
       if (data.success) {
         setPanVerified(true);
         setPanName(data.vendor?.kycDetails?.panName || name.toUpperCase());
-        toast.success('PAN Card verified successfully!');
+        setSuccessMsg("PAN Card verified successfully!");
       }
     } catch (err: any) {
       setPanError(err.response?.data?.message || "PAN verification failed.");
@@ -299,7 +302,7 @@ export default function PartnerRegisterWizard() {
       const { data } = await api.post('/partner/kyc/gst', { gstNumber });
       if (data.success) {
         setGstVerified(true);
-        toast.success('GST details verified successfully!');
+        setSuccessMsg("GST details verified successfully!");
       }
     } catch (err: any) {
       setGstError(err.response?.data?.message || "GST verification failed.");
@@ -310,14 +313,14 @@ export default function PartnerRegisterWizard() {
 
   const handleStep1 = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setErrorMsg('');
 
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match.');
+      setErrorMsg('Passwords do not match.');
       return;
     }
     if (!termsAccepted) {
-      toast.error('Please accept Terms & Privacy Policy.');
+      setErrorMsg('Please accept Terms & Privacy Policy.');
       return;
     }
 
@@ -340,7 +343,7 @@ export default function PartnerRegisterWizard() {
         await saveProgress(2);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Registration step 1 failed.');
+      setErrorMsg(err.response?.data?.message || 'Registration step 1 failed.');
     } finally {
       setApiLoading(false);
     }
@@ -352,13 +355,13 @@ export default function PartnerRegisterWizard() {
       await saveProgress(7);
       const { data } = await api.post('/partner/kyc/submit');
       if (data.success) {
-        toast.success('Onboarding submitted successfully! Redirecting to your application status...');
+        setSuccessMsg("Onboarding submitted successfully! Redirecting to your application status...");
         setTimeout(() => {
           router.push('/partner/status');
         }, 2500);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Final submission failed.');
+      setErrorMsg(err.response?.data?.message || 'Final submission failed.');
     } finally {
       setApiLoading(false);
     }
@@ -492,7 +495,262 @@ export default function PartnerRegisterWizard() {
               </div>
 
         <div className="p-6 sm:p-10">
-          }
+          {errorMsg && (
+            <div className="mb-6 bg-red-50 border border-red-100 rounded-2xl p-4 flex gap-2 items-center">
+              <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+              <p className="text-xs text-red-700 font-bold leading-normal">{errorMsg}</p>
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="mb-6 bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex gap-2 items-center">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+              <p className="text-xs text-emerald-700 font-bold leading-normal">{successMsg}</p>
+            </div>
+          )}
+
+          {/* STEP 1: Account Info */}
+          {currentStep === 1 && (
+            <form onSubmit={handleStep1} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Full Name *</label>
+                  <input 
+                    type="text" required value={name} onChange={e => setName(e.target.value)}
+                    placeholder="Enter full name" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Mobile *</label>
+                  <input 
+                    type="tel" required value={phone} onChange={e => setPhone(e.target.value)}
+                    placeholder="10-digit mobile" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Email Address *</label>
+                <input 
+                  type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="name@business.com" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider font-sans">Password *</label>
+                  <div className="relative">
+                    <input 
+                      type={showPassword ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)}
+                      placeholder="••••••" className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/40">
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider font-sans">Confirm Password *</label>
+                  <div className="relative">
+                    <input 
+                      type={showConfirmPassword ? 'text' : 'password'} required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                      placeholder="••••••" className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                    />
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/40">
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Date of Birth *</label>
+                  <input 
+                    type="date" required value={dob} onChange={e => setDob(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Gender *</label>
+                  <select 
+                    value={gender} onChange={e => setGender(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-white focus:outline-none"
+                  >
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Business Name *</label>
+                  <input 
+                    type="text" required value={businessName} onChange={e => setBusinessName(e.target.value)}
+                    placeholder="e.g. Dynamic Painting Solutions" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Business Type *</label>
+                  <select 
+                    value={businessType} onChange={e => setBusinessType(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gold/30 bg-white focus:outline-none"
+                  >
+                    <option value="Individual">Individual</option>
+                    <option value="Proprietorship">Proprietorship</option>
+                    <option value="Partnership">Partnership</option>
+                    <option value="Company">Company</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5 pt-2">
+                <input 
+                  id="terms" type="checkbox" checked={termsAccepted} onChange={e => setTermsAccepted(e.target.checked)}
+                  className="h-4.5 w-4.5 rounded border-gold/30 text-primary accent-primary mt-0.5"
+                />
+                <label htmlFor="terms" className="text-xs text-foreground/60 leading-normal">
+                  I accept the partner Terms & Conditions and Privacy Policies.
+                </label>
+              </div>
+
+              <button 
+                type="submit" disabled={apiLoading}
+                className="w-full py-3.5 bg-primary text-white rounded-full font-bold hover:bg-primary/95 transition-all text-sm flex items-center justify-center gap-2"
+              >
+                {apiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Register & Continue'} <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+          )}
+
+          {/* STEP 2: Business Info */}
+          {currentStep === 2 && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Experience (Years) *</label>
+                  <input 
+                    type="number" value={experience} onChange={e => setExperience(parseInt(e.target.value) || 0)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Team Size *</label>
+                  <input 
+                    type="number" value={teamSize} onChange={e => setTeamSize(parseInt(e.target.value) || 1)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Primary Contact Person Name *</label>
+                <input 
+                  type="text" value={primaryContact} onChange={e => setPrimaryContact(e.target.value)}
+                  placeholder="Manager / Owner Name" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Business Description *</label>
+                <textarea 
+                  value={businessDescription} onChange={e => setBusinessDescription(e.target.value)}
+                  placeholder="Describe your services, specializations, etc." rows={3}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Business Address *</label>
+                <input 
+                  type="text" value={address} onChange={e => setAddress(e.target.value)}
+                  placeholder="Office or home office address" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">City *</label>
+                  <input 
+                    type="text" value={city} onChange={e => setCity(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">State *</label>
+                  <input 
+                    type="text" value={state} onChange={e => setState(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Pincode *</label>
+                  <input 
+                    type="text" value={pincode} onChange={e => setPincode(e.target.value)}
+                    placeholder="110001" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button 
+                  onClick={() => setCurrentStep(1)} 
+                  className="w-1/3 py-3 border border-primary/30 text-primary rounded-full font-bold hover:bg-cream/40 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Back
+                </button>
+                <button 
+                  onClick={() => saveProgress(3)} disabled={apiLoading}
+                  className="w-2/3 py-3 bg-[#1D3B31] text-white rounded-full font-bold hover:bg-[#1D3B31]/95 transition-all flex items-center justify-center gap-2"
+                >
+                  {apiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save & Continue'} <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: Services Select */}
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              <p className="text-xs text-foreground/60 leading-normal mb-4">
+                Choose the categories of services you provide. Multiple selections are allowed. You will be able to customize your service list after admin approval.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {allCategories.map(cat => {
+                  const isSelected = selectedCategories.includes(cat.name);
+                  return (
+                    <div 
+                      key={cat._id} 
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedCategories(selectedCategories.filter(c => c !== cat.name));
+                        } else {
+                          setSelectedCategories([...selectedCategories, cat.name]);
+                        }
+                      }}
+                      className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex flex-col justify-between h-32 ${
+                        isSelected 
+                          ? 'border-primary bg-primary/5 shadow-md' 
+                          : 'border-gold/20 bg-white hover:border-gold/45 hover:shadow-sm'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="font-serif font-bold text-primary text-base">{cat.name}</div>
+                        <input 
+                          type="checkbox" 
+                          checked={isSelected}
+                          readOnly
+                          className="h-5 w-5 rounded border-gold/30 text-primary accent-primary cursor-pointer mt-0.5"
+                        />
+                      </div>
+                      <p className="text-xs text-foreground/50 line-clamp-2 mt-2">{cat.description || 'Professional home service category'}</p>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="flex gap-4 pt-4">
@@ -505,7 +763,7 @@ export default function PartnerRegisterWizard() {
                 <button 
                   onClick={() => {
                     if (selectedCategories.length === 0) {
-                      toast.error('Please select at least one service category.');
+                      setErrorMsg("Please select at least one service category.");
                       return;
                     }
                     saveProgress(4);
@@ -701,10 +959,10 @@ export default function PartnerRegisterWizard() {
                         <div className="flex gap-2">
                           <input 
                             type="text" 
-                            maxLength={4}
+                            maxLength={6}
                             value={otpInput}
                             onChange={e => setOtpInput(e.target.value.replace(/\D/g, ''))}
-                            placeholder="Enter 1234" 
+                            placeholder="Enter 6-digit OTP" 
                             className="flex-1 px-4 py-2 rounded-xl border border-blue-200 focus:outline-none font-mono text-center text-lg tracking-widest bg-white"
                           />
                           <button 
@@ -852,15 +1110,15 @@ export default function PartnerRegisterWizard() {
                 <button 
                   onClick={() => {
                     if (!aadharVerified) {
-                      toast.error('Please verify your Aadhaar Card to proceed.');
+                      setErrorMsg("Please verify your Aadhaar Card to proceed.");
                       return;
                     }
                     if (!panVerified) {
-                      toast.error('Please verify your PAN Card to proceed.');
+                      setErrorMsg("Please verify your PAN Card to proceed.");
                       return;
                     }
                     if (isGstRegistered && !gstVerified) {
-                      toast.error('Please verify your GSTIN or uncheck the GSTIN option to proceed.');
+                      setErrorMsg("Please verify your GSTIN or uncheck the GSTIN option to proceed.");
                       return;
                     }
                     saveProgress(6);

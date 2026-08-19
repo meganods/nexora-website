@@ -165,8 +165,6 @@ function PartnerLoginForm() {
                 </div>
               </div>
 
-              {error && <p className="text-red-500 text-xs font-semibold bg-red-50 rounded-xl p-3 border border-red-100">{error}</p>}
-
               <button type="submit" disabled={isLoading}
                 className="w-full py-3.5 bg-primary text-white rounded-full font-bold hover:bg-primary/95 transition-all text-sm shadow-sm flex items-center justify-center gap-2">
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Login'}
@@ -194,8 +192,6 @@ function PartnerLoginForm() {
                   />
                 </div>
               </div>
-
-              {error && <p className="text-red-500 text-xs font-semibold bg-red-50 rounded-xl p-3 border border-red-100">{error}</p>}
 
               <button type="submit" disabled={isLoading || otp.length < 4}
                 className="w-full py-3.5 bg-primary text-white rounded-full font-bold hover:bg-primary/95 transition-all text-sm shadow-sm flex items-center justify-center gap-2">

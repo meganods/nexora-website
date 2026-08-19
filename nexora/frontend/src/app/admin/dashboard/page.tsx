@@ -2577,10 +2577,21 @@ function AdminDashboardContent() {
                       <div>
                         <span className="font-bold text-primary block">Aadhaar Card:</span>
                         <p className="font-mono text-foreground/75 mt-0.5">{selectedReviewVendor.kycDetails?.aadharNumber || 'Not Provided'}</p>
+                        {selectedReviewVendor.kycDetails?.aadharVerified && (
+                          <div className="text-xs text-foreground/60 mt-1">
+                            <p>Name: <span className="font-semibold text-primary">{selectedReviewVendor.kycDetails.aadharName}</span></p>
+                            <p>DOB: <span className="font-semibold text-primary">{selectedReviewVendor.kycDetails.aadharDob}</span></p>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <span className="font-bold text-primary block">PAN Card:</span>
                         <p className="font-mono text-foreground/75 mt-0.5">{selectedReviewVendor.kycDetails?.panNumber || 'Not Provided'}</p>
+                        {selectedReviewVendor.kycDetails?.panVerified && (
+                          <div className="text-xs text-foreground/60 mt-1">
+                            <p>Name: <span className="font-semibold text-primary">{selectedReviewVendor.kycDetails.panName}</span></p>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <span className="font-bold text-primary block">GSTIN Number:</span>
