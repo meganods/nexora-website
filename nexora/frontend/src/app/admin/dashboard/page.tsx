@@ -2550,149 +2550,130 @@ function AdminDashboardContent() {
               )}
             </div>
 
-            {/* Application Detail review modal */}
-            {selectedReviewVendor && (
-              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                <div className="bg-white border border-gold/20 rounded-3xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 sm:p-8 space-y-6">
-                  <div className="flex justify-between items-start border-b border-gray-100 pb-4">
-                    <div>
-                      <h3 className="font-serif text-lg font-bold text-primary">Review Partner Application</h3>
-                      <p className="text-xs text-foreground/50">Details submitted by {selectedReviewVendor.name}</p>
-                    </div>
-                    <button onClick={() => setSelectedReviewVendor(null)} className="p-1 hover:text-gold transition-colors font-bold text-lg">×</button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
-                    {/* Column 1 */}
-                    <div className="space-y-4">
-                      <div>
-                        <span className="font-bold text-primary block">Account Name:</span>
-                        <p className="text-foreground/70 mt-0.5">{selectedReviewVendor.name}</p>
-                      </div>
-                      <div>
-                        <span className="font-bold text-primary block">Email & Mobile:</span>
-                        <p className="text-foreground/70 mt-0.5">{selectedReviewVendor.email} | {selectedReviewVendor.phone}</p>
-                      </div>
-                      <div>
-                        <span className="font-bold text-primary block">Business Profile:</span>
-                        <p className="text-foreground/70 mt-0.5">{selectedReviewVendor.kycDetails?.businessName || selectedReviewVendor.name} ({selectedReviewVendor.businessType || 'Individual'})</p>
-                        <p className="text-foreground/75 mt-0.5">{selectedReviewVendor.experience || 0} Years Experience · Team size: {selectedReviewVendor.teamSize || 1}</p>
-                        <p className="text-[11px] text-foreground/50 italic mt-1">"{selectedReviewVendor.businessDescription || 'No description provided'}"</p>
-                      </div>
-                      <div>
-                        <span className="font-bold text-primary block">Address & Location:</span>
-                        <p className="text-foreground/70 mt-0.5">{selectedReviewVendor.location?.address}, {selectedReviewVendor.location?.city}</p>
-                      </div>
-                      <div>
-                        <span className="font-bold text-primary block">Service Areas & Availability:</span>
-                        <p className="text-foreground/70 mt-0.5">Areas: {selectedReviewVendor.serviceAreas?.join(', ') || 'Delhi NCR'}</p>
-                        <p className="text-foreground/70 mt-0.5">Slots: {selectedReviewVendor.availability?.slots?.join(', ')} on {selectedReviewVendor.availability?.days?.join(', ')}</p>
-                      </div>
-                    </div>
-
-                    {/* Column 2 */}
-                    <div className="space-y-4 sm:border-l sm:border-gray-100 sm:pl-6">
-                      <div>
-                        <span className="font-bold text-primary block">Aadhaar Card:</span>
-                        <p className="font-mono text-foreground/75 mt-0.5">{selectedReviewVendor.kycDetails?.aadharNumber || 'Not Provided'}</p>
-                        {selectedReviewVendor.kycDetails?.aadharVerified && (
-                          <div className="text-xs text-foreground/60 mt-1">
-                            <p>Name: <span className="font-semibold text-primary">{selectedReviewVendor.kycDetails.aadharName}</span></p>
-                            <p>DOB: <span className="font-semibold text-primary">{selectedReviewVendor.kycDetails.aadharDob}</span></p>
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <span className="font-bold text-primary block">PAN Card:</span>
-                        <p className="font-mono text-foreground/75 mt-0.5">{selectedReviewVendor.kycDetails?.panNumber || 'Not Provided'}</p>
-                        {selectedReviewVendor.kycDetails?.panVerified && (
-                          <div className="text-xs text-foreground/60 mt-1">
-                            <p>Name: <span className="font-semibold text-primary">{selectedReviewVendor.kycDetails.panName}</span></p>
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <span className="font-bold text-primary block">GSTIN Number:</span>
-                        <p className="font-mono text-foreground/75 mt-0.5">{selectedReviewVendor.kycDetails?.gstNumber || 'Not Provided'}</p>
-                      </div>
-                      <div className="border-t border-gray-100 pt-3">
-                        <span className="font-bold text-primary block">Bank Details:</span>
-                        {selectedReviewVendor.bankDetails ? (
-                          <div className="font-mono text-foreground/75 mt-1 space-y-0.5 bg-cream/30 p-2.5 rounded-xl border border-gold/10">
-                            <p><span className="font-sans font-bold text-primary">Holder:</span> {selectedReviewVendor.bankDetails.accountHolderName}</p>
-                            <p><span className="font-sans font-bold text-primary">Bank:</span> {selectedReviewVendor.bankDetails.bankName}</p>
-                            <p><span className="font-sans font-bold text-primary">A/C:</span> {selectedReviewVendor.bankDetails.accountNumber}</p>
-                            <p><span className="font-sans font-bold text-primary">IFSC:</span> {selectedReviewVendor.bankDetails.ifscCode}</p>
-                            <p><span className="font-sans font-bold text-primary">Type:</span> {selectedReviewVendor.bankDetails.accountType}</p>
-                          </div>
-                        ) : (
-                          <p className="text-foreground/45 mt-0.5">Not Submitted</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2.5 pt-6 border-t border-gray-100 justify-end">
-                    <button
-                      onClick={() => setSelectedReviewVendor(null)}
-                      className="px-5 py-2 border border-gold/30 hover:bg-cream/45 text-xs font-bold rounded-full text-foreground/60 transition-all"
-                    >
-                      Close
-                    </button>
-                    <Link
-                      href={`/partner/${selectedReviewVendor._id}`}
-                      target="_blank"
-                      className="px-5 py-2 border border-[#0F3D30]/20 hover:bg-[#FAF6F0] text-xs font-bold rounded-full text-[#0F3D30] transition-all inline-flex items-center"
-                    >
-                      Public Profile Preview
-                    </Link>
-                    <button
-                      onClick={() => {
-                        const reason = prompt('Rejection reason (shown to partner):');
-                        if (reason !== null) {
-                          api.patch(`/admin/vendors/${selectedReviewVendor._id}/verify`, { action: 'reject', reviewNote: reason })
-                            .then(() => {
-                              alert('Partner rejected');
-                              setSelectedReviewVendor(null);
-                              fetchPendingVendors();
-                              fetchMetrics();
-                            })
-                            .catch(() => alert('Rejection failed'));
-                        }
-                      }}
-                      className="px-5 py-2.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs font-bold rounded-full transition-all"
-                    >
-                      Reject Application
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleVerify(selectedReviewVendor._id, 'verify').then(() => {
-                          setSelectedReviewVendor(null);
-                        });
-                      }}
-                      className="px-6 py-2.5 bg-primary text-white hover:bg-primary/95 text-xs font-bold rounded-full transition-all"
-                    >
-                      Approve & Onboard
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {editingPartner && (
-              <AdminPartnerAvailabilityModal
-                partner={editingPartner}
-                onClose={() => {
-                  setEditingPartner(null);
-                  fetchPartners();
-                }}
-              />
-            )}
-
           </div>
         )}
 
-        {/* ── TAB: Auto-Assign ── */}
+        {/* ── View File modal — GLOBAL, works from any tab ── */}
+        {selectedReviewVendor && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white border border-gold/20 rounded-3xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 sm:p-8 space-y-6">
+              <div className="flex justify-between items-start border-b border-gray-100 pb-4">
+                <div>
+                  <h3 className="font-serif text-lg font-bold text-primary">Review Partner Application</h3>
+                  <p className="text-xs text-foreground/50">Details submitted by {selectedReviewVendor.name}</p>
+                </div>
+                <button onClick={() => setSelectedReviewVendor(null)} className="p-1 hover:text-gold transition-colors font-bold text-lg">×</button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
+                <div className="space-y-4">
+                  <div>
+                    <span className="font-bold text-primary block">Account Name:</span>
+                    <p className="text-foreground/70 mt-0.5">{selectedReviewVendor.name}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-primary block">Email &amp; Mobile:</span>
+                    <p className="text-foreground/70 mt-0.5">{selectedReviewVendor.email} | {selectedReviewVendor.phone}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-primary block">Business Profile:</span>
+                    <p className="text-foreground/70 mt-0.5">{selectedReviewVendor.kycDetails?.businessName || selectedReviewVendor.name} ({selectedReviewVendor.businessType || 'Individual'})</p>
+                    <p className="text-foreground/75 mt-0.5">{selectedReviewVendor.experience || 0} Years Experience · Team size: {selectedReviewVendor.teamSize || 1}</p>
+                    <p className="text-[11px] text-foreground/50 italic mt-1">"{selectedReviewVendor.businessDescription || 'No description provided'}"</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-primary block">Address &amp; Location:</span>
+                    <p className="text-foreground/70 mt-0.5">{selectedReviewVendor.location?.address}, {selectedReviewVendor.location?.city}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-primary block">Service Areas &amp; Availability:</span>
+                    <p className="text-foreground/70 mt-0.5">Areas: {selectedReviewVendor.serviceAreas?.join(', ') || 'Delhi NCR'}</p>
+                    <p className="text-foreground/70 mt-0.5">Slots: {selectedReviewVendor.availability?.slots?.join(', ')} on {selectedReviewVendor.availability?.days?.join(', ')}</p>
+                  </div>
+                </div>
+                <div className="space-y-4 sm:border-l sm:border-gray-100 sm:pl-6">
+                  <div>
+                    <span className="font-bold text-primary block">Aadhaar Card:</span>
+                    <p className="font-mono text-foreground/75 mt-0.5">{selectedReviewVendor.kycDetails?.aadharNumber || 'Not Provided'}</p>
+                    {selectedReviewVendor.kycDetails?.aadharVerified && (
+                      <div className="text-xs text-foreground/60 mt-1">
+                        <p>Name: <span className="font-semibold text-primary">{selectedReviewVendor.kycDetails.aadharName}</span></p>
+                        <p>DOB: <span className="font-semibold text-primary">{selectedReviewVendor.kycDetails.aadharDob}</span></p>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-bold text-primary block">PAN Card:</span>
+                    <p className="font-mono text-foreground/75 mt-0.5">{selectedReviewVendor.kycDetails?.panNumber || 'Not Provided'}</p>
+                    {selectedReviewVendor.kycDetails?.panVerified && (
+                      <div className="text-xs text-foreground/60 mt-1">
+                        <p>Name: <span className="font-semibold text-primary">{selectedReviewVendor.kycDetails.panName}</span></p>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-bold text-primary block">GSTIN Number:</span>
+                    <p className="font-mono text-foreground/75 mt-0.5">{selectedReviewVendor.kycDetails?.gstNumber || 'Not Provided'}</p>
+                  </div>
+                  <div className="border-t border-gray-100 pt-3">
+                    <span className="font-bold text-primary block">Bank Details:</span>
+                    {selectedReviewVendor.bankDetails ? (
+                      <div className="font-mono text-foreground/75 mt-1 space-y-0.5 bg-cream/30 p-2.5 rounded-xl border border-gold/10">
+                        <p><span className="font-sans font-bold text-primary">Holder:</span> {selectedReviewVendor.bankDetails.accountHolderName}</p>
+                        <p><span className="font-sans font-bold text-primary">Bank:</span> {selectedReviewVendor.bankDetails.bankName}</p>
+                        <p><span className="font-sans font-bold text-primary">A/C:</span> {selectedReviewVendor.bankDetails.accountNumber}</p>
+                        <p><span className="font-sans font-bold text-primary">IFSC:</span> {selectedReviewVendor.bankDetails.ifscCode}</p>
+                        <p><span className="font-sans font-bold text-primary">Type:</span> {selectedReviewVendor.bankDetails.accountType}</p>
+                      </div>
+                    ) : (
+                      <p className="text-foreground/45 mt-0.5">Not Submitted</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2.5 pt-6 border-t border-gray-100 justify-end">
+                <button onClick={() => setSelectedReviewVendor(null)} className="px-5 py-2 border border-gold/30 hover:bg-cream/45 text-xs font-bold rounded-full text-foreground/60 transition-all">
+                  Close
+                </button>
+                <Link href={`/partner/${selectedReviewVendor._id}`} target="_blank" className="px-5 py-2 border border-[#0F3D30]/20 hover:bg-[#FAF6F0] text-xs font-bold rounded-full text-[#0F3D30] transition-all inline-flex items-center">
+                  Public Profile Preview
+                </Link>
+                <button
+                  onClick={() => {
+                    const reason = prompt('Rejection reason (shown to partner):');
+                    if (reason !== null) {
+                      api.patch(`/admin/vendors/${selectedReviewVendor._id}/verify`, { action: 'reject', reviewNote: reason })
+                        .then(() => { alert('Partner rejected'); setSelectedReviewVendor(null); fetchPendingVendors(); fetchMetrics(); })
+                        .catch(() => alert('Rejection failed'));
+                    }
+                  }}
+                  className="px-5 py-2.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs font-bold rounded-full transition-all"
+                >
+                  Reject Application
+                </button>
+                <button
+                  onClick={() => { handleVerify(selectedReviewVendor._id, 'verify').then(() => { setSelectedReviewVendor(null); }); }}
+                  className="px-6 py-2.5 bg-primary text-white hover:bg-primary/95 text-xs font-bold rounded-full transition-all"
+                >
+                  Approve &amp; Onboard
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Availability & Areas modal - global, works from any tab */}
+        {editingPartner && (
+          <AdminPartnerAvailabilityModal
+            partner={editingPartner}
+            onClose={() => {
+              setEditingPartner(null);
+              fetchPartners();
+            }}
+          />
+        )}
+
         {activeTab === 'assignment' && (
           <div className="space-y-6">
             <div className="bg-white rounded-3xl border border-gold/20 shadow-sm p-6 sm:p-8">

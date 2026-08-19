@@ -1,10 +1,16 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,          // STARTTLS on port 587 (NOT SSL on 465)
+  family: 4,              // Force IPv4 — Render blocks outgoing IPv6
   auth: {
     user: process.env.EMAIL_USER || "meganodscare@gmail.com",
     pass: process.env.EMAIL_PASS || process.env.EMAIL_SERVER_PASSWORD,
+  },
+  tls: {
+    rejectUnauthorized: false,  // Allow self-signed certs (Render sandbox)
   },
 });
 
