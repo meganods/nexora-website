@@ -65,7 +65,7 @@ function ServicesList() {
   const [allServices, setAllServices] = useState<any[]>([]);
 
   // Filter States
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, Infinity]);
   const [minRating, setMinRating] = useState<number | null>(null);
   const [availability, setAvailability] = useState<string>('any');
   const [wishlist, setWishlist] = useState<string[]>([]);
@@ -110,7 +110,7 @@ function ServicesList() {
       ]);
       setAllServices(svcRes.data || []);
       setCategories(catRes.data || []);
-      applyFilters(svcRes.data || [], categoryFilter || '', searchQuery || '', sortBy, [0, 5000], null, 'any');
+      applyFilters(svcRes.data || [], categoryFilter || '', searchQuery || '', sortBy, [0, Infinity], null, 'any');
     } catch (err) {
       console.error('Failed to load services', err);
     } finally {
@@ -226,7 +226,7 @@ function ServicesList() {
     setSearchInput('');
     setSelectedCategory('');
     setSortBy('popular');
-    setPriceRange([0, 5000]);
+    setPriceRange([0, Infinity]);
     setMinRating(null);
     setAvailability('any');
     setServices(allServices);
@@ -397,7 +397,7 @@ function ServicesList() {
                 <button onClick={() => handlePricePreset(999, 1999)} className={`py-1.5 rounded-xl border text-center transition-colors ${priceRange[0] === 999 && priceRange[1] === 1999 ? 'border-[#0F3D30] bg-[#0F3D30]/5 text-[#0F3D30]' : 'border-gray-200 text-foreground/60'}`}>
                   ₹999 - ₹1999
                 </button>
-                <button onClick={() => handlePricePreset(1999, 5000)} className={`py-1.5 rounded-xl border text-center transition-colors ${priceRange[0] === 1999 ? 'border-[#0F3D30] bg-[#0F3D30]/5 text-[#0F3D30]' : 'border-gray-200 text-foreground/60'}`}>
+                <button onClick={() => handlePricePreset(1999, Infinity)} className={`py-1.5 rounded-xl border text-center transition-colors ${priceRange[0] === 1999 ? 'border-[#0F3D30] bg-[#0F3D30]/5 text-[#0F3D30]' : 'border-gray-200 text-foreground/60'}`}>
                   ₹1999+
                 </button>
               </div>

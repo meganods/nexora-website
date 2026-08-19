@@ -24,6 +24,7 @@ function SignupPageContent() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [devOtp, setDevOtp] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -73,6 +74,7 @@ function SignupPageContent() {
 
       const { data } = await api.post('/user/request-signup-otp', payload);
       if (data.success) {
+        if (data.devOtp) setDevOtp(data.devOtp);
         setStep('otp');
       }
     } catch (err: any) {
@@ -303,6 +305,7 @@ function SignupPageContent() {
                   />
                 </div>
               </div>
+
 
               {error && <p className="text-red-500 text-xs font-semibold bg-red-50 rounded-xl p-3 border border-red-100">{error}</p>}
 

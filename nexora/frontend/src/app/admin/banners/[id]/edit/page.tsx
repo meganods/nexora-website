@@ -35,7 +35,7 @@ export default function EditBannerPage() {
     badgeText: '',
     startDate: '',
     endDate: '',
-    displayOrder: '0', 
+
     isActive: true,
     position: 'CAROUSEL',
   });
@@ -60,7 +60,7 @@ export default function EditBannerPage() {
           promoLabel: b.promoLabel || '',
           gradient: b.gradient || 'from-[#0F3D30] to-[#1D6B50]',
           badgeText: b.badgeText || '',
-          displayOrder: String(b.displayOrder || 0),
+
           startDate: b.startDate ? new Date(b.startDate).toISOString().split('T')[0] : '',
           endDate: b.endDate ? new Date(b.endDate).toISOString().split('T')[0] : '',
           isActive: b.isActive !== false,
@@ -83,7 +83,7 @@ export default function EditBannerPage() {
     try {
       const payload = {
         ...form,
-        displayOrder: Number(form.displayOrder) || 0,
+
         startDate: form.startDate ? new Date(form.startDate) : new Date(),
         endDate: form.endDate ? new Date(form.endDate) : null,
       };
@@ -156,10 +156,7 @@ export default function EditBannerPage() {
               <input type="date" value={form.endDate} onChange={e => setForm(p => ({ ...p, endDate: e.target.value }))} className={inp} placeholder="Leave blank for no expiry" />
             </div>
 
-            <div>
-              <label className={lbl}>Display Order</label>
-              <input type="number" value={form.displayOrder} onChange={e => setForm(p => ({ ...p, displayOrder: e.target.value }))} className={inp} />
-            </div>
+
 
             <div>
               <label className={lbl}>Banner Position *</label>
@@ -205,22 +202,7 @@ export default function EditBannerPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-            <ImageUpload
-              imageUrl={form.imageUrl}
-              imagePublicId={form.imagePublicId}
-              onChange={(url, pid) => setForm(p => ({ ...p, imageUrl: url, imagePublicId: pid }))}
-              label="Desktop Banner Image"
-              folder="nexora/banners"
-            />
-            <ImageUpload
-              imageUrl={form.mobileImageUrl}
-              imagePublicId={form.mobilePublicId}
-              onChange={(url, pid) => setForm(p => ({ ...p, mobileImageUrl: url, mobilePublicId: pid }))}
-              label="Mobile Banner Image (Optional)"
-              folder="nexora/banners/mobile"
-            />
-          </div>
+          {/* Removed Image Upload as requested */}
 
           <div className="pt-2">
             <label className="flex items-center gap-3 cursor-pointer w-fit">

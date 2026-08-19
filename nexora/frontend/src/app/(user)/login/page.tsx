@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Phone, KeyRound, User as UserIcon, Loader2, ShieldCheck, Mail, Lock, Eye, EyeOff, Star } from 'lucide-react';
+import { Phone, KeyRound, User as UserIcon, Loader2, ShieldCheck, Mail, Lock, Eye, EyeOff, Star, ChevronLeft } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import api from '@/lib/api';
@@ -177,8 +177,12 @@ function LoginPageContent() {
       </div>
 
       {/* Right Column Form */}
-      <div className="flex items-center justify-center p-6 sm:p-12 lg:p-16">
-        <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-10 border border-gold/20 shadow-xl shadow-primary/5">
+      <div className="relative flex items-center justify-center p-6 sm:p-12 lg:p-16">
+        <Link href="/" className="absolute top-6 left-6 lg:top-8 lg:left-8 flex items-center gap-1.5 text-primary/70 hover:text-primary transition-colors text-xs font-semibold">
+          <ChevronLeft className="w-4 h-4" />
+          Back to Website
+        </Link>
+        <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-10 border border-gold/20 shadow-xl shadow-primary/5 mt-8 lg:mt-0">
           <div className="text-center mb-6">
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-primary">Login to Nexora</h1>
             <p className="mt-1.5 text-xs sm:text-sm text-foreground/50">Grow your experience with expert services</p>

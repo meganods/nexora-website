@@ -44,12 +44,14 @@ export default function EditServicePage() {
 
   const [form, setForm] = useState({
     name: '', slug: '', categoryId: '', description: '', basePrice: '',
-    estimatedDurationMins: 60, inclusions: '', imageUrl: '', imagePublicId: '',
-    discountPercentage: 0, displayOrder: 0,
+    discountPercentage: 0,
+    estimatedDurationMins: 60,
     isActive: true, isFeatured: false, isPopular: false, isMostBooked: false,
     parentId: '',
     trending: false, newArrival: false, totalBookings: 0,
     bannerImageUrl: '', warrantyInfo: '',
+    inclusions: '',
+    imageUrl: '', imagePublicId: '',
     whatsNotIncludedRaw: '[]',
     processStepsRaw: '[]',
     safetyMeasuresRaw: '[]',
@@ -82,8 +84,7 @@ export default function EditServicePage() {
           imageUrl: svc.imageUrl || '',
           imagePublicId: svc.imagePublicId || '',
           discountPercentage: svc.discountPercentage || 0,
-          displayOrder: svc.displayOrder || 0,
-          isActive: svc.isActive !== false,
+          isActive: svc.isActive ?? true,
           isFeatured: svc.isFeatured || false,
           isPopular: svc.isPopular || false,
           isMostBooked: svc.isMostBooked || false,
@@ -121,15 +122,14 @@ export default function EditServicePage() {
     if (!form.name.trim()) { setError('Service name is required.'); return; }
     setSaving(true); setError(''); setSuccess('');
     try {
-      const payload = {
+      const payload: any = {
         ...form,
         slug: form.slug || autoSlug(form.name),
         basePrice: Number(form.basePrice),
         estimatedDurationMins: Number(form.estimatedDurationMins),
         discountPercentage: Number(form.discountPercentage),
-        displayOrder: Number(form.displayOrder),
         totalBookings: Number(form.totalBookings),
-        inclusions: form.inclusions.split('\n').map((s: string) => s.trim()).filter(Boolean),
+        inclusions: form.inclusions.split(/[\n,]+/).map((s: string) => s.trim()).filter(Boolean),
         whatsNotIncluded: JSON.parse(form.whatsNotIncludedRaw || '[]'),
         processSteps: JSON.parse(form.processStepsRaw || '[]'),
         safetyMeasures: JSON.parse(form.safetyMeasuresRaw || '[]'),
@@ -298,18 +298,15 @@ export default function EditServicePage() {
               <label className={lbl}>Discount %</label>
               <input type="number" min={0} max={100} value={form.discountPercentage} onChange={e => setForm(p => ({ ...p, discountPercentage: Number(e.target.value) }))} className={inp} />
             </div>
-            <div>
-              <label className={lbl}>Display Order</label>
-              <input type="number" value={form.displayOrder} onChange={e => setForm(p => ({ ...p, displayOrder: Number(e.target.value) }))} className={inp} />
-            </div>
+
           </div>
           <div>
             <label className={lbl}>Description</label>
             <textarea rows={3} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} className={`${inp} resize-none`} />
           </div>
           <div>
-            <label className={lbl}>Inclusions (one per line)</label>
-            <textarea rows={4} value={form.inclusions} onChange={e => setForm(p => ({ ...p, inclusions: e.target.value }))} className={`${inp} resize-none font-mono`} />
+            <label className={lbl}>Inclusions (comma or newline separated)</label>
+            <textarea rows={4} value={form.inclusions} onChange={e => setForm(p => ({ ...p, inclusions: e.target.value }))} className={`${inp} resize-none font-mono`} placeholder={"AC filter cleaning, Gas pressure check, Coil inspection"} />
           </div>
           <ImageUpload imageUrl={form.imageUrl} imagePublicId={form.imagePublicId} onChange={(url, pid) => setForm(p => ({ ...p, imageUrl: url, imagePublicId: pid }))} label="Service Image" folder="nexora/services" />
           <ImageUpload imageUrl={form.bannerImageUrl} imagePublicId="" onChange={(url) => setForm(p => ({ ...p, bannerImageUrl: url }))} label="Main Banner Image" folder="nexora/banners" />

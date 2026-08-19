@@ -260,7 +260,7 @@ const getDashboardMetrics = asyncHandler(async (req, res) => {
     totalPayoutsAggr,
     pendingPayoutsAggr
   ] = await Promise.all([
-    Booking.find().sort({ createdAt: -1 }).limit(5).populate('userId', 'name').populate('serviceId', 'name'),
+    Booking.find().sort({ createdAt: -1 }).limit(5).populate('customerId', 'name').populate('serviceId', 'name'),
     ServicePartner.find({ kycStatus: 'APPROVED' }).sort({ rating: -1, totalBookings: -1 }).limit(4),
     Notification.find({ recipientType: 'admin' }).sort({ createdAt: -1 }).limit(5),
     Payout.find().sort({ createdAt: -1 }).limit(4).populate('vendorId', 'businessName'),

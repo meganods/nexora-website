@@ -55,7 +55,7 @@ export default function NewPackagePage() {
         discountPercentage: Number(form.discountPercentage),
         estimatedDurationMins: Number(form.estimatedDurationMins),
         displayOrder: Number(form.displayOrder),
-        inclusions: form.inclusions.split('\n').map((s: string) => s.trim()).filter(Boolean),
+        inclusions: form.inclusions.split(/[\n,]+/).map((s: string) => s.trim()).filter(Boolean),
       };
       await api.post('/admin/packages', payload);
       setSuccess('Package created successfully!');
@@ -79,7 +79,7 @@ export default function NewPackagePage() {
             <div><label className={lbl}>Display Order</label><input type="number" value={form.displayOrder} onChange={e => setForm(p => ({ ...p, displayOrder: Number(e.target.value) }))} className={inp} /></div>
           </div>
           <div><label className={lbl}>Description</label><textarea rows={3} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} className={`${inp} resize-none`} /></div>
-          <div><label className={lbl}>Inclusions (one per line)</label><textarea rows={4} value={form.inclusions} onChange={e => setForm(p => ({ ...p, inclusions: e.target.value }))} className={`${inp} resize-none font-mono`} /></div>
+          <div><label className={lbl}>Inclusions (comma or newline separated)</label><textarea rows={4} value={form.inclusions} onChange={e => setForm(p => ({ ...p, inclusions: e.target.value }))} className={`${inp} resize-none font-mono`} placeholder={"AC filter cleaning, Gas pressure check, Coil inspection"} /></div>
 
           {/* Categories */}
           <div>

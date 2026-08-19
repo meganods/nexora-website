@@ -781,7 +781,7 @@ export default function Home() {
 
   const fetchHomepageDeals = async () => {
     try {
-      const { data } = await api.get('/public/deals?featured=true&limit=6');
+      const { data } = await api.get('/public/deals?limit=6');
       if (data?.success && Array.isArray(data.deals)) {
         setHomepageDeals(data.deals);
       }
@@ -897,28 +897,30 @@ export default function Home() {
   }, [selectedCity]);
 
   // ── Promo banner data ──────────────────────────────────────────────────────
-  const promoBanners = [
-    // {
-    //   badge: "Limited Time Offer",
-    //   heading: "20% OFF On Your First Booking",
-    //   sub: "Professional services at your doorstep. Use code at checkout.",
-    //   code: promoCode || "FIRST20",
-    //   codeLabel: promoText || "Get 20% off on your first Nexora booking",
-    //   cta: "Book Now",
-    //   href: "/services",
-    //   gradient: "from-[#0F3D30] to-[#1D6B50]",
-    // },
-    {
-      badge: "New User Offer",
-      heading: "Refer & Earn with Nexora",
-      sub: "Invite your friends. Both of you get exclusive discounts on your next booking.",
-      code: "REFER50",
-      codeLabel: "Share your referral code with friends",
-      cta: "Learn More",
+  const promoBanners = [];
+  if (promoCode || promoText) {
+    promoBanners.push({
+      badge: "Limited Time Offer",
+      heading: "Special Offer",
+      sub: "Professional services at your doorstep. Use code at checkout.",
+      code: promoCode || "OFFER10",
+      codeLabel: promoText || "Special discount on your booking",
+      cta: "Book Now",
       href: "/services",
-      gradient: "from-[#3D1F0F] to-[#7A3A1A]",
-    },
-  ];
+      gradient: "from-[#0F3D30] to-[#1D6B50]",
+    });
+  }
+
+  promoBanners.push({
+    badge: "New User Offer",
+    heading: "Refer & Earn with Nexora",
+    sub: "Invite your friends. Both of you get exclusive discounts on your next booking.",
+    code: "REFER50",
+    codeLabel: "Share your referral code with friends",
+    cta: "Learn More",
+    href: "/services",
+    gradient: "from-[#3D1F0F] to-[#7A3A1A]",
+  });
 
   const scrollPartners = (dir: 'left' | 'right') => {
     if (!partnersScrollRef.current) return;
@@ -1333,7 +1335,14 @@ export default function Home() {
             </div>
 
             <div className="relative z-10 flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-              <div className="bg-white/10 border border-white/20 px-6 py-3 rounded-2xl font-mono text-lg font-bold tracking-widest text-gold text-center w-full sm:w-auto">
+              <div 
+                className="bg-white/10 border border-white/20 px-6 py-3 rounded-2xl font-mono text-lg font-bold tracking-widest text-gold text-center w-full sm:w-auto cursor-pointer hover:bg-white/20 transition-colors"
+                onClick={() => {
+                  navigator.clipboard.writeText(promoCardData ? promoCardData.code : 'NEXORA150');
+                  toast.success('Promo code copied!');
+                }}
+                title="Click to copy"
+              >
                 {promoCardData ? promoCardData.code : 'NEXORA150'}
               </div>
               <Link
@@ -1672,7 +1681,14 @@ export default function Home() {
                     </p>
 
                     {/* Coupon code */}
-                    <div className="inline-flex items-center gap-3 bg-white/10 border border-white/25 rounded-2xl px-5 py-3 mb-8">
+                    <div 
+                      className="inline-flex items-center gap-3 bg-white/10 border border-white/25 rounded-2xl px-5 py-3 mb-8 cursor-pointer hover:bg-white/20 transition-colors"
+                      onClick={() => {
+                        navigator.clipboard.writeText(currentBanner.code);
+                        toast.success('Promo code copied!');
+                      }}
+                      title="Click to copy"
+                    >
                       <Tag className="w-4 h-4 text-white/70 flex-shrink-0" />
                       <div className="text-left">
                         <p className="text-[10px] text-white/60 uppercase tracking-wider">Promo Code</p>

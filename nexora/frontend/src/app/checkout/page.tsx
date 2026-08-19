@@ -118,8 +118,11 @@ function CheckoutForm() {
       router.replace('/');
       return;
     }
-    
-    if (user) {
+    if (!authLoading) {
+      if (!user) {
+        router.replace('/login');
+        return;
+      }
       if (typeof window !== 'undefined') {
         localStorage.setItem('nexora_role', 'user');
       }
@@ -315,6 +318,14 @@ function CheckoutForm() {
     setIsProcessing(true);
     try {
       const { data } = await createOrder();
+      
+      if (data.paymentSessionId === 'mock_session_id') {
+        // Fallback for development without Cashfree API keys
+        await api.post('/bookings/verify-payment', { orderId: data.orderId, mockSuccess: true });
+        router.push(`/bookings/${data.bookingId}`);
+        return;
+      }
+
       const cashfree = await (window as any).Cashfree({ mode: 'production' });
       cashfree.checkout({ paymentSessionId: data.paymentSessionId, redirectTarget: '_modal' }).then((result: any) => {
         if (result.paymentDetails) router.push(`/bookings/${data.bookingId}`);

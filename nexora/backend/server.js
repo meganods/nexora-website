@@ -12,7 +12,13 @@ const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(
   cors({
-    origin: CLIENT_URL,
+    origin: function (origin, callback) {
+      if (!origin || origin.startsWith("http://localhost") || origin.startsWith("http://192.168.")) {
+        callback(null, true);
+      } else {
+        callback(null, CLIENT_URL);
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

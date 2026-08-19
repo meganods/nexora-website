@@ -148,7 +148,7 @@ const deleteCoupon = asyncHandler(async (req, res) => {
 // ─── Admin: Banner CRUD ────────────────────────────────────────────────────────
 
 const listBanners = asyncHandler(async (req, res) => {
-  const banners = await Banner.find().sort({ displayOrder: 1, createdAt: -1 });
+  const banners = await Banner.find().sort({ createdAt: -1 });
   res.json({ success: true, banners });
 });
 
@@ -190,7 +190,7 @@ const getActiveBanners = asyncHandler(async (req, res) => {
       { startDate: { $lte: now }, endDate: { $gte: now } },
       { startDate: { $lte: now }, endDate: null }, // never expires
     ]
-  }).sort({ displayOrder: 1 });
+  }).sort({ createdAt: -1 });
   res.json({ success: true, banners });
 });
 

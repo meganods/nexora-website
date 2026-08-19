@@ -39,7 +39,7 @@ export default function NewServicePage() {
   const [form, setForm] = useState({
     name: '', slug: '', categoryId: '', description: '', basePrice: '',
     estimatedDurationMins: 60, inclusions: '', imageUrl: '', imagePublicId: '',
-    discountPercentage: 0, displayOrder: 0,
+    discountPercentage: 0,
     isActive: true, isFeatured: false, isPopular: false, isMostBooked: false,
     parentId: '',
   });
@@ -56,15 +56,17 @@ export default function NewServicePage() {
     if (!form.basePrice) { setError('Base price is required.'); return; }
     setSaving(true); setError(''); setSuccess('');
     try {
-      const payload = {
+      const payload: any = {
         ...form,
         slug: form.slug || autoSlug(form.name),
         basePrice: Number(form.basePrice),
         estimatedDurationMins: Number(form.estimatedDurationMins),
         discountPercentage: Number(form.discountPercentage),
-        displayOrder: Number(form.displayOrder),
-        inclusions: form.inclusions.split('\n').map((s: string) => s.trim()).filter(Boolean),
+        inclusions: form.inclusions.split(/[\n,]+/).map((s: string) => s.trim()).filter(Boolean),
       };
+      if (payload.parentId === '') {
+        payload.parentId = null;
+      }
       await api.post('/admin/services', payload);
       setSuccess('Service created successfully!');
       setTimeout(() => router.push('/admin/dashboard?tab=services'), 1200);
@@ -217,18 +219,15 @@ export default function NewServicePage() {
               <label className={lbl}>Discount %</label>
               <input type="number" min={0} max={100} value={form.discountPercentage} onChange={e => setForm(p => ({ ...p, discountPercentage: Number(e.target.value) }))} className={inp} />
             </div>
-            <div>
-              <label className={lbl}>Display Order</label>
-              <input type="number" value={form.displayOrder} onChange={e => setForm(p => ({ ...p, displayOrder: Number(e.target.value) }))} className={inp} />
-            </div>
+
           </div>
           <div>
             <label className={lbl}>Description</label>
             <textarea rows={3} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} className={`${inp} resize-none`} placeholder="Brief description..." />
           </div>
           <div>
-            <label className={lbl}>Inclusions (one per line)</label>
-            <textarea rows={4} value={form.inclusions} onChange={e => setForm(p => ({ ...p, inclusions: e.target.value }))} className={`${inp} resize-none font-mono`} placeholder={"AC filter cleaning\nGas pressure check\nCoil inspection"} />
+            <label className={lbl}>Inclusions (comma or newline separated)</label>
+            <textarea rows={4} value={form.inclusions} onChange={e => setForm(p => ({ ...p, inclusions: e.target.value }))} className={`${inp} resize-none font-mono`} placeholder={"AC filter cleaning, Gas pressure check, Coil inspection"} />
           </div>
           <ImageUpload imageUrl={form.imageUrl} imagePublicId={form.imagePublicId} onChange={(url, pid) => setForm(p => ({ ...p, imageUrl: url, imagePublicId: pid }))} label="Service Image" folder="nexora/services" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

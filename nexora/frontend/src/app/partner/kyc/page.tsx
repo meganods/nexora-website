@@ -255,7 +255,7 @@ export default function PartnerKycWizard() {
 
               {sentAadharOtp && (
                 <form onSubmit={handleVerifyAadharOtp} className="mt-4 p-4 bg-white rounded-xl border border-gold/15 space-y-3">
-                  <p className="text-xs text-foreground/50">Enter the verification OTP code. {devOtp && <span className="font-mono text-gold">(Mock OTP: {devOtp})</span>}</p>
+                  <p className="text-xs text-foreground/50">Enter the verification OTP code.</p>
                   <div className="flex gap-2">
                     <input
                       type="text" maxLength={4} value={aadharOtp} onChange={e => setAadharOtp(e.target.value.replace(/\D/g, ''))}

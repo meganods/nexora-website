@@ -1,7 +1,18 @@
 import axios from 'axios';
 
 const getBaseURL = () => {
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location;
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      return `${protocol}//${hostname}:5000/api`;
+    }
+    return 'http://localhost:5000/api';
+  }
+  // Server-side rendering (SSR) in Node.js 18+ should use IPv4 explicitly
+  return 'http://127.0.0.1:5000/api';
 };
 
 const api = axios.create({

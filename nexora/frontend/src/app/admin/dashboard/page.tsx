@@ -1080,10 +1080,8 @@ function AdminDashboardContent() {
         params.set('createdByPartnerId', 'partner');
       } else if (activeTab === 'sub_services') {
         params.set('hasParent', 'true');
-        params.set('approvalStatus', 'APPROVED');
       } else {
         params.set('hasParent', 'false');
-        params.set('approvalStatus', 'APPROVED');
       }
 
       const { data } = await api.get(`/admin/services?${params}`);
@@ -1922,9 +1920,16 @@ function AdminDashboardContent() {
                           <td className="p-4 text-foreground/60">{svc.estimatedDurationMins} min</td>
 
                           <td className="p-4">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${svc.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                              {svc.isActive ? 'ACTIVE' : 'INACTIVE'}
-                            </span>
+                            <div className="flex flex-col gap-1.5 items-start">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${svc.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                {svc.isActive ? 'ACTIVE' : 'INACTIVE'}
+                              </span>
+                              {svc.approvalStatus && svc.approvalStatus !== 'APPROVED' && (
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-700">
+                                  {svc.approvalStatus}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="p-4">
                             <div className="flex items-center justify-end gap-2">
@@ -2080,9 +2085,16 @@ function AdminDashboardContent() {
                           <td className="p-4 font-semibold text-primary">₹{svc.basePrice}</td>
                           <td className="p-4 text-foreground/60">{svc.estimatedDurationMins} min</td>
                           <td className="p-4">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${svc.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                              {svc.isActive ? 'ACTIVE' : 'INACTIVE'}
-                            </span>
+                            <div className="flex flex-col gap-1.5 items-start">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${svc.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                {svc.isActive ? 'ACTIVE' : 'INACTIVE'}
+                              </span>
+                              {svc.approvalStatus && svc.approvalStatus !== 'APPROVED' && (
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-700">
+                                  {svc.approvalStatus}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="p-4">
                             <div className="flex items-center justify-end gap-2">
@@ -2441,7 +2453,10 @@ function AdminDashboardContent() {
                             <td className="p-4 text-right">
                               <div className="flex justify-end gap-1.5">
                                 <button
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setEditingPartner(null);
                                     if (p.kycStatus === 'PENDING_ADMIN_APPROVAL') {
                                       setActiveTab('verification');
                                     } else {
@@ -2453,7 +2468,10 @@ function AdminDashboardContent() {
                                   {p.kycStatus === 'PENDING_ADMIN_APPROVAL' ? 'Review KYC' : 'View File'}
                                 </button>
                                 <button
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setSelectedReviewVendor(null);
                                     setEditingPartner(p);
                                   }}
                                   className="px-2.5 py-1.5 bg-gold/15 hover:bg-gold/25 text-primary text-xs font-bold rounded-xl transition-all"
