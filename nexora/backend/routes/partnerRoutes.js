@@ -4,7 +4,7 @@ const {
   verifyLoginOtp,
   registerVendor,
   submitAadhar,
-  verifyAadharOtp,
+  verifyDigilockerStatus,
   submitPan,
   submitGst,
   submitKycFinal,
@@ -46,7 +46,7 @@ router.post("/verify-login-otp", verifyLoginOtp);
 router.post("/signup", registerVendor);
 
 router.post("/kyc/aadhar", protect, authorize("vendor"), submitAadhar);
-router.post("/kyc/aadhar/verify", protect, authorize("vendor"), verifyAadharOtp);
+router.post("/kyc/digilocker/verify", protect, authorize("vendor"), verifyDigilockerStatus);
 router.post("/kyc/pan", protect, authorize("vendor"), submitPan);
 router.post("/kyc/gst", protect, authorize("vendor"), submitGst);
 router.post("/kyc/submit", protect, authorize("vendor"), submitKycFinal);

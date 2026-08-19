@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   ShieldCheck, User, Mail, Lock, Phone, Wrench, Eye, EyeOff, Loader2, Star, 
@@ -11,6 +11,7 @@ import api from '@/lib/api';
 
 export default function PartnerRegisterWizard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [apiLoading, setApiLoading] = useState(false);
@@ -86,6 +87,39 @@ export default function PartnerRegisterWizard() {
     // If token already exists, check if onboarding is in progress
     checkExistingDraft();
   }, []);
+
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const verificationId = searchParams.get('verification_id');
+
+    if (status === 'digilocker_callback' && verificationId) {
+      setCurrentStep(5); // Switch to KYC step
+      handleDigilockerCallback(verificationId);
+    }
+  }, [searchParams]);
+
+  const handleDigilockerCallback = async (verificationId: string) => {
+    setApiLoading(true);
+    setAadharError('');
+    try {
+      const { data } = await api.post('/partner/kyc/digilocker/verify', { verification_id: verificationId });
+      if (data.success) {
+        setAadharVerified(true);
+        setAadharName(data.vendor?.kycDetails?.aadharName || name);
+        setAadharDob(data.vendor?.kycDetails?.aadharDob || "");
+        setAadharNumber(data.vendor?.kycDetails?.aadharNumber || "");
+        setSuccessMsg("Aadhaar verified successfully via DigiLocker!");
+      }
+    } catch (err: any) {
+      setAadharError(err.response?.data?.message || "Aadhaar verification via DigiLocker failed. Please try again.");
+    } finally {
+      setApiLoading(false);
+      // Clean up URL to avoid re-triggering
+      router.replace('/partner/register');
+    }
+  };
+
+
 
   const fetchPublicCategories = async () => {
     try {
@@ -227,45 +261,16 @@ export default function PartnerRegisterWizard() {
 
 
   const handleVerifyAadhar = async () => {
-    if (!/^\d{12}$/.test(aadharNumber)) {
-      setAadharError("Aadhaar must be a 12-digit number.");
-      return;
-    }
     setAadharError('');
     setApiLoading(true);
     try {
-      const { data } = await api.post('/partner/kyc/aadhar', { aadharNumber });
-      if (data.success) {
-        setAadharRefId(data.ref_id);
-        setShowOtpField(true);
-        setSuccessMsg("Verification OTP sent to Aadhaar-linked mobile number!");
+      const { data } = await api.post('/partner/kyc/aadhar', {});
+      if (data.success && data.action_url) {
+        setSuccessMsg("Redirecting to DigiLocker...");
+        window.location.href = data.action_url;
       }
     } catch (err: any) {
-      setAadharError(err.response?.data?.message || "Failed to start Aadhaar verification.");
-    } finally {
-      setApiLoading(false);
-    }
-  };
-
-  const handleVerifyAadharOtp = async () => {
-    if (!otpInput || otpInput.length !== 6) {
-      setAadharError("Invalid OTP format. Please enter the 6-digit OTP.");
-      return;
-    }
-    setAadharError('');
-    setApiLoading(true);
-    try {
-      const { data } = await api.post('/partner/kyc/aadhar/verify', { otp: otpInput, ref_id: aadharRefId });
-      if (data.success) {
-        setAadharVerified(true);
-        setAadharName(data.vendor?.kycDetails?.aadharName || name);
-        setAadharDob(data.vendor?.kycDetails?.aadharDob || "15-08-1990");
-        setShowOtpField(false);
-        setSuccessMsg("Aadhaar verified successfully!");
-      }
-    } catch (err: any) {
-      setAadharError(err.response?.data?.message || "Aadhaar verification failed.");
-    } finally {
+      setAadharError(err.response?.data?.message || "Failed to start DigiLocker verification.");
       setApiLoading(false);
     }
   };
@@ -938,43 +943,18 @@ export default function PartnerRegisterWizard() {
                             const raw = e.target.value.replace(/\D/g, '').slice(0, 12);
                             setAadharNumber(raw);
                           }}
-                          placeholder="XXXX XXXX XXXX" 
+                          placeholder="Optional (DigiLocker handles Aadhaar)" 
                           className="flex-1 px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none font-mono text-base tracking-widest bg-white"
                         />
-                        {!showOtpField && (
-                          <button 
-                            type="button"
-                            onClick={handleVerifyAadhar}
-                            className="px-5 bg-[#1D3B31] text-white text-xs font-bold rounded-xl hover:bg-[#1D3B31]/95 transition-all"
-                          >
-                            Verify
-                          </button>
-                        )}
+                        <button 
+                          type="button"
+                          onClick={handleVerifyAadhar}
+                          className="px-5 bg-[#1D3B31] text-white text-xs font-bold rounded-xl hover:bg-[#1D3B31]/95 transition-all whitespace-nowrap"
+                        >
+                          Verify with DigiLocker
+                        </button>
                       </div>
                     </div>
-
-                    {showOtpField && (
-                      <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 space-y-3">
-                        <label className="block text-xs font-bold text-blue-900 uppercase tracking-wider">Enter OTP sent to Aadhaar Mobile *</label>
-                        <div className="flex gap-2">
-                          <input 
-                            type="text" 
-                            maxLength={6}
-                            value={otpInput}
-                            onChange={e => setOtpInput(e.target.value.replace(/\D/g, ''))}
-                            placeholder="Enter 6-digit OTP" 
-                            className="flex-1 px-4 py-2 rounded-xl border border-blue-200 focus:outline-none font-mono text-center text-lg tracking-widest bg-white"
-                          />
-                          <button 
-                            type="button"
-                            onClick={handleVerifyAadharOtp}
-                            className="px-5 bg-blue-900 text-white text-xs font-bold rounded-xl hover:bg-blue-800 transition-all"
-                          >
-                            Submit OTP
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-2xl text-xs text-emerald-800 font-medium">

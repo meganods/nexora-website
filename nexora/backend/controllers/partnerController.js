@@ -172,98 +172,104 @@ const verifyLoginOtp = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Submit Aadhaar number & trigger mock verification OTP
+// @desc    Trigger DigiLocker Aadhaar KYC
 // @route   POST /api/partner/kyc/aadhar
 // @access  Private (ServicePartner)
 const submitAadhar = asyncHandler(async (req, res) => {
   const vendor = await ServicePartner.findById(req.user.userId);
   if (!vendor) return res.status(404).json({ success: false, message: "Service Partner not found" });
 
-  const { aadharNumber } = req.body;
-  if (!aadharNumber || !/^\d{12}$/.test(aadharNumber)) {
-    return res.status(400).json({ success: false, message: "Please provide a valid 12-digit Aadhaar number." });
-  }
-
-  vendor.kycDetails = vendor.kycDetails || {};
-  vendor.kycDetails.aadharNumber = aadharNumber;
   vendor.kycStatus = "KYC_IN_PROGRESS";
+  
+  // Use vendor ID and timestamp for a globally unique, vendor-bound verification_id
+  const verificationId = `req_${vendor._id}_${Date.now()}`;
+  vendor.kycDetails = vendor.kycDetails || {};
+  vendor.kycDetails.aadharRefId = verificationId;
   await vendor.save();
 
   try {
-    const url = `${getCfBaseUrl()}/offline-aadhaar/otp`;
-    console.log(`[Diagnostic] Cashfree Aadhaar OTP Request URL: ${url}`);
-    console.log(`[Diagnostic] Headers present: client-id=${!!process.env.CASHFREE_APP_ID}, client-secret=${!!process.env.CASHFREE_SECRET_KEY}`);
+    const url = `${getCfBaseUrl()}/digilocker`;
+    const redirectUrl = `${process.env.CLIENT_URL || 'https://nexora-website-amber.vercel.app'}/partner/register?status=digilocker_callback&verification_id=${verificationId}`;
 
+    console.log(`[Diagnostic] Cashfree DigiLocker Request URL: ${url}`);
     const cfRes = await axios.post(url, {
-      aadhaar_number: aadharNumber
+      verification_id: verificationId,
+      document_requested: ["AADHAAR"],
+      redirect_url: redirectUrl
     }, { headers: getCfHeaders() });
 
-    console.log(`[Diagnostic] Cashfree Response Status: ${cfRes.status}`);
-
-    vendor.kycDetails.aadharRefId = cfRes.data.ref_id;
-    await vendor.save();
+    console.log(`[Diagnostic] Cashfree DigiLocker Response Status: ${cfRes.status}`);
 
     res.json({
       success: true,
-      message: "Aadhaar verification OTP sent successfully.",
-      ref_id: cfRes.data.ref_id
+      message: "DigiLocker session created.",
+      action_url: cfRes.data.action_url,
+      verification_id: verificationId
     });
   } catch (error) {
-    const status = error.response?.status;
     const cfData = error.response?.data;
-    console.error(`[Diagnostic] Cashfree Aadhaar OTP Error Status: ${status}, Code: ${cfData?.code || 'UNKNOWN'}, Message: ${cfData?.message || error.message}`);
+    console.error(`[Diagnostic] Cashfree DigiLocker Error: ${cfData?.message || error.message}`);
     
     res.status(500).json({ 
       success: false, 
-      message: cfData?.message || "Aadhaar OTP request failed",
-      provider: "cashfree",
-      code: cfData?.code || 'CASHFREE_ERROR'
+      message: cfData?.message || "Failed to initiate DigiLocker verification",
+      provider: "cashfree"
     });
   }
 });
 
-// @desc    Confirm Aadhaar OTP
-// @route   POST /api/partner/kyc/aadhar/verify
+// @desc    Verify DigiLocker Status (Frontend Callback)
+// @route   POST /api/partner/kyc/digilocker/verify
 // @access  Private (ServicePartner)
-const verifyAadharOtp = asyncHandler(async (req, res) => {
+const verifyDigilockerStatus = asyncHandler(async (req, res) => {
   const vendor = await ServicePartner.findById(req.user.userId);
   if (!vendor) return res.status(404).json({ success: false, message: "Service Partner not found" });
 
-  const { otp, ref_id } = req.body;
-  if (!otp || !ref_id) {
-    return res.status(400).json({ success: false, message: "OTP and ref_id are required." });
+  const { verification_id } = req.body;
+  if (!verification_id) {
+    return res.status(400).json({ success: false, message: "verification_id is required." });
   }
 
-  // Security check: ensure the ref_id belongs to the authenticated vendor
-  if (vendor.kycDetails?.aadharRefId !== ref_id) {
-    return res.status(403).json({ success: false, message: "Invalid reference ID or session mismatch. Please request a new OTP." });
+  // Security check
+  if (vendor.kycDetails?.aadharRefId !== verification_id || !verification_id.includes(vendor._id.toString())) {
+    return res.status(403).json({ success: false, message: "Invalid verification session." });
+  }
+
+  if (vendor.kycDetails.aadharVerified) {
+    return res.json({ success: true, message: "Aadhaar already verified.", vendor });
   }
 
   try {
-    const cfRes = await axios.post(`${getCfBaseUrl()}/offline-aadhaar/verify`, {
-      otp,
-      ref_id
-    }, { headers: getCfHeaders() });
+    // 1. Check Status
+    const statusUrl = `${getCfBaseUrl()}/digilocker/${verification_id}`;
+    const statusRes = await axios.get(statusUrl, { headers: getCfHeaders() });
 
-    if (cfRes.data.status !== "SUCCESS" && cfRes.data.status !== "VALID") {
-      return res.status(400).json({ success: false, message: cfRes.data.message || "Aadhaar verification failed." });
+    if (statusRes.data.status !== "AUTHENTICATED" && statusRes.data.status !== "SUCCESS") {
+      return res.status(400).json({ success: false, message: `Verification status is ${statusRes.data.status}. Please try again.` });
     }
 
-    vendor.kycDetails = vendor.kycDetails || {};
+    // 2. Get Document Data
+    const docUrl = `${getCfBaseUrl()}/digilocker/document/AADHAAR?verification_id=${verification_id}`;
+    const docRes = await axios.get(docUrl, { headers: getCfHeaders() });
+    
+    const docData = docRes.data.document_fields || {};
+
     vendor.kycDetails.aadharVerified = true;
-    vendor.kycDetails.aadharName = cfRes.data.name || vendor.name;
-    vendor.kycDetails.aadharDob = cfRes.data.dob || "";
-    vendor.kycDetails.aadharRefId = undefined;
+    vendor.kycDetails.aadharName = docData.name || vendor.name;
+    vendor.kycDetails.aadharDob = docData.dob || "";
+    vendor.kycDetails.aadharNumber = docData.uid || vendor.kycDetails.aadharNumber || "";
+    vendor.kycDetails.aadharRefId = undefined; // clear session
+    
     await vendor.save();
 
     res.json({
       success: true,
-      message: "Aadhaar successfully verified.",
+      message: "Aadhaar successfully verified via DigiLocker.",
       vendor
     });
   } catch (error) {
-    console.error("Cashfree Aadhaar Verify Error:", error.response?.data || error.message);
-    res.status(500).json({ success: false, message: error.response?.data?.message || "Failed to verify Aadhaar OTP with provider." });
+    console.error("Cashfree DigiLocker Verify Error:", error.response?.data || error.message);
+    res.status(500).json({ success: false, message: error.response?.data?.message || "Failed to retrieve DigiLocker document." });
   }
 });
 
@@ -1342,7 +1348,7 @@ module.exports = {
   verifyLoginOtp,
   registerVendor,
   submitAadhar,
-  verifyAadharOtp,
+  verifyDigilockerStatus,
   submitPan,
   submitGst,
   submitKycFinal,
