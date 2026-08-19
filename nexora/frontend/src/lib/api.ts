@@ -5,13 +5,14 @@ const getBaseURL = () => {
     return process.env.NEXT_PUBLIC_API_URL;
   }
   if (typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location;
-    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      return `${protocol}//${hostname}:5000/api`;
+    const { hostname } = window.location;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:5000/api';
     }
-    return 'http://localhost:5000/api';
+    // Production Vercel deployment — use the Render backend URL
+    return 'https://nexora-website-gnhl.onrender.com/api';
   }
-  // Server-side rendering (SSR) in Node.js 18+ should use IPv4 explicitly
+  // SSR fallback
   return 'http://127.0.0.1:5000/api';
 };
 

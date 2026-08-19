@@ -7,17 +7,27 @@ const transporter = nodemailer.createTransport({
   family: 4,              // Force IPv4 — Render blocks outgoing IPv6
   auth: {
     user: process.env.EMAIL_USER || "meganodscare@gmail.com",
-    pass: process.env.EMAIL_PASS || process.env.EMAIL_SERVER_PASSWORD,
+    // Strip surrounding quotes if present (common env var mistake)
+    pass: (process.env.EMAIL_PASS || process.env.EMAIL_SERVER_PASSWORD || "").replace(/^["']|["']$/g, ""),
   },
   tls: {
     rejectUnauthorized: false,  // Allow self-signed certs (Render sandbox)
   },
 });
 
+// Verify SMTP connection on startup so we catch config errors early in logs
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("SMTP transporter verify FAILED:", error.message);
+  } else {
+    console.log("SMTP transporter ready — emails can be sent.");
+  }
+});
+
 const sendOTP = async (email, otp) => {
   try {
     const mailOptions = {
-      from: `"Nexora Services" <${process.env.EMAIL_USER}>`,
+      from: `"Nexora Services" <${process.env.EMAIL_USER || "meganodscare@gmail.com"}>`,
       to: email,
       subject: "Your Nexora Verification Code",
       html: `

@@ -39,11 +39,17 @@ exports.createOrder = async (req, res) => {
     let bookingServiceId = null;
     let bookingPackageId = null;
 
+    const applyCampaignDiscounts = require('../utils/campaignHelper');
+
     if (packageId) {
       // ── Package Booking ──
       const Package = require('../models/Package');
-      const pkg = await Package.findById(packageId);
+      let pkg = await Package.findById(packageId);
       if (!pkg || !pkg.isActive) return res.status(404).json({ message: 'Package not found or inactive.' });
+      
+      // Apply active campaign discounts
+      pkg = await applyCampaignDiscounts(pkg, true);
+
       basePrice = pkg.basePrice * qty;
       if (pkg.discountPercentage > 0) {
         basePrice = Math.round((pkg.basePrice * (1 - pkg.discountPercentage / 100)) * qty);
@@ -53,8 +59,12 @@ exports.createOrder = async (req, res) => {
       bookingPackageId = pkg._id;
     } else {
       // ── Single Service Booking ──
-      const service = await Service.findById(serviceId).populate('categoryId');
+      let service = await Service.findById(serviceId).populate('categoryId');
       if (!service) return res.status(404).json({ message: 'Service not found' });
+      
+      // Apply active campaign discounts
+      service = await applyCampaignDiscounts(service, false);
+
       basePrice = service.basePrice * qty;
       if (service.discountPercentage > 0) {
         basePrice = Math.round((service.basePrice * (1 - service.discountPercentage / 100)) * qty);
@@ -116,6 +126,16 @@ exports.createOrder = async (req, res) => {
     const addonsPriceTotal = addons && Array.isArray(addons) ? addons.reduce((sum, a) => sum + Number(a.price), 0) : 0;
     const totalAmount = Math.max(0, basePrice + addonsPriceTotal + platformFee - discountAmount);
     const orderId = `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+    // TEMPORARY LOGS FOR PAYMENT AUDIT
+    console.log("=== Nexora Payment Amount Audit ===");
+    console.log(`service price: ${basePrice}`);
+    console.log(`platform fee: ${platformFee}`);
+    console.log(`discount: ${discountAmount}`);
+    console.log(`subtotal: ${basePrice + addonsPriceTotal}`);
+    console.log(`final amount: ${totalAmount}`);
+    console.log(`amount sent to Cashfree: ${totalAmount}`);
+    console.log("===================================");
 
     const request = {
       order_amount: totalAmount,
