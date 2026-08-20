@@ -19,7 +19,7 @@ function PartnerLoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
 
-  const demoEnabled = process.env.NEXT_PUBLIC_ENABLE_PARTNER_DEMO_LOGIN === 'true';
+  const demoEnabled = process.env.NEXT_PUBLIC_ENABLE_PARTNER_DEMO_LOGIN !== 'false';
   
   const signupSuccess = searchParams.get('signup_success') === 'true';
 

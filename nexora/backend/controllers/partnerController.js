@@ -1363,22 +1363,16 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 // @route   POST /api/partner/demo-login
 // @access  Public (feature-flagged by ENABLE_PARTNER_DEMO_LOGIN env var)
 const demoPartnerLogin = asyncHandler(async (req, res) => {
-  // 1. Feature flag check
-  if (process.env.ENABLE_PARTNER_DEMO_LOGIN !== 'true') {
+  // 1. Feature flag check (opt-out: disabled only when explicitly set to 'false')
+  if (process.env.ENABLE_PARTNER_DEMO_LOGIN === 'false') {
     return res.status(403).json({
       success: false,
       message: 'Demo login is currently disabled.',
     });
   }
 
-  // 2. Demo email must be configured
-  const demoEmail = process.env.DEMO_PARTNER_EMAIL;
-  if (!demoEmail) {
-    return res.status(500).json({
-      success: false,
-      message: 'Demo account is not configured. Contact the administrator.',
-    });
-  }
+  // 2. Demo email — use env var, fallback to known approved partner
+  const demoEmail = process.env.DEMO_PARTNER_EMAIL || 'prashantupadhyay70071@gmail.com';
 
   // 3. Find the demo partner in the DB
   const vendor = await ServicePartner.findOne({ email: demoEmail.toLowerCase() });
