@@ -990,17 +990,54 @@ const getWalletBalances = asyncHandler(async (req, res) => {
 });
 
 const getPayoutLogs = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 15 } = req.query;
+  const { page = 1, limit = 50 } = req.query;
   const pageNum = Math.max(1, parseInt(page, 10));
   const limitNum = Math.max(1, parseInt(limit, 10));
+
+  // Get manual payout records
+  const manualPayouts = await Payout.find({})
+    .populate('vendorId', 'name businessName email')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  // Get completed bookings as earning entries
+  const Booking = require('../models/Booking');
+  const completedBookings = await Booking.find({ status: 'COMPLETED' })
+    .populate('vendorId', 'name businessName email')
+    .populate('serviceId', 'name')
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  // Build unified payout log list
+  const earningEntries = completedBookings.map(b => {
+    const paid = b.paymentDetails?.amount || b.finalPrice || b.totalAmount || 0;
+    const commission = b.commissionAmount || 0;
+    const platformFee = b.customerPlatformFee || 0;
+    const earning = Math.max(0, paid - commission - platformFee);
+    return {
+      _id: b._id,
+      referenceId: `BKG-${b._id.toString().slice(-8).toUpperCase()}`,
+      vendorId: b.vendorId,
+      amount: earning,
+      notes: `Booking payout — ${b.serviceId?.name || 'Service'}`,
+      status: 'COMPLETED',
+      type: 'booking_earning',
+      createdAt: b.updatedAt || b.createdAt
+    };
+  });
+
+  const manualEntries = manualPayouts.map(p => ({ ...p, type: 'manual_payout' }));
+
+  // Merge, sort by date desc, paginate
+  const all = [...earningEntries, ...manualEntries].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  const total = all.length;
   const skip = (pageNum - 1) * limitNum;
+  const paged = all.slice(skip, skip + limitNum);
 
-  const [payouts, total] = await Promise.all([
-    Payout.find({}).populate("vendorId", "name businessName email").sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
-    Payout.countDocuments()
-  ]);
-
-  res.json({ success: true, data: payouts, total, page: pageNum, pages: Math.ceil(total / limitNum) });
+  res.json({ success: true, data: paged, total, page: pageNum, pages: Math.ceil(total / limitNum) });
 });
 
 const createPayout = asyncHandler(async (req, res) => {

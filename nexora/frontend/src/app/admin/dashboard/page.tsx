@@ -3933,10 +3933,11 @@ function AdminDashboardContent() {
                       <tr className="bg-cream/20 border-b border-gold/10 text-xs font-bold text-foreground/55 uppercase">
                         <th className="text-left px-5 py-3">Reference ID</th>
                         <th className="text-left px-5 py-3">Partner / Business</th>
-                        <th className="text-left px-5 py-3">Payout Amount</th>
+                        <th className="text-left px-5 py-3">Type</th>
+                        <th className="text-left px-5 py-3">Amount</th>
                         <th className="text-left px-5 py-3">Notes</th>
                         <th className="text-left px-5 py-3">Status</th>
-                        <th className="text-right px-5 py-3">Transaction Date</th>
+                        <th className="text-right px-5 py-3">Date</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gold/10 text-xs">
@@ -3949,8 +3950,13 @@ function AdminDashboardContent() {
                             <p className="font-bold text-xs text-primary">{log.vendorId?.businessName || log.vendorId?.name || 'Partner'}</p>
                             <p className="text-[10px] text-foreground/50">{log.vendorId?.email}</p>
                           </td>
+                          <td className="px-5 py-4">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${log.type === 'manual_payout' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
+                              {log.type === 'manual_payout' ? 'Manual Payout' : 'Booking Earning'}
+                            </span>
+                          </td>
                           <td className="px-5 py-4 font-bold text-primary font-mono text-sm">
-                            ₹{log.amount.toLocaleString('en-IN')}
+                            ₹{(log.amount || 0).toLocaleString('en-IN')}
                           </td>
                           <td className="px-5 py-4 text-foreground/75 italic">
                             {log.notes || '—'}
