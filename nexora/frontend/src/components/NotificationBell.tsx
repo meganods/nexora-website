@@ -328,7 +328,7 @@ export default function NotificationBell({ tokenKey, theme = "dark", userRole = 
                 if (isAdmin) {
                   router.push('/admin/dashboard?tab=notifications'); // Redirect to admin notification tab
                 } else if (isVendor) {
-                  router.push('/partner/bookings'); // As requested: vendor redirects to active booking
+                  router.push('/partner/notifications'); // Vendor notification page
                 } else {
                   router.push('/profile/notifications'); // Customer notification page
                 }

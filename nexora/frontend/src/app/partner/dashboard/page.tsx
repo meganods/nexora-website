@@ -38,6 +38,9 @@ export default function PartnerDashboard() {
   const [earningsPeriod, setEarningsPeriod] = useState('Weekly');
   const [showEarningsDropdown, setShowEarningsDropdown] = useState(false);
 
+  const [topServicesPeriod, setTopServicesPeriod] = useState('All Time');
+  const [showTopServicesDropdown, setShowTopServicesDropdown] = useState(false);
+
   const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
@@ -122,6 +125,33 @@ export default function PartnerDashboard() {
     });
 
     return Object.entries(grouped).map(([name, counts]) => ({ name, ...counts }));
+  };
+
+  const getTopServicesData = () => {
+    if (!stats || !stats.bookingsForCharts) return stats?.topServicesData || [];
+    const now = new Date();
+    const data = stats.bookingsForCharts.filter((b: any) => {
+      if (topServicesPeriod === 'All Time') return true;
+      const d = new Date(b.createdAt);
+      if (topServicesPeriod === 'Today') {
+        return d.toDateString() === now.toDateString();
+      } else if (topServicesPeriod === 'This Week') {
+        const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 7);
+        return d >= weekAgo;
+      } else if (topServicesPeriod === 'This Month') {
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+      return true;
+    });
+    const grouped: Record<string, number> = {};
+    data.forEach((b: any) => {
+      const name = b.serviceId?.name || b.categoryId?.name || 'Other';
+      grouped[name] = (grouped[name] || 0) + 1;
+    });
+    return Object.entries(grouped)
+      .map(([name, count]) => ({ name: name.length > 12 ? name.slice(0, 12) + '…' : name, Bookings: count }))
+      .sort((a, b) => b.Bookings - a.Bookings)
+      .slice(0, 5);
   };
 
   const getStatusColor = (status: string) => {
@@ -529,14 +559,34 @@ export default function PartnerDashboard() {
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] lg:col-span-4 flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h2 className="font-serif text-[15px] font-bold text-primary">Top Services</h2>
-            <button className="flex items-center gap-1 text-[11px] font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded border border-gray-100">
-              All Time <ChevronDown className="w-3 h-3" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowTopServicesDropdown(!showTopServicesDropdown)}
+                className="flex items-center gap-1 text-[11px] font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded border border-gray-100 hover:border-gray-300 transition-colors"
+              >
+                {topServicesPeriod} <ChevronDown className="w-3 h-3" />
+              </button>
+              {showTopServicesDropdown && (
+                <div className="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50">
+                  {['Today', 'This Week', 'This Month', 'All Time'].map(p => (
+                    <button
+                      key={p}
+                      onClick={() => { setTopServicesPeriod(p); setShowTopServicesDropdown(false); }}
+                      className={`w-full text-left px-3 py-1.5 text-[11px] hover:bg-gray-50 transition-colors ${
+                        topServicesPeriod === p ? 'font-bold text-primary' : 'text-gray-600'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex-1 min-h-[220px]">
-            {topServicesData && topServicesData.length > 0 ? (
+            {(() => { const d = getTopServicesData(); return d && d.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topServicesData} layout="vertical" margin={{ top: 0, right: 10, left: 15, bottom: 0 }}>
+                <BarChart data={d} layout="vertical" margin={{ top: 0, right: 10, left: 15, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
                   <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
                   <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#4b5563', fontWeight: 600 }} width={90} />
@@ -544,9 +594,9 @@ export default function PartnerDashboard() {
                   <Bar dataKey="Bookings" fill="#1F4037" radius={[0, 2, 2, 0]} barSize={12} />
                 </BarChart>
               </ResponsiveContainer>
-             ) : (
-                <div className="h-full flex items-center justify-center text-xs text-gray-400">No data available</div>
-             )}
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-gray-400">No data available</div>
+            ); })()}
           </div>
         </div>
 
