@@ -316,7 +316,7 @@ export default function ServiceDetailPage() {
                       <UserCheck className="w-4 h-4 text-[#C3AB84]" />
                       <div>
                         <span className="block text-[8px] uppercase tracking-wider text-foreground/40">Expertise</span>
-                        <span className="font-bold text-[#0F3D30]">Therapist</span>
+                        <span className="font-bold text-[#0F3D30]">{service.categoryId?.name || 'Professional'}</span>
                       </div>
                     </div>
 
