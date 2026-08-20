@@ -692,12 +692,15 @@ export default function Home() {
   const [offersCanScrollLeft, setOffersCanScrollLeft] = useState(false);
   const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
 
-  // ── Auto-slide Offers Carousel ──
+  // ── Auto-slide Offers Carousel — stops at last slide, no loop ──
   useEffect(() => {
     if (dbOffers.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentOfferIndex(prev => (prev + 1) % dbOffers.length);
-    }, 5000);
+      setCurrentOfferIndex(prev => {
+        if (prev >= dbOffers.length - 1) return prev; // stop at last
+        return prev + 1;
+      });
+    }, 3000);
     return () => clearInterval(interval);
   }, [dbOffers]);
 
@@ -1232,37 +1235,15 @@ export default function Home() {
                 })}
               </div>
 
-              {/* Navigation Arrows */}
-              {dbOffers.length > 1 && (
-                <>
-                  <button
-                    onClick={() => setCurrentOfferIndex(prev => (prev - 1 + dbOffers.length) % dbOffers.length)}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white backdrop-blur-md rounded-full transition-all border border-white/20"
-                    aria-label="Previous Slide"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => setCurrentOfferIndex(prev => (prev + 1) % dbOffers.length)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white backdrop-blur-md rounded-full transition-all border border-white/20"
-                    aria-label="Next Slide"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </>
-              )}
-
-              {/* Indicator Dots */}
+              {/* Indicator Dots — display only, no loop */}
               {dbOffers.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
                   {dbOffers.map((_, idx) => (
-                    <button
+                    <div
                       key={idx}
-                      onClick={() => setCurrentOfferIndex(idx)}
-                      className={`w-2.5 h-2.5 rounded-full transition-all ${
-                        currentOfferIndex === idx ? 'bg-gold w-6' : 'bg-white/40 hover:bg-white/70'
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        currentOfferIndex === idx ? 'bg-gold w-6' : 'bg-white/40 w-2.5'
                       }`}
-                      aria-label={`Go to slide ${idx + 1}`}
                     />
                   ))}
                 </div>
