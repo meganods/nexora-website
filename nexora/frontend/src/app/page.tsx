@@ -1776,13 +1776,14 @@ export default function Home() {
                   {step.num}
                 </span>
 
-                <div className="bg-white rounded-3xl p-6 border border-gold/20 shadow-sm hover:shadow-md hover:border-gold/40 transition-all mt-4 w-full">
+                <div className="bg-white rounded-3xl p-6 border border-gold/20 shadow-sm hover:shadow-md hover:border-gold/40 transition-all mt-4 w-full flex-1 flex flex-col justify-center">
                   <h3 className="font-serif text-base font-bold text-primary mb-2">{step.title}</h3>
                   <p className="text-sm text-foreground/60 leading-relaxed">{step.desc}</p>
                 </div>
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
