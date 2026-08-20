@@ -1148,7 +1148,7 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4 md:gap-6 lg:gap-8 max-w-6xl mx-auto relative z-20">
-              {displayCategories.slice(0, 8).map((cat, i) => (
+              {displayCategories.map((cat, i) => (
                 <Link
                   key={i}
                   href={`/services?category=${encodeURIComponent(cat.name)}`}
