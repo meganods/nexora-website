@@ -408,7 +408,10 @@ const getCategoryById = asyncHandler(async (req, res) => {
 // @route   POST /api/admin/services
 // @access  Private (admin)
 const addService = asyncHandler(async (req, res) => {
-  const service = await Service.create(req.body);
+  // Sanitize parentId: convert empty string to null to avoid BSONError
+  const body = { ...req.body };
+  if (body.parentId === '' || body.parentId === undefined) body.parentId = null;
+  const service = await Service.create(body);
 
   const { broadcastToAll } = require('./notificationController');
   await broadcastToAll(
@@ -630,7 +633,10 @@ const listServices = asyncHandler(async (req, res) => {
 // @route   PUT /api/admin/services/:id
 // @access  Private (admin)
 const updateService = asyncHandler(async (req, res) => {
-  const service = await Service.findOneAndUpdate({ _id: req.params.id, isDeleted: false }, req.body, { new: true, runValidators: true });
+  // Sanitize parentId: convert empty string to null to avoid BSONError
+  const body = { ...req.body };
+  if (body.parentId === '' || body.parentId === undefined) body.parentId = null;
+  const service = await Service.findOneAndUpdate({ _id: req.params.id, isDeleted: false }, body, { new: true, runValidators: true });
   if (!service) return res.status(404).json({ success: false, message: 'Service not found' });
   res.json({ success: true, service });
 });

@@ -1757,7 +1757,7 @@ export default function Home() {
           {(() => {
             const currentBanner = activePromoBanners[promoBannerIdx] || activePromoBanners[0] || promoBanners[0];
             return (
-              <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${currentBanner.gradient} text-white`}>
+              <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${currentBanner.gradient} text-white min-h-[280px] sm:min-h-[300px]`}>
                 {/* Background pattern */}
                 <div className="absolute inset-0 opacity-10 pointer-events-none">
                   <svg width="100%" height="100%" viewBox="0 0 600 300" preserveAspectRatio="xMidYMid slice">
@@ -1766,16 +1766,16 @@ export default function Home() {
                   </svg>
                 </div>
 
-                <div className="relative flex flex-col lg:flex-row items-center gap-8 p-8 sm:p-12 lg:p-16">
+                <div className="relative flex flex-col lg:flex-row items-center gap-8 p-8 sm:p-10 lg:p-12 min-h-[280px] sm:min-h-[300px]">
                   {/* Left content */}
                   <div className="flex-1 text-center lg:text-left">
                     <span className="inline-block text-xs font-bold bg-white/20 border border-white/30 px-3 py-1 rounded-full mb-4 tracking-wider uppercase">
                       {currentBanner.badge}
                     </span>
-                    <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-4">
+                    <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight mb-3 line-clamp-2">
                       {currentBanner.heading}
                     </h2>
-                    <p className="text-white/80 text-base mb-6 max-w-lg mx-auto lg:mx-0">
+                    <p className="text-white/80 text-sm mb-5 max-w-lg mx-auto lg:mx-0 line-clamp-2">
                       {currentBanner.sub}
                     </p>
 
