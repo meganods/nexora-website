@@ -31,9 +31,21 @@ export default function PartnerNewServicePage() {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    if (!authLoading && user && !user.profilePictureUrl && !user.profilePhoto) {
-      alert('Please upload your profile photo before adding a new service.');
-      router.push('/partner/profile');
+    const verifyProfile = async () => {
+      try {
+        const { data } = await api.get('/partner/profile');
+        const v = data?.vendor;
+        const hasPhoto = v?.profilePictureUrl || v?.profilePhoto || user?.profilePictureUrl || user?.profilePhoto;
+        if (!hasPhoto) {
+          alert('Please upload your profile photo before adding a new service.');
+          router.push('/partner/profile');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    if (!authLoading) {
+      verifyProfile();
     }
   }, [user, authLoading, router]);
 

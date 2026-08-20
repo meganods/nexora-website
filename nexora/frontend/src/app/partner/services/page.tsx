@@ -11,6 +11,7 @@ export default function PartnerServicesPage() {
   const router = useRouter();
   const { user } = useAuth();
 
+  const [vendor, setVendor] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'standard' | 'custom'>('standard');
   const [categories, setCategories] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
@@ -46,15 +47,19 @@ export default function PartnerServicesPage() {
       setLoading(true);
       setErrorMsg('');
 
-      const [catRes, svcRes, platRes] = await Promise.all([
+      const [catRes, svcRes, platRes, profRes] = await Promise.all([
         api.get('/public/categories'),
         api.get('/partner/created-services'),
-        api.get('/partner/services')
+        api.get('/partner/services'),
+        api.get('/partner/profile').catch(() => ({ data: {} }))
       ]);
 
       setCategories(catRes.data || []);
       setServices((svcRes.data.services || []).filter((s: any) => !s.parentId));
       setPlatformServices(platRes.data.services || []);
+      if (profRes.data?.vendor) {
+        setVendor(profRes.data.vendor);
+      }
     } catch (err) {
       console.error(err);
       setErrorMsg('Failed to load services data.');
@@ -64,7 +69,8 @@ export default function PartnerServicesPage() {
   };
 
   const handleOpenAdd = () => {
-    if (!user?.profilePictureUrl && !user?.profilePhoto) {
+    const hasPhoto = vendor?.profilePictureUrl || vendor?.profilePhoto || user?.profilePictureUrl || user?.profilePhoto;
+    if (!hasPhoto) {
       alert('Please upload your profile photo in the Profile section before adding services.');
       router.push('/partner/profile');
       return;
@@ -110,7 +116,8 @@ export default function PartnerServicesPage() {
   };
 
   const handleSavePlatformServices = async () => {
-    if (!user?.profilePictureUrl && !user?.profilePhoto) {
+    const hasPhoto = vendor?.profilePictureUrl || vendor?.profilePhoto || user?.profilePictureUrl || user?.profilePhoto;
+    if (!hasPhoto) {
       alert('Please upload your profile photo in the Profile section before adding services.');
       router.push('/partner/profile');
       return;
