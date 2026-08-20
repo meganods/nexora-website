@@ -501,7 +501,7 @@ function CategoryServiceSection({
       {/* Slider view container with centered absolute overlay arrow buttons */}
       <div className="relative px-2">
         {/* Left arrow — only visible after scrolling */}
-        {canScrollLeft && (
+        {canScrollLeft && services && services.length >= 4 && (
           <button
             onClick={() => slide('left')}
             className="absolute left-[-5px] sm:left-[-20px] top-[96px] -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white border border-gold/30 rounded-full hover:bg-beige text-primary transition-all shadow-md group-hover:scale-105"
@@ -511,13 +511,15 @@ function CategoryServiceSection({
           </button>
         )}
 
-        <button
-          onClick={() => slide('right')}
-          className="absolute right-[-5px] sm:right-[-20px] top-[96px] -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white border border-gold/30 rounded-full hover:bg-beige text-primary transition-all shadow-md group-hover:scale-105"
-          aria-label="Slide Right"
-        >
-          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-        </button>
+        {services && services.length >= 4 && (
+          <button
+            onClick={() => slide('right')}
+            className="absolute right-[-5px] sm:right-[-20px] top-[96px] -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white border border-gold/30 rounded-full hover:bg-beige text-primary transition-all shadow-md group-hover:scale-105"
+            aria-label="Slide Right"
+          >
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+        )}
 
         <div
           ref={rowRef}
@@ -1207,7 +1209,7 @@ export default function Home() {
           ) : (
             <div className="relative px-2">
               {/* Left arrow — only visible after scrolling */}
-              {popCanScrollLeft && (
+              {popCanScrollLeft && popularServices && popularServices.length >= 4 && (
                 <button
                   onClick={() => {
                     if (popScrollRef.current) popScrollRef.current.scrollBy({ left: -350, behavior: 'smooth' });
@@ -1219,15 +1221,17 @@ export default function Home() {
                 </button>
               )}
 
-              <button
-                onClick={() => {
-                  if (popScrollRef.current) popScrollRef.current.scrollBy({ left: 350, behavior: 'smooth' });
-                }}
-                className="absolute right-[-5px] sm:right-[-20px] top-[96px] -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white border border-gold/30 rounded-full hover:bg-beige text-primary transition-all shadow-md group-hover/pop:scale-105"
-                aria-label="Slide Right"
-              >
-                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
+              {popularServices && popularServices.length >= 4 && (
+                <button
+                  onClick={() => {
+                    if (popScrollRef.current) popScrollRef.current.scrollBy({ left: 350, behavior: 'smooth' });
+                  }}
+                  className="absolute right-[-5px] sm:right-[-20px] top-[96px] -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white border border-gold/30 rounded-full hover:bg-beige text-primary transition-all shadow-md group-hover/pop:scale-105"
+                  aria-label="Slide Right"
+                >
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              )}
 
               <div
                 ref={popScrollRef}
@@ -1277,7 +1281,7 @@ export default function Home() {
             {/* Cards Grid / Slider */}
             <div className="relative px-2">
               {/* Left arrow — only visible after scrolling */}
-              {dealsCanScrollLeft && (
+              {dealsCanScrollLeft && displayDeals && displayDeals.length >= 4 && (
                 <button
                   onClick={() => {
                     if (dealsScrollRef.current) dealsScrollRef.current.scrollBy({ left: -350, behavior: 'smooth' });
@@ -1289,15 +1293,17 @@ export default function Home() {
                 </button>
               )}
 
-              <button
-                onClick={() => {
-                  if (dealsScrollRef.current) dealsScrollRef.current.scrollBy({ left: 350, behavior: 'smooth' });
-                }}
-                className="absolute right-[-5px] sm:right-[-20px] top-[96px] -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white border border-gold/30 rounded-full hover:bg-beige text-primary transition-all shadow-md group-hover/deals:scale-105"
-                aria-label="Slide Right"
-              >
-                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
+              {displayDeals && displayDeals.length >= 4 && (
+                <button
+                  onClick={() => {
+                    if (dealsScrollRef.current) dealsScrollRef.current.scrollBy({ left: 350, behavior: 'smooth' });
+                  }}
+                  className="absolute right-[-5px] sm:right-[-20px] top-[96px] -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white border border-gold/30 rounded-full hover:bg-beige text-primary transition-all shadow-md group-hover/deals:scale-105"
+                  aria-label="Slide Right"
+                >
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              )}
 
               <div
                 ref={dealsScrollRef}
