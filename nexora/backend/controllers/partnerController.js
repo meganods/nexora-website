@@ -1359,6 +1359,91 @@ const getDashboardStats = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Demo login for an approved Service Partner (no OTP required)
+// @route   POST /api/partner/demo-login
+// @access  Public (feature-flagged by ENABLE_PARTNER_DEMO_LOGIN env var)
+const demoPartnerLogin = asyncHandler(async (req, res) => {
+  // 1. Feature flag check
+  if (process.env.ENABLE_PARTNER_DEMO_LOGIN !== 'true') {
+    return res.status(403).json({
+      success: false,
+      message: 'Demo login is currently disabled.',
+    });
+  }
+
+  // 2. Demo email must be configured
+  const demoEmail = process.env.DEMO_PARTNER_EMAIL;
+  if (!demoEmail) {
+    return res.status(500).json({
+      success: false,
+      message: 'Demo account is not configured. Contact the administrator.',
+    });
+  }
+
+  // 3. Find the demo partner in the DB
+  const vendor = await ServicePartner.findOne({ email: demoEmail.toLowerCase() });
+
+  if (!vendor) {
+    return res.status(404).json({
+      success: false,
+      message: 'Please register as a Service Partner first.',
+    });
+  }
+
+  // 4. Check each eligibility gate using existing kycStatus values
+  const { kycStatus } = vendor;
+
+  // Not even started registration
+  if (kycStatus === 'NOT_STARTED' || kycStatus === 'REGISTERED') {
+    return res.status(403).json({
+      success: false,
+      message: 'Please register as a Service Partner first.',
+    });
+  }
+
+  // Registered but KYC not submitted
+  if (kycStatus === 'KYC_NOT_STARTED' || kycStatus === 'KYC_IN_PROGRESS' || kycStatus === 'KYC_SUBMITTED') {
+    return res.status(403).json({
+      success: false,
+      message: 'Please complete your verification first.',
+    });
+  }
+
+  // Awaiting admin decision
+  if (kycStatus === 'PENDING_ADMIN_APPROVAL') {
+    return res.status(403).json({
+      success: false,
+      message: 'Your account is awaiting Admin approval.',
+    });
+  }
+
+  // Account rejected
+  if (kycStatus === 'REJECTED') {
+    return res.status(403).json({
+      success: false,
+      message: 'Your account application has been rejected.',
+    });
+  }
+
+  // 5. Only APPROVED partners reach here
+  if (kycStatus !== 'APPROVED') {
+    return res.status(403).json({
+      success: false,
+      message: 'Demo login is only available for approved Service Partners.',
+    });
+  }
+
+  // 6. Issue the same JWT token as normal login (verifyLoginOtp)
+  const token = generateToken({ id: vendor._id, role: 'vendor' });
+
+  res.status(200).json({
+    success: true,
+    message: 'Demo login successful.',
+    token,
+    vendor,
+  });
+});
+
 module.exports = {
   requestLoginOtp,
   verifyLoginOtp,
@@ -1393,5 +1478,6 @@ module.exports = {
   deletePartnerService,
   getPartnerReviews,
   replyToReview,
-  getDashboardStats
+  getDashboardStats,
+  demoPartnerLogin,
 };

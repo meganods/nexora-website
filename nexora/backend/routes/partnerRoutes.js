@@ -33,7 +33,8 @@ const {
   deletePartnerService,
   getPartnerReviews,
   replyToReview,
-  getDashboardStats
+  getDashboardStats,
+  demoPartnerLogin
 } = require("../controllers/partnerController");
 const { getMyDeals, createVendorDeal, updateVendorDeal } = require("../controllers/dealController");
 const { protect, authorize, requireApprovedVendor } = require("../middlewares/auth");
@@ -43,6 +44,7 @@ const router = express.Router();
 router.post("/login", requestLoginOtp);
 router.post("/request-login-otp", requestLoginOtp);
 router.post("/verify-login-otp", verifyLoginOtp);
+router.post("/demo-login", demoPartnerLogin);
 router.post("/signup", registerVendor);
 
 router.post("/kyc/aadhar", protect, authorize("vendor"), submitAadhar);

@@ -17,6 +17,9 @@ function PartnerLoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
+
+  const demoEnabled = process.env.NEXT_PUBLIC_ENABLE_PARTNER_DEMO_LOGIN === 'true';
   
   const signupSuccess = searchParams.get('signup_success') === 'true';
 
@@ -45,6 +48,23 @@ function PartnerLoginForm() {
       toast.error(err.response?.data?.message || 'Login failed. Invalid credentials.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setIsDemoLoading(true);
+    try {
+      const { data } = await api.post('/partner/demo-login');
+      if (data.success && data.token) {
+        localStorage.setItem('nexora_token', data.token);
+        localStorage.setItem('nexora_role', 'vendor');
+        toast.success('Demo login successful! Redirecting to dashboard...');
+        router.push('/partner/dashboard');
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Demo login failed.');
+    } finally {
+      setIsDemoLoading(false);
     }
   };
 
@@ -176,11 +196,28 @@ function PartnerLoginForm() {
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Login'}
               </button>
 
-              <div className="flex items-center gap-4 my-6 opacity-70">
+              <div className="flex items-center gap-4 my-4 opacity-70">
                 <div className="flex-1 h-px bg-[#C3AB84]/40" />
                 <span className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest">OR</span>
                 <div className="flex-1 h-px bg-[#C3AB84]/40" />
               </div>
+
+              {demoEnabled && (
+                <button
+                  type="button"
+                  onClick={handleDemoLogin}
+                  disabled={isDemoLoading || isLoading}
+                  className="w-full py-3 border-2 border-primary/30 text-primary rounded-full font-bold hover:bg-primary/5 hover:border-primary/60 transition-all text-sm flex items-center justify-center gap-2 relative"
+                >
+                  {isDemoLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Smartphone className="w-4 h-4" />
+                  )}
+                  {isDemoLoading ? 'Logging in...' : 'Demo Login'}
+                  <span className="absolute right-4 text-[9px] font-bold uppercase tracking-wider bg-gold/20 text-gold/80 px-2 py-0.5 rounded-full">Test</span>
+                </button>
+              )}
             </div>
           ) : (
             <div 
