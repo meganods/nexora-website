@@ -218,8 +218,11 @@ function ServicesList() {
   };
 
   const handlePricePreset = (min: number, max: number) => {
-    setPriceRange([min, max]);
-    applyFilters(allServices, selectedCategory, searchInput, sortBy, [min, max], minRating, availability);
+    // Toggle: if same range already selected, deselect (reset to all)
+    const isAlreadySelected = priceRange[0] === min && priceRange[1] === max;
+    const nextRange: [number, number] = isAlreadySelected ? [0, Infinity] : [min, max];
+    setPriceRange(nextRange);
+    applyFilters(allServices, selectedCategory, searchInput, sortBy, nextRange, minRating, availability);
   };
 
   const handleRatingFilter = (r: number) => {
