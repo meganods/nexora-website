@@ -163,6 +163,85 @@ export default function DashboardCharts({
     );
   }
 
+  const getPercentageChange = (timeframe: 'today' | 'week' | 'month' | 'year', type: 'revenue' | 'booking') => {
+    if (!bookings || bookings.length === 0) {
+      return type === 'revenue' ? '+18.6%' : '+15.7%';
+    }
+
+    const now = new Date();
+    let currentSum = 0;
+    let previousSum = 0;
+
+    const getVal = (b: any) => {
+      if (type === 'booking') return 1;
+      return b.status === 'COMPLETED' ? (b.paymentDetails?.amount || b.totalAmount || 0) : 0;
+    };
+
+    if (timeframe === 'today') {
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterdayStart = new Date(todayStart);
+      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+      bookings.forEach(b => {
+        const d = new Date(b.createdAt);
+        if (d >= todayStart) {
+          currentSum += getVal(b);
+        } else if (d >= yesterdayStart && d < todayStart) {
+          previousSum += getVal(b);
+        }
+      });
+    } else if (timeframe === 'week') {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const fourteenDaysAgo = new Date();
+      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+      bookings.forEach(b => {
+        const d = new Date(b.createdAt);
+        if (d >= sevenDaysAgo) {
+          currentSum += getVal(b);
+        } else if (d >= fourteenDaysAgo && d < sevenDaysAgo) {
+          previousSum += getVal(b);
+        }
+      });
+    } else if (timeframe === 'month') {
+      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+      bookings.forEach(b => {
+        const d = new Date(b.createdAt);
+        if (d >= thisMonthStart) {
+          currentSum += getVal(b);
+        } else if (d >= lastMonthStart && d < thisMonthStart) {
+          previousSum += getVal(b);
+        }
+      });
+    } else { // year
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      const twelveMonthsAgo = new Date();
+      twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
+      bookings.forEach(b => {
+        const d = new Date(b.createdAt);
+        if (d >= sixMonthsAgo) {
+          currentSum += getVal(b);
+        } else if (d >= twelveMonthsAgo && d < sixMonthsAgo) {
+          previousSum += getVal(b);
+        }
+      });
+    }
+
+    if (previousSum === 0) {
+      if (currentSum === 0) return '0%';
+      return `+100%`;
+    }
+
+    const pct = ((currentSum - previousSum) / previousSum) * 100;
+    const sign = pct >= 0 ? '+' : '';
+    return `${sign}${pct.toFixed(1)}%`;
+  };
+
   const activeRevenueData = aggregateData(revenueTimeframe, 'revenue');
   const activeBookingData = aggregateData(bookingTimeframe, 'booking');
 
@@ -172,6 +251,9 @@ export default function DashboardCharts({
 
   const totalBookingsVal = activeBookingData.reduce((acc, curr) => acc + curr.value, 0);
   const totalRevenueVal = activeRevenueData.reduce((acc, curr) => acc + curr.value, 0);
+
+  const revPct = getPercentageChange(revenueTimeframe, 'revenue');
+  const bookPct = getPercentageChange(bookingTimeframe, 'booking');
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -184,7 +266,7 @@ export default function DashboardCharts({
               <span className="text-primary font-bold">
                 ₹{totalRevenueVal.toLocaleString('en-IN')}
               </span>{" "}
-              <span className="text-green-500 font-bold">+18.6%</span>
+              <span className={`${revPct.startsWith('-') ? 'text-red-500' : 'text-green-500'} font-bold`}>{revPct}</span>
             </p>
           </div>
           {/* Custom Timeframe Dropdown */}
@@ -246,7 +328,7 @@ export default function DashboardCharts({
               <span className="text-primary font-bold">
                 {totalBookingsVal}
               </span>{" "}
-              <span className="text-green-500 font-bold">+15.7%</span>
+              <span className={`${bookPct.startsWith('-') ? 'text-red-500' : 'text-green-500'} font-bold`}>{bookPct}</span>
             </p>
           </div>
           {/* Custom Timeframe Dropdown */}

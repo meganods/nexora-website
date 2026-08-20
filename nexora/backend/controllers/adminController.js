@@ -338,6 +338,8 @@ const getDashboardMetrics = asyncHandler(async (req, res) => {
     color: colors[i % colors.length]
   }));
 
+  const bookings = await Booking.find({}, 'status createdAt totalAmount paymentDetails.amount');
+
   res.json({
     success: true,
     totalRevenue: revenueData.totalRevenue,
@@ -372,7 +374,8 @@ const getDashboardMetrics = asyncHandler(async (req, res) => {
     topPartnersList,
     recentActivity,
     recentPayouts,
-    walletPayoutOverview
+    walletPayoutOverview,
+    bookings
   });
 });
 

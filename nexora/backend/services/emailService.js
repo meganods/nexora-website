@@ -25,6 +25,7 @@ transporter.verify((error, success) => {
 });
 
 const sendOTP = async (email, otp) => {
+  console.log(`[OTP Request] Received request for email address: ${email}`);
   try {
     const mailOptions = {
       from: `"Nexora Services" <${process.env.EMAIL_USER || "meganodscare@gmail.com"}>`,
@@ -56,11 +57,12 @@ const sendOTP = async (email, otp) => {
       `,
     };
 
+    console.log(`[SMTP Attempt] Attempting to send OTP email to: ${email}`);
     const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.messageId);
+    console.log(`[SMTP Success] Email sent successfully to ${email}. Message ID: ${info.messageId}`);
     return true;
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error(`[SMTP Failure] Failed to send OTP email to ${email}. Error: ${error.message}`, error);
     return false;
   }
 };

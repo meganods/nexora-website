@@ -520,6 +520,7 @@ function AdminDashboardContent() {
   const [locationMetrics, setLocationMetrics] = useState<any>(null);
   const [chartBookingData, setChartBookingData] = useState<any[]>([]);
   const [chartRevenueData, setChartRevenueData] = useState<any[]>([]);
+  const [metricsBookings, setMetricsBookings] = useState<any[]>([]);
   const [chartCategoryData, setChartCategoryData] = useState<any[]>([]);
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const [topPartnersList, setTopPartnersList] = useState<any[]>([]);
@@ -1046,6 +1047,7 @@ function AdminDashboardContent() {
       }
       if (data.chartBookingData) setChartBookingData(data.chartBookingData);
       if (data.chartRevenueData) setChartRevenueData(data.chartRevenueData);
+      if (data.bookings) setMetricsBookings(data.bookings);
       if (data.chartCategoryData) setChartCategoryData(data.chartCategoryData);
       if (data.recentBookings) setRecentBookings(data.recentBookings);
       if (data.topPartnersList) setTopPartnersList(data.topPartnersList);
@@ -1535,7 +1537,7 @@ function AdminDashboardContent() {
               <DashboardKPICard label="Pending Approvals" value={metrics.pendingApprovals || 0} icon={AlertCircle} bg="bg-amber-100" text="text-amber-700" />
             </div>
 
-            <DashboardCharts revenueData={chartRevenueData} bookingData={chartBookingData} categoryData={chartCategoryData} />
+            <DashboardCharts bookings={metricsBookings} categoryData={chartCategoryData} />
 
             {/* Location Analytics Section */}
             {locationMetrics && (
@@ -1585,7 +1587,7 @@ function AdminDashboardContent() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Recent Bookings */}
-              <div className="bg-white rounded-3xl p-6 border border-gold/20 shadow-sm flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-6 border border-gold/20 shadow-sm flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-serif font-bold text-primary text-sm">Recent Bookings</h3>
                   <button onClick={() => setActiveTab('bookings')} className="text-xs text-primary font-semibold hover:underline">View All</button>
@@ -1678,7 +1680,7 @@ function AdminDashboardContent() {
               </div>
 
               {/* Recent Activity */}
-              <div className="bg-white rounded-3xl p-6 border border-gold/20 shadow-sm flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-6 border border-gold/20 shadow-sm flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-serif font-bold text-primary text-sm">Recent Activity</h3>
                 </div>
@@ -1700,7 +1702,7 @@ function AdminDashboardContent() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Top Service Partners */}
-              <div className="bg-white rounded-3xl p-6 border border-gold/20 shadow-sm flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-6 border border-gold/20 shadow-sm flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-serif font-bold text-primary text-sm">Top Service Partners</h3>
                   <button onClick={() => setActiveTab('partners')} className="text-xs text-primary font-semibold hover:underline">View All</button>
@@ -1720,7 +1722,7 @@ function AdminDashboardContent() {
                         <tr><td colSpan={4} className="py-6 text-center text-foreground/45">No service partners yet.</td></tr>
                       ) : topPartnersList.map((p: any, idx) => (
                         <tr key={idx} className="hover:bg-cream/10">
-                          <td className="py-3 text-primary">{p.businessName || 'Unknown'}</td>
+                          <td className="py-3 text-primary">{p.name || p.kycDetails?.businessName || p.businessName || 'Unknown'}</td>
                           <td className="py-3">{p.totalBookings || 0}</td>
                           <td className="py-3 text-gold">★ {p.rating || 'N/A'}</td>
                           <td className="py-3 text-right text-emerald-600 font-bold">₹{p.totalEarnings?.toLocaleString('en-IN') || 0}</td>
@@ -1732,7 +1734,7 @@ function AdminDashboardContent() {
               </div>
 
               {/* Wallet & Payout Overview */}
-              <div className="bg-white rounded-3xl p-6 border border-gold/20 shadow-sm flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-6 border border-gold/20 shadow-sm flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-serif font-bold text-primary text-sm">Wallet &amp; Payout Overview</h3>
                   <button onClick={() => setActiveTab('reports')} className="text-xs text-primary font-semibold hover:underline">View All</button>
@@ -1766,7 +1768,7 @@ function AdminDashboardContent() {
                         <tr><td colSpan={4} className="py-6 text-center text-foreground/45">No recent payouts.</td></tr>
                       ) : recentPayouts.map((p: any, idx) => (
                         <tr key={idx} className="hover:bg-cream/10">
-                          <td className="py-2.5 text-primary">{p.vendorId?.businessName || 'Unknown'}</td>
+                          <td className="py-2.5 text-primary">{p.vendorId?.name || p.vendorId?.kycDetails?.businessName || p.vendorId?.businessName || 'Unknown'}</td>
                           <td className="py-2.5 text-foreground/50">{new Date(p.createdAt).toLocaleDateString()}</td>
                           <td className="py-2.5 font-bold">₹{p.amount?.toLocaleString('en-IN') || 0}</td>
                           <td className="py-2.5 text-right">
@@ -1780,7 +1782,7 @@ function AdminDashboardContent() {
               </div>
 
               {/* Quick Actions */}
-              <div className="bg-white rounded-3xl p-6 border border-gold/20 shadow-sm flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-6 border border-gold/20 shadow-sm flex flex-col">
                 <div>
                   <h3 className="font-serif font-bold text-primary text-sm mb-1">Quick Actions</h3>
                   <p className="text-[10px] text-foreground/45 font-semibold uppercase tracking-wider mb-4">Fast actions &amp; shortcuts</p>
