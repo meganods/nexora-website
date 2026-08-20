@@ -171,9 +171,9 @@ export default function CategoryDetailPage() {
       {/* Category Hero Block */}
       <div className="relative w-full overflow-hidden bg-[#0F3D30] text-[#FAF6F0] py-12 md:py-16">
         {/* Dynamic Banner Image Background */}
-        {category.bannerImageUrl ? (
+        {(category.bannerImageUrl || category.imageUrl) ? (
           <div className="absolute inset-0">
-            <img src={category.bannerImageUrl} alt={category.name} className="w-full h-full object-cover opacity-20" />
+            <img src={category.bannerImageUrl || category.imageUrl} alt={category.name} className="w-full h-full object-cover opacity-20" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#0F3D30] via-[#0F3D30]/90 to-transparent" />
           </div>
         ) : (
