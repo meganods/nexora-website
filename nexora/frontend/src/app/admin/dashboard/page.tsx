@@ -1170,7 +1170,20 @@ function AdminDashboardContent() {
     try {
       await api.delete(`/admin/categories/${id}`);
       fetchCategories();
-    } catch (err: any) { alert(err.response?.data?.message || 'Delete failed'); }
+    } catch (err: any) {
+      if (err.response?.data?.canDeactivate) {
+        if (confirm(`${err.response.data.message}\n\nWould you like to deactivate these active services and proceed to delete the category?`)) {
+          try {
+            await api.delete(`/admin/categories/${id}?deactivateServices=true`);
+            fetchCategories();
+          } catch (batchErr: any) {
+            alert(batchErr.response?.data?.message || 'Failed to deactivate services and delete category.');
+          }
+        }
+      } else {
+        alert(err.response?.data?.message || 'Delete failed');
+      }
+    }
   };
 
   const handleCancelBooking = async (id: string) => {

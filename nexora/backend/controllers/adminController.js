@@ -780,9 +780,19 @@ const updateCategory = asyncHandler(async (req, res) => {
 // @route   DELETE /api/admin/categories/:id
 // @access  Private (admin)
 const deleteCategory = asyncHandler(async (req, res) => {
-  const inUse = await Service.countDocuments({ categoryId: req.params.id });
-  if (inUse > 0) {
-    return res.status(400).json({ success: false, message: `Cannot delete: ${inUse} service(s) use this category. Deactivate them first.` });
+  if (req.query.deactivateServices === 'true') {
+    const Service = require('../models/Service');
+    await Service.updateMany({ categoryId: req.params.id }, { isActive: false });
+  } else {
+    const Service = require('../models/Service');
+    const inUse = await Service.countDocuments({ categoryId: req.params.id, isActive: true });
+    if (inUse > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        canDeactivate: true,
+        message: `Cannot delete: ${inUse} service(s) use this category. Deactivate them first.` 
+      });
+    }
   }
   const category = await Category.findByIdAndDelete(req.params.id);
   if (!category) return res.status(404).json({ success: false, message: 'Category not found' });
