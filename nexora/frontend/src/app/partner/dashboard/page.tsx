@@ -230,7 +230,7 @@ export default function PartnerDashboard() {
             )}
           </div>
 
-          <NotificationBell tokenKey="nexora_token" theme="light" userRole="vendor" />
+          <NotificationBell tokenKey="partner_token" theme="light" userRole="vendor" />
 
 
         </div>

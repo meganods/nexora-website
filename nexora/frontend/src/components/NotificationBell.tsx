@@ -19,7 +19,7 @@ interface Notification {
 
 interface Props {
   /** Override the default token key. Defaults to auto-detect. */
-  tokenKey?: "admin_token" | "nexora_token";
+  tokenKey?: "admin_token" | "nexora_token" | "partner_token";
   /** Theme: 'dark' for sidebar use (admin/partner), 'light' for navbar use */
   theme?: "dark" | "light";
   /** Explicitly pass the role to avoid relying on localStorage which can be stale during testing */
@@ -68,9 +68,10 @@ export default function NotificationBell({ tokenKey, theme = "dark", userRole = 
   const getToken = useCallback((): string | null => {
     if (typeof window === "undefined") return null;
     if (tokenKey) return localStorage.getItem(tokenKey);
-    // Auto-detect: try admin_token first, then nexora_token
+    // Auto-detect: try admin_token first, then partner_token, then nexora_token
     return (
       localStorage.getItem("admin_token") ||
+      localStorage.getItem("partner_token") ||
       localStorage.getItem("nexora_token") ||
       null
     );

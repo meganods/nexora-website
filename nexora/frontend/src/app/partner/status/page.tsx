@@ -35,8 +35,8 @@ export default function PartnerStatusPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('nexora_token');
-    localStorage.removeItem('nexora_role');
+    localStorage.removeItem('partner_token');
+    localStorage.removeItem('partner_role');
     router.replace('/partner/login');
   };
 

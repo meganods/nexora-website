@@ -411,6 +411,7 @@ exports.toggleWishlist = asyncHandler(async (req, res) => {
   const { serviceId } = req.body;
   if (!serviceId) return res.status(400).json({ success: false, message: "Service ID is required." });
 
+  console.log("toggleWishlist: req.user details:", { id: req.user?.id, role: req.user?.role });
   // Only regular users (not vendors/admins) can use the wishlist
   if (req.user?.role !== 'user') {
     return res.status(403).json({ success: false, message: "Only customer accounts can use the wishlist." });

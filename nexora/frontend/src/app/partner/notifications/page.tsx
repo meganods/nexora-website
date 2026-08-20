@@ -25,7 +25,7 @@ export default function PartnerNotificationsPage() {
     try {
       setLoading(true);
       setErrorMsg('');
-      const token = localStorage.getItem('nexora_token');
+      const token = localStorage.getItem('partner_token');
       if (!token) {
         setErrorMsg('Unauthorized access.');
         return;

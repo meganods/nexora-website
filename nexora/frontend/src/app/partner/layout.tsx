@@ -30,7 +30,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
   }, [pathname]);
 
   const checkAuthAndStatus = async () => {
-    const token = localStorage.getItem('nexora_token');
+    const token = localStorage.getItem('partner_token');
 
     // Only pre-check token presence; role validation is done by the API
     if (!token) {
@@ -68,8 +68,8 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('nexora_token');
-    localStorage.removeItem('nexora_role');
+    localStorage.removeItem('partner_token');
+    localStorage.removeItem('partner_role');
     router.replace('/partner/login');
   };
 

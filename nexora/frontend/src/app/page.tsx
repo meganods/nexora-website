@@ -789,6 +789,7 @@ export default function Home() {
       localStorage.setItem('user_wishlist', JSON.stringify(reverted));
       const status = err?.response?.status;
       const msg = err?.response?.data?.message;
+      console.warn("Wishlist toggle failed:", { status, msg, data: err?.response?.data });
       if (status === 401) {
         toast.error('Session expired. Please login again.');
         localStorage.removeItem('nexora_token');
@@ -796,7 +797,7 @@ export default function Home() {
         localStorage.removeItem('nexora_user');
         window.location.href = '/login';
       } else if (status === 403) {
-        toast.error('Only customer accounts can save to wishlist.');
+        toast.error(msg || 'Only customer accounts can save to wishlist.');
       } else {
         toast.error(msg || 'Failed to update wishlist.');
       }

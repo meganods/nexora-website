@@ -140,8 +140,8 @@ export default function PartnerRegisterWizard() {
   };
 
   const checkExistingDraft = async () => {
-    const token = localStorage.getItem('nexora_token');
-    const role = localStorage.getItem('nexora_role');
+    const token = localStorage.getItem('partner_token');
+    const role = localStorage.getItem('partner_role');
     if (token && role === 'vendor') {
       try {
         setLoading(true);
@@ -343,8 +343,8 @@ export default function PartnerRegisterWizard() {
       });
 
       if (data.success && data.token) {
-        localStorage.setItem('nexora_token', data.token);
-        localStorage.setItem('nexora_role', 'vendor');
+        localStorage.setItem('partner_token', data.token);
+        localStorage.setItem('partner_role', 'vendor');
         await saveProgress(2);
       }
     } catch (err: any) {
