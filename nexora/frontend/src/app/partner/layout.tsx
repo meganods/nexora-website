@@ -115,7 +115,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
         </div>
 
         {/* Nav Links */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-thin">
+        <nav className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-none">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
             return (

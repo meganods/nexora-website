@@ -428,6 +428,42 @@ export default function ServiceDetailPage() {
                 </div>
               )}
 
+            {/* Associated Sub-Services (Clean Listing) */}
+            {service.subServices && service.subServices.length > 0 && (
+              <div className="bg-white border border-[#C3AB84]/15 rounded-3xl p-6 shadow-sm space-y-4">
+                <h3 className="font-serif text-base font-bold text-[#0F3D30]">Available Sub-Services</h3>
+                <p className="text-xs text-foreground/50">Choose from our specialized sub-services available under this service:</p>
+                <div className="space-y-3">
+                  {service.subServices.map((sub: any) => {
+                    const isSelected = selectedAddons.some(a => a.name === sub.name);
+                    return (
+                      <div
+                        key={sub._id}
+                        onClick={() => toggleAddon({ name: sub.name, price: sub.basePrice })}
+                        className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
+                          isSelected ? 'border-[#0F3D30] bg-[#0F3D30]/5 shadow-sm' : 'border-gray-150 hover:bg-[#FAF6F0]/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-[#0F3D30] border-[#0F3D30] text-white' : 'border-gray-300 bg-white'}`}>
+                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-[#0F3D30]">{sub.name}</h4>
+                            {sub.description && <p className="text-xs text-foreground/60 mt-0.5">{sub.description}</p>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 mt-2 sm:mt-0 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0">
+                          <span className="text-xs text-foreground/50">{sub.estimatedDurationMins} mins</span>
+                          <span className="text-sm font-serif font-bold text-[#0F3D30]">₹{sub.basePrice}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
               {categoryServices.length > 0 && (
                 <div className="bg-white border border-[#C3AB84]/15 rounded-3xl p-6 shadow-sm space-y-4">
                   <h3 className="font-serif text-base font-bold text-[#0F3D30]">Frequently Booked Together</h3>

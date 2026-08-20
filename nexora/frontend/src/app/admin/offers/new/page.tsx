@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2, AlertTriangle } from 'lucide-react';
 import AdminPageLayout from '../../_components/AdminPageLayout';
+import ImageUpload from '../../_components/ImageUpload';
 import api from '@/lib/api';
 
 const inp = 'w-full border border-[#C3AB84]/30 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#0F3D30] bg-[#F8F4EE] transition-colors';
@@ -27,6 +28,8 @@ export default function NewOfferPage() {
     isActive: true,
     isFeatured: false,
     applicableCategories: [] as string[],
+    imageUrl: '',
+    imagePublicId: '',
   });
 
   useEffect(() => {
@@ -100,20 +103,43 @@ export default function NewOfferPage() {
             </div>
           </div>
 
-          {/* Applicable Categories — multi-select dropdown */}
+          {/* Applicable Categories — Interactive Multi-Select Pill Layout */}
           <div>
             <label className={lbl}>Applicable Categories</label>
-            <select
-              multiple
-              value={form.applicableCategories}
-              onChange={handleCategoryChange}
-              className={`${inp} min-h-[120px]`}
-            >
-              {categories.map(c => (
-                <option key={c._id} value={c._id}>{c.name}</option>
-              ))}
-            </select>
-            <p className="text-[11px] text-foreground/40 mt-1.5">Hold Ctrl / Cmd to select multiple categories. Leave empty to apply to all.</p>
+            <div className="flex flex-wrap gap-2.5 mt-2 bg-[#F8F4EE] border border-[#C3AB84]/30 rounded-2xl p-4">
+              {categories.map((c) => {
+                const isSelected = form.applicableCategories.includes(c._id);
+                return (
+                  <button
+                    key={c._id}
+                    type="button"
+                    onClick={() => {
+                      const selected = form.applicableCategories.includes(c._id)
+                        ? form.applicableCategories.filter(id => id !== c._id)
+                        : [...form.applicableCategories, c._id];
+                      setForm(p => ({ ...p, applicableCategories: selected }));
+                    }}
+                    className={`px-4 py-2 rounded-full text-xs font-bold transition-all border ${
+                      isSelected
+                        ? 'bg-[#0F3D30] text-white border-[#0F3D30] shadow-sm'
+                        : 'bg-white text-foreground/70 border-gold/30 hover:border-gold/60'
+                    }`}
+                  >
+                    {c.name}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-foreground/40 mt-2">Click to select/deselect categories. Leave empty to apply to all.</p>
+          </div>
+
+          <div>
+            <ImageUpload 
+              label="Offer Banner Image"
+              imageUrl={form.imageUrl}
+              imagePublicId={form.imagePublicId}
+              onChange={(url, pubId) => setForm(p => ({ ...p, imageUrl: url, imagePublicId: pubId }))}
+            />
           </div>
 
 

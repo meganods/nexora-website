@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
-import { MapPin, Calendar, CreditCard, ChevronLeft, Loader2, ShieldAlert, Plus, Edit2, Tag } from 'lucide-react';
+import { MapPin, Calendar, CreditCard, ChevronLeft, Loader2, ShieldAlert, Plus, Edit2, Tag, X } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -108,6 +108,8 @@ function CheckoutForm() {
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [discountMsg, setDiscountMsg] = useState('');
+  const [coupons, setCoupons] = useState<any[]>([]);
+  const [isCouponsModalOpen, setIsCouponsModalOpen] = useState(false);
 
   const loginUrl = `/login?redirect=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '/checkout')}`;
 
@@ -190,20 +192,34 @@ function CheckoutForm() {
         setPlatformFee(settingsRes.data.platformFee?.minRupees ?? 15);
       }
 
-      // User saved addresses
-      const addrRes = await api.get('/user/addresses');
-      const addrs = addrRes.data?.addresses || addrRes.data || [];
-      setSavedAddresses(addrs);
+      // User saved addresses (wrapped to prevent 403 crashes for non-customer roles)
+      try {
+        const addrRes = await api.get('/user/addresses');
+        const addrs = addrRes.data?.addresses || addrRes.data || [];
+        setSavedAddresses(addrs);
+        if (addrs.length > 0) {
+          setSelectedAddressId(addrs[0]._id || '');
+        } else {
+          setUseCustom(true);
+        }
+      } catch (addrErr) {
+        console.warn('Failed to load user addresses:', addrErr);
+        setUseCustom(true);
+      }
 
       if (user) {
         setName(user.name || '');
         setPhone(user.phone || '');
       }
 
-      if (addrs.length > 0) {
-        setSelectedAddressId(addrs[0]._id || '');
-      } else {
-        setUseCustom(true);
+      // Public coupons
+      try {
+        const couponsRes = await api.get('/public/coupons');
+        if (couponsRes.data?.success && Array.isArray(couponsRes.data.data)) {
+          setCoupons(couponsRes.data.data);
+        }
+      } catch (err) {
+        console.warn('Failed to load coupons list:', err);
       }
     } catch (err) {
       console.error('Failed to load checkout details:', err);
@@ -214,10 +230,15 @@ function CheckoutForm() {
 
   const applyPromo = async () => {
     if (!promoCodeInput.trim()) return;
+    applyCouponCode(promoCodeInput.trim().toUpperCase());
+  };
+
+  const applyCouponCode = async (codeStr: string) => {
+    setPromoCodeInput(codeStr);
     setDiscountMsg('');
     try {
       const payload: any = {
-        code: promoCodeInput,
+        code: codeStr,
         orderAmount: basePrice,
       };
       if (service?.isPackage) {
@@ -722,7 +743,16 @@ function CheckoutForm() {
 
               {/* Coupon entry */}
               <div className="pt-2">
-                <label className="block text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-2">Apply Promo Code</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-xs font-semibold text-foreground/60 uppercase tracking-wider">Apply Promo Code</label>
+                  <button 
+                    type="button"
+                    onClick={() => setIsCouponsModalOpen(true)}
+                    className="text-xs font-bold text-primary hover:underline"
+                  >
+                    View All Coupons
+                  </button>
+                </div>
                 <div className="flex gap-2">
                   <input 
                     type="text" 
@@ -770,7 +800,7 @@ function CheckoutForm() {
               </div>
 
               <button onClick={handlePayment} disabled={isProcessing}
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-primary text-white rounded-full font-bold hover:bg-primary/90 transition-colors shadow-md disabled:opacity-70 text-xs sm:text-sm">
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-primary text-white rounded-full font-bold hover:bg-primary/95 transition-colors shadow-md disabled:opacity-70 text-xs sm:text-sm">
                 {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CreditCard className="w-4 h-4" /> Pay & Book</>}
               </button>
               <p className="text-center text-xs text-foreground/40 mt-3">Secured by Cashfree</p>
@@ -789,6 +819,115 @@ function CheckoutForm() {
 
         </div>
       </div>
+
+      {/* Coupons Modal Popup */}
+      {isCouponsModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-[#FAF6F0] w-full max-w-lg rounded-3xl border border-gold/20 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="p-6 border-b border-gold/10 bg-white flex justify-between items-center">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-primary">Available Coupons</h3>
+                <p className="text-xs text-foreground/50">Select a valid promo code to apply to your booking</p>
+              </div>
+              <button 
+                onClick={() => setIsCouponsModalOpen(false)}
+                className="w-8 h-8 rounded-full border border-gold/20 flex items-center justify-center hover:bg-cream/40 text-foreground/60 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* List */}
+            <div className="p-6 overflow-y-auto space-y-5 divide-y divide-gold/10">
+              {(() => {
+                const evaluatedCoupons = coupons.map((c: any) => {
+                  const isExpired = c.endDate && new Date(c.endDate) < new Date();
+                  const matchesMinOrder = basePrice >= (c.minOrderValue || 0);
+                  const matchesVendor = !c.vendorId || (service && (service.vendorId === c.vendorId || (service.vendor && service.vendor._id === c.vendorId)));
+                  const matchesCategory = !c.applicableCategories || c.applicableCategories.length === 0 || (service && service.categoryId && c.applicableCategories.some((catId: any) => (catId._id || catId) === (service.categoryId._id || service.categoryId)));
+                  const isEligible = !isExpired && matchesMinOrder && matchesVendor && matchesCategory && c.isActive;
+                  
+                  let reason = '';
+                  if (!matchesMinOrder) reason = `Requires minimum order value of ₹${c.minOrderValue}`;
+                  else if (!matchesVendor) reason = `Only valid for specific partner services`;
+                  else if (!matchesCategory) reason = `Only valid for specific categories`;
+                  else if (isExpired) reason = `Expired coupon`;
+                  
+                  return { ...c, isEligible, reason };
+                });
+
+                if (evaluatedCoupons.length === 0) {
+                  return <p className="text-xs text-foreground/50 text-center py-6">No coupons currently available.</p>;
+                }
+
+                // Split into eligible and ineligible
+                const eligible = evaluatedCoupons.filter(c => c.isEligible);
+                const ineligible = evaluatedCoupons.filter(c => !c.isEligible);
+
+                return (
+                  <div className="space-y-6 divide-y divide-gold/10">
+                    {/* Eligible section */}
+                    {eligible.length > 0 && (
+                      <div className="space-y-3 pt-4 first:pt-0">
+                        <span className="block text-[10px] font-bold uppercase tracking-wider text-emerald-700">Valid Coupons</span>
+                        {eligible.map((c) => {
+                          const discountDisplay = c.discountType === 'PERCENTAGE' ? `${c.discountValue}% OFF` : `₹${c.discountValue} OFF`;
+                          return (
+                            <div key={c._id} className="p-4 bg-white rounded-2xl border border-emerald-500/20 shadow-sm flex items-start justify-between gap-4">
+                              <div className="space-y-1">
+                                <span className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-md uppercase tracking-wider font-mono">
+                                  {c.code}
+                                </span>
+                                <h4 className="text-xs font-bold text-primary mt-1">{discountDisplay}</h4>
+                                <p className="text-[11px] text-foreground/60 leading-normal">{c.description || 'Promotional coupon discount'}</p>
+                              </div>
+                              <button 
+                                onClick={() => {
+                                  applyCouponCode(c.code);
+                                  setIsCouponsModalOpen(false);
+                                }}
+                                className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Ineligible section */}
+                    {ineligible.length > 0 && (
+                      <div className="space-y-3 pt-4">
+                        <span className="block text-[10px] font-bold uppercase tracking-wider text-red-700">Ineligible Coupons</span>
+                        {ineligible.map((c) => {
+                          const discountDisplay = c.discountType === 'PERCENTAGE' ? `${c.discountValue}% OFF` : `₹${c.discountValue} OFF`;
+                          return (
+                            <div key={c._id} className="p-4 bg-[#FAF6F0]/50 rounded-2xl border border-gold/10 opacity-70 flex items-start justify-between gap-4">
+                              <div className="space-y-1">
+                                <span className="bg-gray-100 border border-gray-200 text-gray-700 text-[10px] font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wider font-mono">
+                                  {c.code}
+                                </span>
+                                <h4 className="text-xs font-bold text-foreground/75 mt-1">{discountDisplay}</h4>
+                                <p className="text-[11px] text-foreground/60 leading-normal">{c.description}</p>
+                                <p className="text-[10px] text-red-500 font-semibold italic mt-1.5">{c.reason}</p>
+                              </div>
+                              <button disabled className="px-3.5 py-1.5 bg-gray-200 text-gray-400 text-xs font-bold rounded-xl cursor-not-allowed">
+                                Apply
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

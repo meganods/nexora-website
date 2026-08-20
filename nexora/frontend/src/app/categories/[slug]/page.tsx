@@ -41,20 +41,43 @@ export default function CategoryDetailPage() {
     }
   }, []);
 
-  const toggleWishlist = (serviceId: string, serviceName: string) => {
+  const toggleWishlist = async (serviceId: string, serviceName: string) => {
+    const role = typeof window !== 'undefined' ? localStorage.getItem('nexora_role') : '';
+    const token = typeof window !== 'undefined' ? localStorage.getItem('nexora_token') : '';
+    
+    if (!token) {
+      toast.error('Please login to save services to your wishlist.');
+      router.push('/login');
+      return;
+    }
+    if (role !== 'user') {
+      toast.error('Only customer accounts can use the wishlist.');
+      return;
+    }
+
     const local = localStorage.getItem('user_wishlist');
     let list: string[] = [];
     if (local) list = JSON.parse(local);
 
-    if (list.includes(serviceId)) {
+    const isAdded = !list.includes(serviceId);
+    if (!isAdded) {
       list = list.filter(id => id !== serviceId);
-      toast.success(`${serviceName} removed from wishlist`);
     } else {
       list.push(serviceId);
-      toast.success(`${serviceName} added to wishlist`);
     }
-    localStorage.setItem('user_wishlist', JSON.stringify(list));
     setWishlist(list);
+    localStorage.setItem('user_wishlist', JSON.stringify(list));
+
+    try {
+      await api.post('/user/dashboard/wishlist/toggle', { serviceId });
+      toast.success(isAdded ? `${serviceName} added to wishlist` : `${serviceName} removed from wishlist`);
+    } catch (err) {
+      console.error(err);
+      const reverted = isAdded ? list.filter(id => id !== serviceId) : [...list, serviceId];
+      setWishlist(reverted);
+      localStorage.setItem('user_wishlist', JSON.stringify(reverted));
+      toast.error('Failed to update wishlist. Please try again.');
+    }
   };
 
   useEffect(() => {

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Loader2, AlertTriangle } from 'lucide-react';
 import api from '@/lib/api';
+import ImageUpload from '@/app/admin/_components/ImageUpload';
 
 export default function PartnerEditOfferPage() {
   const router = useRouter();
@@ -15,26 +16,39 @@ export default function PartnerEditOfferPage() {
   const [discountValue, setDiscountValue] = useState<number>(0);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [applicableCategories, setApplicableCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [imageUrl, setImageUrl] = useState('');
+  const [imagePublicId, setImagePublicId] = useState('');
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    fetchOffer();
+    fetchOfferAndDeps();
   }, [id]);
 
-  const fetchOffer = async () => {
+  const fetchOfferAndDeps = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get('/partner/offers');
-      const list = data?.offers || data || [];
+      const [catRes, offerRes] = await Promise.all([
+        api.get('/admin/categories'),
+        api.get('/partner/offers')
+      ]);
+
+      setCategories(catRes.data.categories || catRes.data || []);
+
+      const list = offerRes.data?.offers || offerRes.data || [];
       const offer = list.find((o: any) => o._id === id);
       if (offer) {
         setTitle(offer.title || '');
         setDescription(offer.description || '');
         setDiscountType(offer.discountType || 'PERCENTAGE');
         setDiscountValue(offer.discountValue || 0);
+        setImageUrl(offer.imageUrl || '');
+        setImagePublicId(offer.imagePublicId || '');
+        setApplicableCategories((offer.applicableCategories || []).map((c: any) => c._id || c));
         if (offer.startDate) setStartDate(new Date(offer.startDate).toISOString().split('T')[0]);
         if (offer.endDate) setEndDate(new Date(offer.endDate).toISOString().split('T')[0]);
       } else {
@@ -54,15 +68,16 @@ export default function PartnerEditOfferPage() {
     setErrorMsg('');
 
     try {
-      // In the real system, modifying an offer creates/saves changes. We route request to backend:
-      // Note: If no special edit route exists, we can use a PUT/POST to recreate or update. Let's make sure the form works.
       await api.put(`/partner/offers/${id}`, {
         title,
         description,
         discountType,
         discountValue,
         startDate: startDate ? new Date(startDate) : new Date(),
-        endDate: endDate ? new Date(endDate) : null
+        endDate: endDate ? new Date(endDate) : null,
+        applicableCategories,
+        imageUrl,
+        imagePublicId,
       });
       router.push('/partner/offers');
     } catch (err: any) {
@@ -151,6 +166,45 @@ export default function PartnerEditOfferPage() {
               className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
             />
           </div>
+        </div>
+
+        {/* Applicable Categories — Interactive Multi-Select Pill Layout */}
+        <div>
+          <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Applicable Category</label>
+          <div className="flex flex-wrap gap-2.5 mt-2 bg-cream/20 border border-gold/30 rounded-2xl p-4">
+            {categories.map((c) => {
+              const isSelected = applicableCategories.includes(c._id);
+              return (
+                <button
+                  key={c._id}
+                  type="button"
+                  onClick={() => {
+                    const selected = applicableCategories.includes(c._id)
+                      ? applicableCategories.filter(id => id !== c._id)
+                      : [...applicableCategories, c._id];
+                    setApplicableCategories(selected);
+                  }}
+                  className={`px-4 py-2 rounded-full text-xs font-bold transition-all border ${
+                    isSelected
+                      ? 'bg-primary text-white border-primary shadow-sm'
+                      : 'bg-white text-foreground/70 border-gold/30 hover:border-gold/60'
+                  }`}
+                >
+                  {c.name}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-foreground/40 mt-2">Click to select/deselect categories. Leave empty to apply to all categories.</p>
+        </div>
+
+        <div>
+          <ImageUpload 
+            label="Offer Banner Image"
+            imageUrl={imageUrl}
+            imagePublicId={imagePublicId}
+            onChange={(url, pubId) => { setImageUrl(url); setImagePublicId(pubId); }}
+          />
         </div>
 
         <button 

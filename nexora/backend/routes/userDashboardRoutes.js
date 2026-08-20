@@ -24,6 +24,7 @@ const { protect, authorize } = require("../middlewares/auth");
 const router = express.Router();
 
 router.use(protect);
+router.use(authorize('user'));
 
 router.get("/overview", getDashboardOverview);
 router.get("/bookings", getUserBookings);

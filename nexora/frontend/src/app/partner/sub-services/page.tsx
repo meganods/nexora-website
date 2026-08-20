@@ -225,11 +225,13 @@ export default function PartnerSubServicesPage() {
                       <td className="p-4">
                         <div>
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            svc.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-700' :
-                            svc.approvalStatus === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                            svc.approvalStatus === 'APPROVED' 
+                              ? (svc.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700')
+                              : (svc.approvalStatus === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700')
                           }`}>
-                            {svc.approvalStatus === 'APPROVED' ? 'Approved' :
-                             svc.approvalStatus === 'REJECTED' ? 'Rejected' : 'Pending Approval'}
+                            {svc.approvalStatus === 'APPROVED' 
+                              ? (svc.isActive ? 'Active' : 'Inactive')
+                              : (svc.approvalStatus === 'REJECTED' ? 'Rejected' : 'Pending Approval')}
                           </span>
                           {svc.approvalStatus === 'REJECTED' && svc.rejectionReason && (
                             <p className="text-[10px] text-red-600 mt-1 font-medium bg-red-50 p-1.5 rounded-lg">Reason: {svc.rejectionReason}</p>

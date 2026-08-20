@@ -829,7 +829,7 @@ const getPartnerOffers = asyncHandler(async (req, res) => {
 // @access  Private (vendor)
 const createPartnerOffer = asyncHandler(async (req, res) => {
   const Offer = require('../models/Offer');
-  const { title, description, imageUrl, discountType, discountValue, startDate, endDate } = req.body;
+  const { title, description, imageUrl, imagePublicId, discountType, discountValue, startDate, endDate, applicableCategories } = req.body;
 
   if (!title || !discountValue) {
     return res.status(400).json({ success: false, message: 'Title and discount value are required' });
@@ -839,12 +839,14 @@ const createPartnerOffer = asyncHandler(async (req, res) => {
     title,
     description,
     imageUrl,
+    imagePublicId,
     discountType: discountType || 'PERCENTAGE',
     discountValue,
     startDate: startDate || new Date(),
     endDate: endDate || null,
     source: 'VENDOR',
     vendorId: req.user.userId,
+    applicableCategories: applicableCategories || [],
     requiresAdminApproval: false,
     approvalStatus: 'APPROVED',
     isActive: true
@@ -864,15 +866,17 @@ const updatePartnerOffer = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: "Offer not found or access denied." });
   }
 
-  const { title, description, imageUrl, discountType, discountValue, startDate, endDate } = req.body;
+  const { title, description, imageUrl, imagePublicId, discountType, discountValue, startDate, endDate, applicableCategories } = req.body;
 
   if (title !== undefined) offer.title = title;
   if (description !== undefined) offer.description = description;
   if (imageUrl !== undefined) offer.imageUrl = imageUrl;
+  if (imagePublicId !== undefined) offer.imagePublicId = imagePublicId;
   if (discountType !== undefined) offer.discountType = discountType;
   if (discountValue !== undefined) offer.discountValue = discountValue;
   if (startDate !== undefined) offer.startDate = startDate;
   if (endDate !== undefined) offer.endDate = endDate;
+  if (applicableCategories !== undefined) offer.applicableCategories = applicableCategories;
 
   // Auto-approve offer when edited by vendor
   offer.approvalStatus = 'APPROVED';
@@ -966,7 +970,7 @@ const getPartnerCoupons = asyncHandler(async (req, res) => {
 // @access  Private (ServicePartner)
 const createPartnerCoupon = asyncHandler(async (req, res) => {
   const Coupon = require('../models/Coupon');
-  const { code, description, discountType, discountValue, maxDiscountAmount, minOrderValue, startDate, endDate, usageLimit } = req.body;
+  const { code, description, discountType, discountValue, maxDiscountAmount, minOrderValue, startDate, endDate, usageLimit, perUserLimit, isFirstTimeOnly, applicableCategories } = req.body;
 
   if (!code || !discountType || !discountValue) {
     return res.status(400).json({ success: false, message: "Required fields: code, discountType, discountValue" });
@@ -988,6 +992,9 @@ const createPartnerCoupon = asyncHandler(async (req, res) => {
     startDate: startDate || new Date(),
     endDate: endDate || null,
     usageLimit: usageLimit || null,
+    perUserLimit: perUserLimit || 1,
+    isFirstTimeOnly: isFirstTimeOnly || false,
+    applicableCategories: applicableCategories || [],
     vendorId: req.user.userId,
     approvalStatus: 'APPROVED',
     isActive: true
@@ -1007,8 +1014,9 @@ const updatePartnerCoupon = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: "Coupon not found or access denied." });
   }
 
-  const { description, discountType, discountValue, maxDiscountAmount, minOrderValue, startDate, endDate, usageLimit } = req.body;
+  const { code, description, discountType, discountValue, maxDiscountAmount, minOrderValue, startDate, endDate, usageLimit, perUserLimit, isFirstTimeOnly, applicableCategories } = req.body;
 
+  if (code !== undefined) coupon.code = code.toUpperCase().trim();
   if (description !== undefined) coupon.description = description;
   if (discountType !== undefined) coupon.discountType = discountType;
   if (discountValue !== undefined) coupon.discountValue = discountValue;
@@ -1017,6 +1025,9 @@ const updatePartnerCoupon = asyncHandler(async (req, res) => {
   if (startDate !== undefined) coupon.startDate = startDate;
   if (endDate !== undefined) coupon.endDate = endDate;
   if (usageLimit !== undefined) coupon.usageLimit = usageLimit;
+  if (perUserLimit !== undefined) coupon.perUserLimit = perUserLimit;
+  if (isFirstTimeOnly !== undefined) coupon.isFirstTimeOnly = isFirstTimeOnly;
+  if (applicableCategories !== undefined) coupon.applicableCategories = applicableCategories;
 
   // Auto-approve when edited by vendor
   coupon.approvalStatus = 'APPROVED';

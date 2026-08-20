@@ -56,6 +56,7 @@ function PartnerLoginForm() {
     try {
       const { data } = await api.post('/partner/demo-login');
       if (data.success && data.token) {
+        localStorage.removeItem('nexora_user');
         localStorage.setItem('nexora_token', data.token);
         localStorage.setItem('nexora_role', 'vendor');
         toast.success('Demo login successful! Redirecting to dashboard...');
@@ -84,6 +85,7 @@ function PartnerLoginForm() {
       });
 
       if (data.success && data.token) {
+        localStorage.removeItem('nexora_user');
         localStorage.setItem('nexora_token', data.token);
         localStorage.setItem('nexora_role', 'vendor');
         router.push('/partner/dashboard');

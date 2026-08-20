@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { IndianRupee, Star, Search, SlidersHorizontal, Loader2, ArrowRight, ChevronDown } from 'lucide-react';
 import api from '@/lib/api';
+import { useLocation } from '@/lib/location';
 
 export default function DealsPage() {
   const router = useRouter();
+  const { selectedCity } = useLocation();
   const [deals, setDeals] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +32,7 @@ export default function DealsPage() {
     if (search.trim()) params.set('search', search.trim());
     if (selectedCat) params.set('categoryId', selectedCat);
     if (sortBy !== 'recommended') params.set('sort', sortBy);
+    if (selectedCity) params.set('city', selectedCity);
 
     api.get(`/public/deals?${params}`)
       .then(res => {
@@ -39,7 +42,7 @@ export default function DealsPage() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [search, selectedCat, sortBy]);
+  }, [search, selectedCat, sortBy, selectedCity]);
 
   return (
     <div className="min-h-screen bg-cream flex flex-col">

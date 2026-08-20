@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2, AlertTriangle } from 'lucide-react';
 import api from '@/lib/api';
@@ -17,8 +15,26 @@ export default function PartnerNewCouponPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   
+  const [usageLimit, setUsageLimit] = useState<number | string>('');
+  const [perUserLimit, setPerUserLimit] = useState<number | string>('1');
+  const [isFirstTimeOnly, setIsFirstTimeOnly] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [applicableCategories, setApplicableCategories] = useState<string[]>([]);
+  
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    const fetchCats = async () => {
+      try {
+        const { data } = await api.get('/public/categories');
+        if (Array.isArray(data)) setCategories(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchCats();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +50,11 @@ export default function PartnerNewCouponPage() {
         minOrderValue,
         maxDiscountAmount,
         startDate: startDate ? new Date(startDate) : new Date(),
-        endDate: endDate ? new Date(endDate) : null
+        endDate: endDate ? new Date(endDate) : null,
+        usageLimit: usageLimit ? parseInt(usageLimit.toString()) : null,
+        perUserLimit: perUserLimit ? parseInt(perUserLimit.toString()) : 1,
+        isFirstTimeOnly,
+        applicableCategories
       };
 
       const { data } = await api.post('/partner/coupons', payload);
@@ -136,6 +156,59 @@ export default function PartnerNewCouponPage() {
               type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
             />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Max Total Uses</label>
+            <input 
+              type="number" value={usageLimit} onChange={e => setUsageLimit(e.target.value)}
+              placeholder="e.g. 100" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Uses Per User</label>
+            <input 
+              type="number" value={perUserLimit} onChange={e => setPerUserLimit(e.target.value)}
+              placeholder="e.g. 1" className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="flex items-center gap-3 cursor-pointer py-1.5">
+            <input type="checkbox" checked={isFirstTimeOnly} onChange={e => setIsFirstTimeOnly(e.target.checked)} className="rounded text-[#0F3D30] border-gold/30 focus:ring-[#0F3D30]" />
+            <span className="text-xs font-bold text-foreground/75 uppercase tracking-wider">First-time users only</span>
+          </label>
+        </div>
+
+        {/* Applicable Categories — Interactive Multi-Select Pill Layout */}
+        <div>
+          <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Applicable Categories (Empty = All)</label>
+          <div className="flex flex-wrap gap-2.5 mt-2 bg-[#F8F4EE] border border-[#C3AB84]/30 rounded-2xl p-4">
+            {categories.map((c) => {
+              const isSelected = applicableCategories.includes(c._id);
+              return (
+                <button
+                  key={c._id}
+                  type="button"
+                  onClick={() => {
+                    const selected = isSelected
+                      ? applicableCategories.filter((id) => id !== c._id)
+                      : [...applicableCategories, c._id];
+                    setApplicableCategories(selected);
+                  }}
+                  className={`text-xs px-3.5 py-2 rounded-full font-semibold border transition-all ${
+                    isSelected
+                      ? 'bg-primary text-white border-primary shadow-sm'
+                      : 'bg-white border-[#C3AB84]/35 text-[#0F3D30]/85 hover:bg-[#FAF6F0]'
+                  }`}
+                >
+                  {c.name}
+                </button>
+              );
+            })}
           </div>
         </div>
 

@@ -704,9 +704,21 @@ export default function Home() {
   const partnersScrollRef = useRef<HTMLDivElement>(null);
   const popScrollRef = useRef<HTMLDivElement>(null);
   const dealsScrollRef = useRef<HTMLDivElement>(null);
+  const offersScrollRef = useRef<HTMLDivElement>(null);
 
   const [popCanScrollLeft, setPopCanScrollLeft] = useState(false);
   const [dealsCanScrollLeft, setDealsCanScrollLeft] = useState(false);
+  const [offersCanScrollLeft, setOffersCanScrollLeft] = useState(false);
+  const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
+
+  // ── Auto-slide Offers Carousel ──
+  useEffect(() => {
+    if (dbOffers.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentOfferIndex(prev => (prev + 1) % dbOffers.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [dbOffers]);
 
   // ── Fetch data ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -718,7 +730,6 @@ export default function Home() {
     fetchDbPackages();
     fetchDbBanners();
     fetchDbOffers();
-    fetchHomepageDeals();
     fetchWishlist();
     fetchLiveReviews();
   }, [user]);
@@ -793,9 +804,10 @@ export default function Home() {
   };
 
 
-  const fetchHomepageDeals = async () => {
+  const fetchHomepageDeals = async (city?: string) => {
     try {
-      const { data } = await api.get('/public/deals?limit=6');
+      const url = city ? `/public/deals?limit=6&city=${encodeURIComponent(city)}` : '/public/deals?limit=6';
+      const { data } = await api.get(url);
       if (data?.success && Array.isArray(data.deals)) {
         setHomepageDeals(data.deals);
       }
@@ -908,6 +920,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchApprovedPartners(selectedCity);
+    fetchHomepageDeals(selectedCity);
   }, [selectedCity]);
 
   // ── Promo banner data ──────────────────────────────────────────────────────
@@ -1169,6 +1182,109 @@ export default function Home() {
               >
                 View All Categories <ArrowRight className="w-4 h-4" />
               </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          2.5 OFFERS CAROUSEL SECTION
+      ══════════════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════
+          2.5 OFFERS SLIDING BANNER CAROUSEL SECTION
+      ══════════════════════════════════════════════════════════ */}
+      {dbOffers.length > 0 && (
+        <section className="bg-cream/45 py-10 relative border-t border-b border-gold/10">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+            <div className="text-center mb-6">
+              <span className="text-xs font-bold text-gold uppercase tracking-wider bg-gold/10 px-3 py-1 rounded-full">Special Promotions</span>
+              <h2 className="font-serif text-2xl sm:text-3.5xl font-bold text-primary mt-2.5">Exclusive Offers & Deals</h2>
+            </div>
+
+            <div className="relative max-w-7xl mx-auto overflow-hidden rounded-[32px] border border-gold/25 shadow-md bg-white">
+              {/* Slide Container */}
+              <div 
+                className="flex transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${currentOfferIndex * 100}%)` }}
+              >
+                {dbOffers.map((offer) => {
+                  const hasImage = !!offer.imageUrl;
+                  const discountDisplay = offer.discountType === 'PERCENTAGE' ? `${offer.discountValue}% OFF` : `₹${offer.discountValue} OFF`;
+                  
+                  return (
+                    <div key={offer._id} className="w-full flex-shrink-0 relative h-[260px] sm:h-[300px]">
+                      {hasImage ? (
+                        <>
+                          <img src={offer.imageUrl} alt={offer.title} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/40 to-transparent z-10" />
+                        </>
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-[#0F3D30] to-[#04100c]" />
+                      )}
+
+                      {/* Content Overlay */}
+                      <div className="absolute inset-0 z-20 p-8 sm:p-12 flex flex-col justify-between text-white max-w-xl">
+                        <div>
+                          <span className="bg-gold/90 text-[#0F3D30] text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm w-fit inline-block">
+                            {discountDisplay}
+                          </span>
+                        </div>
+
+                        <div className="space-y-2 mt-auto">
+                          <h3 className="font-serif text-xl sm:text-2.5xl font-bold tracking-tight line-clamp-1">{offer.title}</h3>
+                          <p className="text-white/80 text-xs sm:text-sm line-clamp-2 leading-relaxed">{offer.description || 'Exclusive promotional discount'}</p>
+                          
+                          {offer.applicableCategories && offer.applicableCategories.length > 0 && (
+                            <div className="pt-2 flex flex-wrap gap-1.5">
+                              {offer.applicableCategories.map((c: any) => (
+                                <span key={c._id || c} className="text-[9px] font-bold px-2.5 py-0.5 rounded bg-white/10 text-white uppercase tracking-wider">
+                                  {c.name || 'Category'}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Navigation Arrows */}
+              {dbOffers.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrentOfferIndex(prev => (prev - 1 + dbOffers.length) % dbOffers.length)}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white backdrop-blur-md rounded-full transition-all border border-white/20"
+                    aria-label="Previous Slide"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentOfferIndex(prev => (prev + 1) % dbOffers.length)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white backdrop-blur-md rounded-full transition-all border border-white/20"
+                    aria-label="Next Slide"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+
+              {/* Indicator Dots */}
+              {dbOffers.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+                  {dbOffers.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentOfferIndex(idx)}
+                      className={`w-2.5 h-2.5 rounded-full transition-all ${
+                        currentOfferIndex === idx ? 'bg-gold w-6' : 'bg-white/40 hover:bg-white/70'
+                      }`}
+                      aria-label={`Go to slide ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>

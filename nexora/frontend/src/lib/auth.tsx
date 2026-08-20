@@ -33,17 +33,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Rehydrate from localStorage on mount
     const storedToken = localStorage.getItem('nexora_token');
     const storedUser = localStorage.getItem('nexora_user');
-    if (storedToken && storedUser) {
+    const storedRole = localStorage.getItem('nexora_role');
+    if (storedToken && storedUser && storedRole === 'user') {
       try {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
       } catch {
         localStorage.removeItem('nexora_token');
         localStorage.removeItem('nexora_user');
+        localStorage.removeItem('nexora_role');
       }
+    } else {
+      setToken(null);
+      setUser(null);
     }
     setIsLoading(false);
   }, []);

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Percent, ArrowLeft, Loader2, AlertTriangle } from 'lucide-react';
 import api from '@/lib/api';
+import ImageUpload from '@/app/admin/_components/ImageUpload';
 
 export default function PartnerNewOfferPage() {
   const router = useRouter();
@@ -16,6 +17,8 @@ export default function PartnerNewOfferPage() {
   const [endDate, setEndDate] = useState('');
   const [applicableCategories, setApplicableCategories] = useState<string[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [imageUrl, setImageUrl] = useState('');
+  const [imagePublicId, setImagePublicId] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -39,6 +42,8 @@ export default function PartnerNewOfferPage() {
         startDate: startDate ? new Date(startDate) : new Date(),
         endDate: endDate ? new Date(endDate) : null,
         applicableCategories,
+        imageUrl,
+        imagePublicId,
       };
 
       const { data } = await api.post('/partner/offers', payload);
@@ -127,20 +132,43 @@ export default function PartnerNewOfferPage() {
           </div>
         </div>
 
-        {/* Applicable Categories */}
+        {/* Applicable Categories — Interactive Multi-Select Pill Layout */}
         <div>
           <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Applicable Category</label>
-          <select
-            multiple
-            value={applicableCategories}
-            onChange={e => setApplicableCategories(Array.from(e.target.selectedOptions).map(o => o.value))}
-            className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none min-h-[100px]"
-          >
-            {categories.map(c => (
-              <option key={c._id} value={c._id}>{c.name}</option>
-            ))}
-          </select>
-          <p className="text-[11px] text-foreground/40 mt-1">Hold Ctrl / Cmd to select multiple. Leave empty to apply to all categories.</p>
+          <div className="flex flex-wrap gap-2.5 mt-2 bg-cream/20 border border-gold/30 rounded-2xl p-4">
+            {categories.map((c) => {
+              const isSelected = applicableCategories.includes(c._id);
+              return (
+                <button
+                  key={c._id}
+                  type="button"
+                  onClick={() => {
+                    const selected = applicableCategories.includes(c._id)
+                      ? applicableCategories.filter(id => id !== c._id)
+                      : [...applicableCategories, c._id];
+                    setApplicableCategories(selected);
+                  }}
+                  className={`px-4 py-2 rounded-full text-xs font-bold transition-all border ${
+                    isSelected
+                      ? 'bg-primary text-white border-primary shadow-sm'
+                      : 'bg-white text-foreground/70 border-gold/30 hover:border-gold/60'
+                  }`}
+                >
+                  {c.name}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-foreground/40 mt-2">Click to select/deselect categories. Leave empty to apply to all categories.</p>
+        </div>
+
+        <div>
+          <ImageUpload 
+            label="Offer Banner Image"
+            imageUrl={imageUrl}
+            imagePublicId={imagePublicId}
+            onChange={(url, pubId) => { setImageUrl(url); setImagePublicId(pubId); }}
+          />
         </div>
 
         <button 

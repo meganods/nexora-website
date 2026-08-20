@@ -22,8 +22,10 @@ export default function AdminLogin() {
     try {
       const { data } = await api.post('/admin/login', { email, password });
       if (data.token) {
+        localStorage.removeItem('nexora_user');
         localStorage.setItem('admin_token', data.token);
         localStorage.setItem('nexora_token', data.token); // Also store as global auth token
+        localStorage.setItem('nexora_role', 'admin');
         router.push('/admin/dashboard');
       } else {
         setError('Login failed. No token received.');

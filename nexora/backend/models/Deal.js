@@ -15,8 +15,10 @@ const dealSchema = new mongoose.Schema({
     default: 'SERVICE',
   },
   serviceId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Service',  default: null },
+  serviceIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Service' }],
   packageId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Package',  default: null },
   categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null },
+  city:       { type: String, default: null },
 
   // Pricing (backend-computed, frontend value is NEVER trusted)
   originalPrice: { type: Number, required: true, min: 0 },

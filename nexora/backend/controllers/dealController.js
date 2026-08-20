@@ -287,7 +287,7 @@ const getMyDeals = asyncHandler(async (req, res) => {
 const createVendorDeal = asyncHandler(async (req, res) => {
   const {
     title, description, imageUrl, imagePublicId,
-    serviceId,
+    serviceId, serviceIds,
     discountType, discountValue,
     startDate, endDate,
     termsAndConditions,
@@ -296,7 +296,12 @@ const createVendorDeal = asyncHandler(async (req, res) => {
   const vendorId = req.user._id;
 
   if (!title) return res.status(400).json({ success: false, message: 'Title is required.' });
-  if (!serviceId) return res.status(400).json({ success: false, message: 'Service is required for vendor deals.' });
+  
+  const finalServiceIds = Array.isArray(serviceIds) ? serviceIds : (serviceId ? [serviceId] : []);
+  if (finalServiceIds.length === 0) {
+    return res.status(400).json({ success: false, message: 'At least one service is required for vendor deals.' });
+  }
+
   if (discountValue === undefined) return res.status(400).json({ success: false, message: 'Discount value is required.' });
 
   // Validate dates
@@ -304,14 +309,14 @@ const createVendorDeal = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'End date cannot be before start date.' });
   }
 
-  // Verify service exists and vendor is eligible
-  const svc = await Service.findById(serviceId);
-  if (!svc || !svc.isActive) {
-    return res.status(404).json({ success: false, message: 'Service not found or inactive.' });
+  // Verify services exist
+  const svcs = await Service.find({ _id: { $in: finalServiceIds }, isActive: true });
+  if (svcs.length === 0) {
+    return res.status(404).json({ success: false, message: 'None of the selected services were found or active.' });
   }
 
-  // Compute final price server-side
-  const originalPrice = svc.basePrice;
+  // Compute final price server-side (sum of all selected services)
+  const originalPrice = svcs.reduce((sum, s) => sum + s.basePrice, 0);
   const finalPrice = computeFinalPrice(originalPrice, discountType || 'PERCENTAGE', Number(discountValue));
 
   const deal = await Deal.create({
@@ -319,8 +324,9 @@ const createVendorDeal = asyncHandler(async (req, res) => {
     imageUrl: imageUrl || null,
     imagePublicId: imagePublicId || null,
     dealType: 'SERVICE',
-    serviceId,
-    categoryId: svc.categoryId || null,
+    serviceId: finalServiceIds[0],
+    serviceIds: finalServiceIds,
+    categoryId: svcs[0].categoryId || null,
     originalPrice,
     discountType: discountType || 'PERCENTAGE',
     discountValue: Number(discountValue),
@@ -348,20 +354,26 @@ const updateVendorDeal = asyncHandler(async (req, res) => {
   const deal = await Deal.findOne({ _id: req.params.id, vendorId });
   if (!deal) return res.status(404).json({ success: false, message: 'Deal not found or not your deal.' });
 
-
   // Vendor cannot change approvalStatus or admin-controlled fields
   const {
     title, description, imageUrl, imagePublicId,
+    serviceId, serviceIds,
     discountType, discountValue,
     startDate, endDate,
     termsAndConditions,
     isActive,
   } = req.body;
 
+  const finalServiceIds = Array.isArray(serviceIds) ? serviceIds : (serviceId ? [serviceId] : (deal.serviceIds && deal.serviceIds.length > 0 ? deal.serviceIds : [deal.serviceId]));
+  if (finalServiceIds.length === 0 || !finalServiceIds[0]) {
+    return res.status(400).json({ success: false, message: 'At least one service is required.' });
+  }
+
   // Re-resolve price
-  const svc = await Service.findById(deal.serviceId);
-  if (!svc) return res.status(404).json({ success: false, message: 'Associated service not found.' });
-  const originalPrice = svc.basePrice;
+  const svcs = await Service.find({ _id: { $in: finalServiceIds } });
+  if (svcs.length === 0) return res.status(404).json({ success: false, message: 'Associated services not found.' });
+  
+  const originalPrice = svcs.reduce((sum, s) => sum + s.basePrice, 0);
   const newDiscountType  = discountType  || deal.discountType;
   const newDiscountValue = discountValue !== undefined ? Number(discountValue) : deal.discountValue;
   const finalPrice = computeFinalPrice(originalPrice, newDiscountType, newDiscountValue);
@@ -378,6 +390,8 @@ const updateVendorDeal = asyncHandler(async (req, res) => {
     description: description !== undefined ? description : deal.description,
     imageUrl: imageUrl !== undefined ? imageUrl : deal.imageUrl,
     imagePublicId: imagePublicId !== undefined ? imagePublicId : deal.imagePublicId,
+    serviceId: finalServiceIds[0],
+    serviceIds: finalServiceIds,
     discountType: newDiscountType,
     discountValue: newDiscountValue,
     finalPrice,
@@ -394,9 +408,8 @@ const updateVendorDeal = asyncHandler(async (req, res) => {
   });
 
   await deal.save();
-  res.json({ success: true, deal, message: 'Deal updated successfully.' });
+  res.json({ success: true, message: 'Deal updated successfully.', deal });
 });
-
 // ════════════════════════════════════════════════════════════════════════════
 //  PUBLIC FUNCTIONS
 // ════════════════════════════════════════════════════════════════════════════
@@ -404,18 +417,32 @@ const updateVendorDeal = asyncHandler(async (req, res) => {
 // @desc   Get all active approved valid deals (public)
 // @route  GET /api/public/deals
 const getPublicDeals = asyncHandler(async (req, res) => {
-  const { categoryId, search, featured, limit, page = 1, sort } = req.query;
+  const { categoryId, search, featured, limit, page = 1, sort, city } = req.query;
   const now = new Date();
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
 
   const filter = {
     isActive: true,
     approvalStatus: 'APPROVED',
-    startDate: { $lte: now },
+    startDate: { $lte: endOfToday },
     $or: [
       { endDate: { $gte: now } },
       { endDate: null },
     ],
   };
+
+  if (city) {
+    // Show deals specifically targeted to this city, or nation-wide deals (no city specified)
+    filter.$and = filter.$and || [];
+    filter.$and.push({
+      $or: [
+        { city: { $regex: new RegExp('^' + city.trim() + '$', 'i') } },
+        { city: null },
+        { city: '' }
+      ]
+    });
+  }
 
   if (categoryId) filter.categoryId = categoryId;
   if (featured === 'true') filter.isFeatured = true;

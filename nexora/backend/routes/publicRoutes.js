@@ -336,25 +336,42 @@ router.get('/partners', async (req, res) => {
 router.get('/partners/:id', async (req, res) => {
   try {
     const partner = await ServicePartner.findOne({ _id: req.params.id, kycStatus: 'APPROVED', isActive: true })
-      .select('name category email phone kycDetails.businessName businessDescription experience teamSize addresses serviceAreas createdAt profilePictureUrl aboutMe skills certifications languages workingHours');
+      .select('name category email phone kycDetails.businessName businessDescription experience teamSize addresses serviceAreas createdAt profilePictureUrl aboutMe skills certifications languages workingHours customServices');
     
     if (!partner) {
       return res.status(404).json({ success: false, message: 'Partner profile not found or currently inactive.' });
     }
 
-    // Fetch active services matching the partner's category
-    const Category = require('../models/Category');
-    const matchedCategory = await Category.findOne({ name: { $regex: new RegExp(`^${partner.category}$`, 'i') } });
-    
-    let services = [];
-    if (matchedCategory) {
-      services = await Service.find({
-        categoryId: matchedCategory._id,
-        isActive: true,
-        approvalStatus: 'APPROVED',
-        isDeleted: false
-      }).select('name slug basePrice discountPercentage estimatedDurationMins imageUrl description rating reviewCount');
-    }
+    // Create a map of active selected standard services
+    const customServiceMap = {};
+    (partner.customServices || []).forEach(cs => {
+      if (cs.serviceId && cs.isActive !== false) {
+        customServiceMap[cs.serviceId.toString()] = cs;
+      }
+    });
+
+    const selectedServiceIds = Object.keys(customServiceMap);
+
+    const dbServices = await Service.find({
+      $or: [
+        { _id: { $in: selectedServiceIds } },
+        { vendorId: partner._id }
+      ],
+      isActive: true,
+      approvalStatus: 'APPROVED',
+      isDeleted: false
+    }).select('name slug basePrice discountPercentage estimatedDurationMins imageUrl description rating reviewCount vendorId');
+
+    const services = dbServices.map(s => {
+      const custom = customServiceMap[s._id.toString()];
+      if (custom && custom.customPrice !== null && custom.customPrice !== undefined) {
+        return {
+          ...s.toObject(),
+          basePrice: custom.customPrice
+        };
+      }
+      return s;
+    });
 
     // Fetch approved customer reviews
     const reviews = await Review.find({

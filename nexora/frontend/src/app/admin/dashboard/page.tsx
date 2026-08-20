@@ -3150,7 +3150,6 @@ function AdminDashboardContent() {
                           <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Offer</th>
                           <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Discount</th>
                           <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Source</th>
-                          <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Approval</th>
                           <th className="text-left px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
                           <th className="text-right px-6 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
                         </tr></thead>
@@ -3164,8 +3163,16 @@ function AdminDashboardContent() {
                             <td className="px-6 py-4">{o.discountType === 'PERCENTAGE' ? `${o.discountValue}%` : `₹${o.discountValue}`}</td>
                             <td className="px-6 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${o.source === 'ADMIN' ? 'bg-primary/10 text-primary' : 'bg-purple-100 text-purple-700'}`}>{o.source}</span></td>
                             <td className="px-6 py-4">
-                              <div className="flex flex-wrap gap-1">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${o.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-700' : o.approvalStatus === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}`}>{o.approvalStatus}</span>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  o.approvalStatus === 'APPROVED'
+                                    ? (o.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')
+                                    : (o.approvalStatus === 'REJECTED' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-700')
+                                }`}>
+                                  {o.approvalStatus === 'APPROVED'
+                                    ? (o.isActive ? 'Active' : 'Inactive')
+                                    : (o.approvalStatus === 'REJECTED' ? 'Rejected' : 'Pending Approval')}
+                                </span>
                                 {o.source === 'VENDOR' && o.approvalStatus === 'PENDING' && (
                                   <div className="flex gap-1">
                                     <button onClick={async () => { await api.post(`/admin/offers/${o._id}/review`, { action: 'approve' }); fetchOffers(); }} className="text-[10px] px-2 py-0.5 bg-green-500 text-white rounded-full font-bold hover:bg-green-600">Approve</button>
@@ -3174,7 +3181,6 @@ function AdminDashboardContent() {
                                 )}
                               </div>
                             </td>
-                            <td className="px-6 py-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${o.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{o.isActive ? 'Active' : 'Off'}</span></td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-2 justify-end">
                                 <button onClick={() => router.push(`/admin/offers/${o._id}/edit`)} className="p-2 rounded-xl bg-cream hover:bg-beige"><Edit2 className="w-4 h-4 text-primary" /></button>
@@ -3321,7 +3327,6 @@ function AdminDashboardContent() {
                           <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Type</th>
                           <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Price</th>
                           <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Discount</th>
-                          <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Approval</th>
                           <th className="text-left px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Status</th>
                           <th className="text-right px-4 py-3 text-xs font-bold text-foreground/50 uppercase">Actions</th>
                         </tr></thead>
@@ -3346,21 +3351,26 @@ function AdminDashboardContent() {
                               </td>
                               <td className="px-4 py-4 font-semibold text-red-500">{d.discountType === 'PERCENTAGE' ? `${d.discountValue}% OFF` : `₹${d.discountValue} OFF`}</td>
                               <td className="px-4 py-4">
-                                <div className="flex flex-col gap-1">
-                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-fit ${d.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-700' : d.approvalStatus === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}`}>{d.approvalStatus}</span>
-                                  {d.vendorId && d.approvalStatus === 'PENDING' && (
-                                    <div className="flex gap-1">
-                                      <button onClick={async () => { await api.patch(`/admin/deals/${d._id}/review`, { action: 'approve' }); fetchDeals(); }} className="text-[10px] px-2 py-0.5 bg-green-500 text-white rounded-full font-bold hover:bg-green-600">Approve</button>
-                                      <button onClick={async () => { const r = prompt('Rejection reason?'); if (r !== null) { await api.patch(`/admin/deals/${d._id}/review`, { action: 'reject', rejectionReason: r }); fetchDeals(); } }} className="text-[10px] px-2 py-0.5 bg-red-500 text-white rounded-full font-bold hover:bg-red-600">Reject</button>
-                                    </div>
-                                  )}
+                                <div className="flex flex-col gap-1.5">
+                                  <div className="flex flex-wrap items-center gap-1">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                      d.approvalStatus === 'APPROVED'
+                                        ? (d.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')
+                                        : (d.approvalStatus === 'REJECTED' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-700')
+                                    }`}>
+                                      {d.approvalStatus === 'APPROVED'
+                                        ? (d.isActive ? 'Active' : 'Inactive')
+                                        : (d.approvalStatus === 'REJECTED' ? 'Rejected' : 'Pending Approval')}
+                                    </span>
+                                    {isExpired && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-600">Expired</span>}
+                                    {d.vendorId && d.approvalStatus === 'PENDING' && (
+                                      <div className="flex gap-1">
+                                        <button onClick={async () => { await api.patch(`/admin/deals/${d._id}/review`, { action: 'approve' }); fetchDeals(); }} className="text-[10px] px-2 py-0.5 bg-green-500 text-white rounded-full font-bold hover:bg-green-600">Approve</button>
+                                        <button onClick={async () => { const r = prompt('Rejection reason?'); if (r !== null) { await api.patch(`/admin/deals/${d._id}/review`, { action: 'reject', rejectionReason: r }); fetchDeals(); } }} className="text-[10px] px-2 py-0.5 bg-red-500 text-white rounded-full font-bold hover:bg-red-600">Reject</button>
+                                      </div>
+                                    )}
+                                  </div>
                                   {d.rejectionReason && <p className="text-[10px] text-red-500 italic">{d.rejectionReason}</p>}
-                                </div>
-                              </td>
-                              <td className="px-4 py-4">
-                                <div className="flex flex-col gap-1">
-                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-fit ${d.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{d.isActive ? 'Active' : 'Inactive'}</span>
-                                  {isExpired && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full w-fit bg-orange-100 text-orange-600">Expired</span>}
                                 </div>
                               </td>
                               <td className="px-4 py-4">
