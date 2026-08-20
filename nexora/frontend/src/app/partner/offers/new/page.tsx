@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Percent, ArrowLeft, Loader2, AlertTriangle } from 'lucide-react';
 import api from '@/lib/api';
@@ -14,9 +14,16 @@ export default function PartnerNewOfferPage() {
   const [discountValue, setDiscountValue] = useState<number>(0);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [applicableCategories, setApplicableCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+
+  useEffect(() => {
+    api.get('/admin/categories').then(r => setCategories(r.data.categories || r.data || [])).catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +37,8 @@ export default function PartnerNewOfferPage() {
         discountType,
         discountValue,
         startDate: startDate ? new Date(startDate) : new Date(),
-        endDate: endDate ? new Date(endDate) : null
+        endDate: endDate ? new Date(endDate) : null,
+        applicableCategories,
       };
 
       const { data } = await api.post('/partner/offers', payload);
@@ -117,6 +125,22 @@ export default function PartnerNewOfferPage() {
               className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none"
             />
           </div>
+        </div>
+
+        {/* Applicable Categories */}
+        <div>
+          <label className="block text-xs font-bold text-foreground/75 mb-1.5 uppercase tracking-wider">Applicable Category</label>
+          <select
+            multiple
+            value={applicableCategories}
+            onChange={e => setApplicableCategories(Array.from(e.target.selectedOptions).map(o => o.value))}
+            className="w-full px-4 py-2.5 rounded-xl border border-gold/30 focus:outline-none min-h-[100px]"
+          >
+            {categories.map(c => (
+              <option key={c._id} value={c._id}>{c.name}</option>
+            ))}
+          </select>
+          <p className="text-[11px] text-foreground/40 mt-1">Hold Ctrl / Cmd to select multiple. Leave empty to apply to all categories.</p>
         </div>
 
         <button 

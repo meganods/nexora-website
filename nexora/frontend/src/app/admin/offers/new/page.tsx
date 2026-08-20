@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2, AlertTriangle } from 'lucide-react';
 import AdminPageLayout from '../../_components/AdminPageLayout';
-import ImageUpload from '../../_components/ImageUpload';
 import api from '@/lib/api';
 
 const inp = 'w-full border border-[#C3AB84]/30 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#0F3D30] bg-[#F8F4EE] transition-colors';
@@ -17,13 +16,10 @@ export default function NewOfferPage() {
   const [success, setSuccess] = useState('');
 
   const [categories, setCategories] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
 
   const [form, setForm] = useState({
     title: '',
     description: '',
-    imageUrl: '',
-    imagePublicId: '',
     discountType: 'PERCENTAGE',
     discountValue: '',
     startDate: '',
@@ -31,12 +27,10 @@ export default function NewOfferPage() {
     isActive: true,
     isFeatured: false,
     applicableCategories: [] as string[],
-    applicableServices: [] as string[],
   });
 
   useEffect(() => {
     api.get('/admin/categories').then(r => setCategories(r.data.categories || r.data || [])).catch(() => {});
-    api.get('/admin/services?limit=1000').then(r => setServices(r.data.services || r.data || [])).catch(() => {});
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,22 +57,9 @@ export default function NewOfferPage() {
     } finally { setSaving(false); }
   };
 
-  const toggleCategory = (catId: string) => {
-    setForm(p => ({
-      ...p,
-      applicableCategories: p.applicableCategories.includes(catId)
-        ? p.applicableCategories.filter(id => id !== catId)
-        : [...p.applicableCategories, catId]
-    }));
-  };
-
-  const toggleService = (svcId: string) => {
-    setForm(p => ({
-      ...p,
-      applicableServices: p.applicableServices.includes(svcId)
-        ? p.applicableServices.filter(id => id !== svcId)
-        : [...p.applicableServices, svcId]
-    }));
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = Array.from(e.target.selectedOptions).map(o => o.value);
+    setForm(p => ({ ...p, applicableCategories: selected }));
   };
 
   return (
@@ -119,47 +100,22 @@ export default function NewOfferPage() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className={lbl}>Applicable Categories</label>
-              <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-3 border border-gold/20 rounded-2xl bg-cream/10">
-                {categories.map(c => {
-                  const sel = form.applicableCategories.includes(c._id);
-                  return (
-                    <button type="button" key={c._id} onClick={() => toggleCategory(c._id)}
-                      className={`text-xs px-3 py-1.5 rounded-full font-semibold border transition-all ${sel ? 'bg-primary text-white border-primary shadow-sm' : 'border-gold/25 text-foreground/60 hover:bg-cream'}`}>
-                      {c.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <label className={lbl}>Applicable Services</label>
-              <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-3 border border-gold/20 rounded-2xl bg-cream/10">
-                {services.map(s => {
-                  const sel = form.applicableServices.includes(s._id);
-                  return (
-                    <button type="button" key={s._id} onClick={() => toggleService(s._id)}
-                      className={`text-xs px-3 py-1.5 rounded-full font-semibold border transition-all ${sel ? 'bg-primary text-white border-primary shadow-sm' : 'border-gold/25 text-foreground/60 hover:bg-cream'}`}>
-                      {s.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          {/* Applicable Categories — multi-select dropdown */}
+          <div>
+            <label className={lbl}>Applicable Categories</label>
+            <select
+              multiple
+              value={form.applicableCategories}
+              onChange={handleCategoryChange}
+              className={`${inp} min-h-[120px]`}
+            >
+              {categories.map(c => (
+                <option key={c._id} value={c._id}>{c.name}</option>
+              ))}
+            </select>
+            <p className="text-[11px] text-foreground/40 mt-1.5">Hold Ctrl / Cmd to select multiple categories. Leave empty to apply to all.</p>
           </div>
 
-          <div className="pt-2">
-            <ImageUpload
-              imageUrl={form.imageUrl}
-              imagePublicId={form.imagePublicId}
-              onChange={(url, pid) => setForm(p => ({ ...p, imageUrl: url, imagePublicId: pid }))}
-              label="Offer Image"
-              folder="nexora/offers"
-            />
-          </div>
 
           <div className="flex gap-8 pt-2">
             <label className="flex items-center gap-3 cursor-pointer w-fit">
