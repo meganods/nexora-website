@@ -173,8 +173,8 @@ export default function CategoryDetailPage() {
         {/* Dynamic Banner Image Background */}
         {(category.bannerImageUrl || category.imageUrl) ? (
           <div className="absolute inset-0">
-            <img src={category.bannerImageUrl || category.imageUrl} alt={category.name} className="w-full h-full object-cover opacity-20" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0F3D30] via-[#0F3D30]/90 to-transparent" />
+            <img src={category.bannerImageUrl || category.imageUrl} alt={category.name} className="w-full h-full object-cover opacity-80" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0F3D30]/95 via-[#0F3D30]/80 to-transparent" />
           </div>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-[#0F3D30] to-[#041d16] opacity-90" />
