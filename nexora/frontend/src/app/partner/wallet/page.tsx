@@ -115,7 +115,7 @@ export default function PartnerWalletPage() {
             <CheckCircle2 className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-gold uppercase tracking-wider">Jobs Completed</p>
+            <p className="text-[10px] font-bold text-gold uppercase tracking-wider">Bookings Completed</p>
             <p className="font-serif text-xl font-bold text-primary">{completedCount}</p>
           </div>
         </div>
