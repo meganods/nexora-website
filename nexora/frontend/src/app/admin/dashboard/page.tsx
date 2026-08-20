@@ -1094,7 +1094,9 @@ function AdminDashboardContent() {
   const fetchServices = async () => {
     setServicesLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(servicesPage), limit: '15' });
+      // Use large limit for sub_services to show all of them
+      const limitVal = activeTab === 'sub_services' ? '1000' : '15';
+      const params = new URLSearchParams({ page: String(servicesPage), limit: limitVal });
       if (serviceCatFilter) params.set('categoryId', serviceCatFilter);
       if (serviceSearch) params.set('q', serviceSearch);
 

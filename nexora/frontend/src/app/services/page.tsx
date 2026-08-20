@@ -54,6 +54,7 @@ function ServicesList() {
   const router = useRouter();
   const categoryFilter = searchParams.get('category');
   const searchQuery = searchParams.get('q');
+  const sortParam = searchParams.get('sort') || 'popular';
   const { selectedCity } = useLocation();
 
   const [services, setServices] = useState<any[]>([]);
@@ -61,7 +62,7 @@ function ServicesList() {
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState(searchQuery || '');
   const [selectedCategory, setSelectedCategory] = useState(categoryFilter || '');
-  const [sortBy, setSortBy] = useState('popular');
+  const [sortBy, setSortBy] = useState(sortParam);
   const [allServices, setAllServices] = useState<any[]>([]);
 
   // Filter States
@@ -83,10 +84,11 @@ function ServicesList() {
   useEffect(() => {
     setSearchInput(searchQuery || '');
     setSelectedCategory(categoryFilter || '');
+    setSortBy(sortParam);
     if (allServices.length > 0) {
-      applyFilters(allServices, categoryFilter || '', searchQuery || '', sortBy, priceRange, minRating, availability);
+      applyFilters(allServices, categoryFilter || '', searchQuery || '', sortParam, priceRange, minRating, availability);
     }
-  }, [searchQuery, categoryFilter, allServices]);
+  }, [searchQuery, categoryFilter, sortParam, allServices]);
 
   const fetchWishlist = async () => {
     try {
@@ -110,7 +112,7 @@ function ServicesList() {
       ]);
       setAllServices(svcRes.data || []);
       setCategories(catRes.data || []);
-      applyFilters(svcRes.data || [], categoryFilter || '', searchQuery || '', sortBy, [0, Infinity], null, 'any');
+      applyFilters(svcRes.data || [], categoryFilter || '', searchQuery || '', sortParam, [0, Infinity], null, 'any');
     } catch (err) {
       console.error('Failed to load services', err);
     } finally {
