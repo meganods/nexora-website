@@ -35,7 +35,7 @@ export default function RootLayout({
       className={`${inter.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
-        <GoogleOAuthProvider clientId="43818320492-c1h38v893a0b12c8n2b23a9d.apps.googleusercontent.com">
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "43818320492-c1h38v893a0b12c8n2b23a9d.apps.googleusercontent.com"}>
           <AuthProvider>
             <LocationProvider>
               <LayoutWrapper>
