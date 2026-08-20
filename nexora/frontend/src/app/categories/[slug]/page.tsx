@@ -184,7 +184,7 @@ export default function CategoryDetailPage() {
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
 
             {/* Left side info panel */}
-            <div className="w-full lg:w-7/12 space-y-6">
+            <div className="w-full space-y-6">
               <div className="flex items-center gap-2 text-white/50 text-[10px] uppercase font-bold tracking-wider">
                 <Link href="/" className="hover:text-[#C3AB84] transition-colors">Home</Link>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -232,48 +232,6 @@ export default function CategoryDetailPage() {
               >
                 Explore Services <ArrowRight className="w-3.5 h-3.5" />
               </button>
-            </div>
-
-            {/* Right side trust box (Desktop Only) */}
-            <div className="hidden lg:block lg:w-4/12 flex-shrink-0">
-              <div className="bg-[#0F3D30] border border-[#C3AB84]/20 rounded-3xl p-6 space-y-5 shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-[#C3AB84]/5 rounded-bl-full pointer-events-none" />
-                <h3 className="font-serif text-base font-bold text-[#C3AB84] flex items-center gap-2 border-b border-[#C3AB84]/10 pb-3">
-                  <ShieldCheck className="w-5 h-5" /> Nexora Trust
-                </h3>
-
-                <div className="space-y-4">
-                  <div className="flex gap-3">
-                    <Shield className="w-4 h-4 text-[#C3AB84] shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="text-xs font-bold text-[#FAF6F0]">Verified Specialists</h4>
-                      <p className="text-[10px] text-[#FAF6F0]/60 mt-0.5 leading-normal">
-                        Every technician undergoes a background check and certification check.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Award className="w-4 h-4 text-[#C3AB84] shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="text-xs font-bold text-[#FAF6F0]">Satisfaction Promised</h4>
-                      <p className="text-[10px] text-[#FAF6F0]/60 mt-0.5 leading-normal">
-                        Not happy with output? We will fix it at no additional cost.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Clock className="w-4 h-4 text-[#C3AB84] shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="text-xs font-bold text-[#FAF6F0]">On-time Service</h4>
-                      <p className="text-[10px] text-[#FAF6F0]/60 mt-0.5 leading-normal">
-                        We value your time. Certified professionals deliver as scheduled.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
 
           </div>
