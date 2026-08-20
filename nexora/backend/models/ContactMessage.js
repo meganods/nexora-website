@@ -27,6 +27,15 @@ const contactMessageSchema = new mongoose.Schema(
       enum: ["UNREAD", "READ", "REPLIED"],
       default: "UNREAD",
     },
+    adminReply: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    repliedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

@@ -1129,6 +1129,69 @@ const updateContactMessageStatus = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, message: "Status updated successfully", data: message });
 });
 
+// @desc    Reply to Contact Message
+// @route   POST /api/admin/contact-messages/:id/reply
+// @access  Private (admin roles)
+const replyToContactMessage = asyncHandler(async (req, res) => {
+  const { reply } = req.body;
+  if (!reply || !reply.trim()) {
+    return res.status(400).json({ success: false, message: "Reply message is required" });
+  }
+
+  const ContactMessage = require("../models/ContactMessage");
+  const message = await ContactMessage.findById(req.params.id);
+  if (!message) {
+    return res.status(404).json({ success: false, message: "Message not found" });
+  }
+
+  // Send reply email
+  const { sendOTP } = require("../services/emailService");
+  // We reuse sendGenericEmail logic via a raw fetch to Resend (or fallback)
+  const htmlBody = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #0F3D30; padding: 20px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 22px;">Nexora Premium Services</h1>
+      </div>
+      <div style="padding: 30px; background-color: #fcfcfc;">
+        <h2 style="color: #333; margin-top: 0;">Reply from Nexora Team</h2>
+        <p style="color: #555; font-size: 15px; line-height: 1.7;">${reply.replace(/\n/g, '<br/>')}</p>
+        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 24px 0;" />
+        <p style="color: #888; font-size: 12px;">This is a reply to your message: <em>${message.subject}</em></p>
+      </div>
+      <div style="background-color: #f5f5f5; padding: 15px; text-align: center; border-top: 1px solid #e0e0e0;">
+        <p style="color: #999; font-size: 12px; margin: 0;">&copy; ${new Date().getFullYear()} Nexora. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+
+  let emailSent = false;
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.RESEND_API_KEY}` },
+        body: JSON.stringify({
+          from: `Nexora Support <${fromEmail}>`,
+          to: [message.email],
+          subject: `Re: ${message.subject}`,
+          html: htmlBody,
+        }),
+      });
+      const resData = await response.json();
+      emailSent = response.ok && !!resData.id;
+      if (!emailSent) console.error("[Contact Reply] Resend error:", resData);
+    } catch (e) { console.error("[Contact Reply] Resend fetch error:", e.message); }
+  }
+
+  message.status = "REPLIED";
+  message.adminReply = reply;
+  message.repliedAt = new Date();
+  await message.save();
+
+  res.status(200).json({ success: true, message: emailSent ? "Reply sent successfully" : "Reply saved (email delivery may have failed)", data: message });
+});
+
 module.exports = {
   getPendingCounts,
   loginAdmin,
@@ -1169,5 +1232,6 @@ module.exports = {
   deleteVendorReply,
   getContactMessages,
   updateContactMessageStatus,
+  replyToContactMessage,
 };
 

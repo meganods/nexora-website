@@ -39,6 +39,7 @@ const {
   deleteVendorReply,
   getContactMessages,
   updateContactMessageStatus,
+  replyToContactMessage,
 } = require("../controllers/adminController");
 
 const {
@@ -196,6 +197,7 @@ router.delete("/tickets/:ticketId/messages/:messageId", protect, authorize("supe
 // ─── Contact Messages ─────────────────────────────────────────────────────────
 router.get("/contact-messages", protect, authorize("super_admin", "admin", "support"), getContactMessages);
 router.put("/contact-messages/:id/status", protect, authorize("super_admin", "admin"), updateContactMessageStatus);
+router.post("/contact-messages/:id/reply", protect, authorize("super_admin", "admin"), replyToContactMessage);
 
 // ─── Wallet & Payouts (Admin) ─────────────────────────────────────────────────
 router.get("/wallet/balances", protect, authorize("super_admin", "admin"), getWalletBalances);
