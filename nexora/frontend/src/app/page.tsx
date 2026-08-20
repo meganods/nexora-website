@@ -463,20 +463,23 @@ function CategoryServiceSection({
   onToggleWishlist?: (id: string, name: string) => void;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
 
-  const slide = (direction: 'left' | 'right') => {
-    if (rowRef.current) {
-      const scrollAmt = direction === 'left' ? -350 : 350;
-      rowRef.current.scrollBy({ left: scrollAmt, behavior: 'smooth' });
-    }
-  };
-
-  const handleScroll = () => {
-    if (rowRef.current) {
-      setCanScrollLeft(rowRef.current.scrollLeft > 0);
-    }
-  };
+  // Auto-scroll every 3 seconds
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el || services.length < 2) return;
+    const cardWidth = el.querySelector('div')?.offsetWidth || 220;
+    const interval = setInterval(() => {
+      if (!el) return;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (el.scrollLeft >= maxScroll - 4) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: cardWidth + 16, behavior: 'smooth' });
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [services]);
 
   return (
     <div className="py-6 border-b border-gold/10 last:border-0 relative group">
@@ -498,32 +501,10 @@ function CategoryServiceSection({
         </div>
       </div>
 
-      {/* Slider view container with centered absolute overlay arrow buttons */}
+      {/* Slider view container */}
       <div className="relative px-2">
-        {/* Left arrow — only visible after scrolling */}
-        {canScrollLeft && services && services.length >= 4 && (
-          <button
-            onClick={() => slide('left')}
-            className="absolute left-[-5px] sm:left-[-20px] top-[96px] -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white border border-gold/30 rounded-full hover:bg-beige text-primary transition-all shadow-md group-hover:scale-105"
-            aria-label="Slide Left"
-          >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-        )}
-
-        {services && services.length >= 4 && (
-          <button
-            onClick={() => slide('right')}
-            className="absolute right-[-5px] sm:right-[-20px] top-[96px] -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white border border-gold/30 rounded-full hover:bg-beige text-primary transition-all shadow-md group-hover:scale-105"
-            aria-label="Slide Right"
-          >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-        )}
-
         <div
           ref={rowRef}
-          onScroll={handleScroll}
           className="flex overflow-x-auto gap-4 pb-4 scrollbar-none snap-x snap-mandatory scroll-smooth"
         >
           {services.slice(0, 8).map((service, idx) => (
