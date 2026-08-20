@@ -1329,54 +1329,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* ══════════════════════════════════════════════════════════
-          3.5.5. CUSTOM VALUE BANNER
-      ══════════════════════════════════════════════════════════ */}
-      <section className="py-8 px-4 sm:px-6 lg:px-8 bg-cream">
-        <div className="max-w-7xl mx-auto">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary to-[#18483B] text-white p-8 sm:p-12 shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="absolute inset-0 opacity-5 pointer-events-none">
-              <svg width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <pattern id="pattern" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <circle cx="20" cy="20" r="1" fill="white" />
-                </pattern>
-                <rect width="100%" height="100%" fill="url(#pattern)" />
-              </svg>
-            </div>
 
-            <div className="relative z-10 max-w-xl text-center md:text-left">
-              <span className="inline-block bg-gold/20 text-gold text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3">
-                {promoCardData ? promoCardData.badge : 'Nexora Premium'}
-              </span>
-              <h3 className="font-serif text-2xl sm:text-3xl font-bold mb-2">
-                {promoCardData ? promoCardData.heading : 'Get Flat ₹150 Off on Your Next Booking!'}
-              </h3>
-              <p className="text-white/80 text-xs sm:text-sm">
-                {promoCardData ? promoCardData.sub : 'Experience top-rated verified home services. Use the code below during checkout to claim your first reward.'}
-              </p>
-            </div>
-
-            <div className="relative z-10 flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-              <div 
-                className="bg-white/10 border border-white/20 px-6 py-3 rounded-2xl font-mono text-lg font-bold tracking-widest text-gold text-center w-full sm:w-auto cursor-pointer hover:bg-white/20 transition-colors"
-                onClick={() => {
-                  navigator.clipboard.writeText(promoCardData ? promoCardData.code : 'NEXORA150');
-                  toast.success('Promo code copied!');
-                }}
-                title="Click to copy"
-              >
-                {promoCardData ? promoCardData.code : 'NEXORA150'}
-              </div>
-              <Link
-                href={promoCardData ? promoCardData.href : '/services'}
-                className="px-6 py-3.5 bg-gold text-primary hover:bg-gold/90 transition-all font-bold text-sm rounded-full w-full sm:w-auto text-center shadow-md active:scale-95"
-              >
-                {promoCardData ? promoCardData.cta : 'Book Service'}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ══════════════════════════════════════════════════════════
           3.6.  SERVICES BY CATEGORY SECTION

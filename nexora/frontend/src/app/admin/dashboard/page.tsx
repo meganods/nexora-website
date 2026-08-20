@@ -4078,23 +4078,7 @@ function AdminDashboardContent() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-3xl border border-gold/20 shadow-sm p-6 sm:p-8">
-                  <h2 className="font-serif text-xl font-bold text-primary mb-6">Promotional Banner</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground/70 mb-2">Coupon Code</label>
-                      <input type="text" value={(localSettings as any).promoCode || ''}
-                        onChange={e => setLocalSettings(p => ({ ...p, promoCode: e.target.value } as any))}
-                        placeholder="NEXORA10" className="w-full border border-gold/30 rounded-2xl px-4 py-3 text-sm bg-cream focus:outline-none focus:border-primary" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-foreground/70 mb-2">Banner Description</label>
-                      <input type="text" value={(localSettings as any).promoText || ''}
-                        onChange={e => setLocalSettings(p => ({ ...p, promoText: e.target.value } as any))}
-                        placeholder="ONLINE BOOKING 10% OFF" className="w-full border border-gold/30 rounded-2xl px-4 py-3 text-sm bg-cream focus:outline-none focus:border-primary" />
-                    </div>
-                  </div>
-                </div>
+
 
 
                 <button onClick={handleSaveSettings} disabled={settingsSaving || Math.abs(weightsSum - 100) > 0.01}

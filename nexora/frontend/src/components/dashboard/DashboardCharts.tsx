@@ -82,7 +82,7 @@ export default function DashboardCharts({
     }
 
     if (timeframe === 'week') {
-      const days = [];
+      const days: { dateStr: string; label: string; value: number }[] = [];
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
