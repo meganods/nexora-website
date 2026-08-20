@@ -462,7 +462,7 @@ function ServicesList() {
                   {sortDropdownOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setSortDropdownOpen(false)} />
-                      <div className="absolute right-0 sm:left-auto sm:right-0 mt-8 w-48 bg-white border border-[#C3AB84]/20 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5 animate-in fade-in slide-in-from-top-1 duration-100">
+                      <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-[#C3AB84]/30 rounded-2xl shadow-xl z-50 overflow-hidden py-0 animate-in fade-in slide-in-from-top-1 duration-100 divide-y divide-[#C3AB84]/5">
                         {[
                           { value: "popular", label: "Popularity" },
                           { value: "rating", label: "Rating" },
@@ -479,7 +479,7 @@ function ServicesList() {
                               setSortDropdownOpen(false);
                               applyFilters(allServices, selectedCategory, searchInput, opt.value, priceRange, minRating, availability);
                             }}
-                            className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors ${sortBy === opt.value ? 'bg-[#0F3D30] text-white' : 'text-foreground/75 hover:bg-[#FAF6F0]'}`}
+                            className={`w-full text-left px-5 py-3 text-[13px] font-bold transition-all ${sortBy === opt.value ? 'bg-[#0F3D30] text-white' : 'text-foreground/75 hover:bg-[#FAF6F0] hover:text-[#0F3D30]'}`}
                           >
                             {opt.label}
                           </button>
@@ -537,29 +537,6 @@ function ServicesList() {
                                 {service.discountPercentage}% OFF
                               </span>
                             )}
-                            {service.isMostBooked && (
-                              <span className="bg-[#0F3D30] text-[#C3AB84] text-[6px] sm:text-[8px] font-bold px-1.5 py-0.5 rounded sm:rounded-md shadow-sm uppercase tracking-wider w-fit">
-                                Most Booked
-                              </span>
-                            )}
-                            {service.isPopular && (
-                              <span className="bg-amber-500 text-white text-[6px] sm:text-[8px] font-bold px-1.5 py-0.5 rounded sm:rounded-md shadow-sm uppercase tracking-wider w-fit">
-                                Trending
-                              </span>
-                            )}
-                            {service.newArrival && (
-                              <span className="bg-blue-600 text-white text-[6px] sm:text-[8px] font-bold px-1.5 py-0.5 rounded sm:rounded-md shadow-sm uppercase tracking-wider w-fit">
-                                New
-                              </span>
-                            )}
-                            {service.isFeatured && (
-                              <span className="bg-[#C3AB84] text-[#0F3D30] text-[6px] sm:text-[8px] font-bold px-1.5 py-0.5 rounded sm:rounded-md shadow-sm uppercase tracking-wider w-fit">
-                                Featured
-                              </span>
-                            )}
-                            <span className="bg-emerald-600 text-white text-[6px] sm:text-[8px] font-bold px-1.5 py-0.5 rounded sm:rounded-md shadow-sm uppercase tracking-wider w-fit">
-                              {service.name.length % 2 === 0 ? 'Available Today' : 'Available Tomorrow'}
-                            </span>
                           </div>
                         </div>
 

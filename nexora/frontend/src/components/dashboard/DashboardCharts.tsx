@@ -18,6 +18,7 @@ interface ChartDataPoint {
 }
 
 interface DashboardChartsProps {
+  bookings?: any[];
   revenueData?: ChartDataPoint[];
   bookingData?: ChartDataPoint[];
   categoryData?: { name: string; percentage: number; color: string }[];
@@ -31,6 +32,7 @@ const TIMEFRAME_LABELS = {
 };
 
 export default function DashboardCharts({
+  bookings = [],
   revenueData,
   bookingData,
   categoryData
@@ -48,6 +50,109 @@ export default function DashboardCharts({
     setMounted(true);
   }, []);
 
+  const aggregateData = (timeframe: 'today' | 'week' | 'month' | 'year', type: 'revenue' | 'booking') => {
+    if (!bookings || bookings.length === 0) {
+      return type === 'revenue' ? (revenueData || []) : (bookingData || []);
+    }
+
+    const now = new Date();
+    
+    if (timeframe === 'today') {
+      const intervals = [
+        { label: '12 AM', start: 0, end: 4, value: 0 },
+        { label: '4 AM', start: 4, end: 8, value: 0 },
+        { label: '8 AM', start: 8, end: 12, value: 0 },
+        { label: '12 PM', start: 12, end: 16, value: 0 },
+        { label: '4 PM', start: 16, end: 20, value: 0 },
+        { label: '8 PM', start: 20, end: 24, value: 0 },
+      ];
+      bookings.forEach(b => {
+        const d = new Date(b.createdAt);
+        if (d.toDateString() === now.toDateString()) {
+          const hour = d.getHours();
+          const match = intervals.find(i => hour >= i.start && hour < i.end);
+          if (match) {
+            match.value += type === 'revenue' 
+              ? (b.status === 'COMPLETED' ? (b.paymentDetails?.amount || b.totalAmount || 0) : 0)
+              : 1;
+          }
+        }
+      });
+      return intervals.map(i => ({ label: i.label, value: i.value }));
+    }
+
+    if (timeframe === 'week') {
+      const days = [];
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(now.getDate() - i);
+        days.push({
+          dateStr: d.toDateString(),
+          label: dayNames[d.getDay()],
+          value: 0
+        });
+      }
+      bookings.forEach(b => {
+        const d = new Date(b.createdAt);
+        const match = days.find(day => d.toDateString() === day.dateStr);
+        if (match) {
+          match.value += type === 'revenue'
+            ? (b.status === 'COMPLETED' ? (b.paymentDetails?.amount || b.totalAmount || 0) : 0)
+            : 1;
+        }
+      });
+      return days.map(d => ({ label: d.label, value: d.value }));
+    }
+
+    if (timeframe === 'month') {
+      const weeks = [
+        { label: 'Week 1', start: 1, end: 7, value: 0 },
+        { label: 'Week 2', start: 8, end: 14, value: 0 },
+        { label: 'Week 3', start: 15, end: 21, value: 0 },
+        { label: 'Week 4', start: 22, end: 32, value: 0 },
+      ];
+      bookings.forEach(b => {
+        const d = new Date(b.createdAt);
+        if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+          const date = d.getDate();
+          const match = weeks.find(w => date >= w.start && date <= w.end);
+          if (match) {
+            match.value += type === 'revenue'
+              ? (b.status === 'COMPLETED' ? (b.paymentDetails?.amount || b.totalAmount || 0) : 0)
+              : 1;
+          }
+        }
+      });
+      return weeks.map(w => ({ label: w.label, value: w.value }));
+    }
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = Array.from({ length: 6 }).map((_, i) => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      return {
+        monthNum: d.getMonth(),
+        year: d.getFullYear(),
+        label: `${monthNames[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`,
+        value: 0
+      };
+    }).reverse();
+
+    bookings.forEach(b => {
+      const d = new Date(b.createdAt);
+      const m = d.getMonth();
+      const y = d.getFullYear();
+      const match = months.find(p => p.monthNum === m && p.year === y);
+      if (match) {
+        match.value += type === 'revenue'
+          ? (b.status === 'COMPLETED' ? (b.paymentDetails?.amount || b.totalAmount || 0) : 0)
+          : 1;
+      }
+    });
+    return months.map(m => ({ label: m.label, value: m.value }));
+  };
+
   if (!mounted) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -58,19 +163,8 @@ export default function DashboardCharts({
     );
   }
 
-  // Get active dataset based on selection
-  const getRevenueDataset = () => {
-    if (revenueData && revenueData.length > 0) return revenueData;
-    return [];
-  };
-
-  const getBookingDataset = () => {
-    if (bookingData && bookingData.length > 0) return bookingData;
-    return [];
-  };
-
-  const activeRevenueData = getRevenueDataset();
-  const activeBookingData = getBookingDataset();
+  const activeRevenueData = aggregateData(revenueTimeframe, 'revenue');
+  const activeBookingData = aggregateData(bookingTimeframe, 'booking');
 
   const activeCategoryData = categoryData && categoryData.length > 0
     ? categoryData.map(c => ({ name: c.name, value: c.percentage, color: c.color }))

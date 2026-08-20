@@ -616,6 +616,7 @@ function AdminDashboardContent() {
   const [reportBookings, setReportBookings] = useState<any[]>([]);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportDateFilter, setReportDateFilter] = useState('30'); // '7', '30', 'all'
+  const [isReportDateDropdownOpen, setIsReportDateDropdownOpen] = useState(false);
 
   // Mobile sidebar
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -2800,16 +2801,44 @@ function AdminDashboardContent() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-bold text-foreground/60 uppercase tracking-wider">Date Period:</span>
-                  <select
-                    value={reportDateFilter}
-                    onChange={e => setReportDateFilter(e.target.value)}
-                    className="border border-[#C3AB84]/30 rounded-2xl px-4 py-2 text-xs font-bold bg-[#F8F4EE] focus:outline-none focus:border-[#0F3D30]"
-                  >
-                    <option value="7">Last 7 Days</option>
-                    <option value="30">Last 30 Days</option>
-                    <option value="90">Last 90 Days</option>
-                    <option value="all">All Time</option>
-                  </select>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsReportDateDropdownOpen(!isReportDateDropdownOpen)}
+                      className="border border-[#0F3D30] rounded-full px-5 py-2.5 text-xs font-bold text-[#0F3D30] bg-[#FAF6F0] hover:bg-cream/45 transition-all flex items-center gap-2 focus:outline-none shadow-sm"
+                    >
+                      {reportDateFilter === '7' && 'Last 7 Days'}
+                      {reportDateFilter === '30' && 'Last 30 Days'}
+                      {reportDateFilter === '90' && 'Last 90 Days'}
+                      {reportDateFilter === 'all' && 'All Time'}
+                      <ChevronDown className="w-3.5 h-3.5 text-[#0F3D30]" />
+                    </button>
+                    {isReportDateDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-20" onClick={() => setIsReportDateDropdownOpen(false)} />
+                        <div className="absolute top-full right-0 mt-1.5 w-36 bg-white border border-[#C3AB84]/20 rounded-2xl shadow-xl z-30 py-1.5 divide-y divide-[#C3AB84]/5 font-bold text-foreground/80 text-xs overflow-hidden">
+                          {[
+                            { value: '7', label: 'Last 7 Days' },
+                            { value: '30', label: 'Last 30 Days' },
+                            { value: '90', label: 'Last 90 Days' },
+                            { value: 'all', label: 'All Time' },
+                          ].map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => {
+                                setReportDateFilter(opt.value);
+                                setIsReportDateDropdownOpen(false);
+                              }}
+                              className={`w-full px-4 py-2.5 text-left hover:bg-cream/45 transition-colors ${reportDateFilter === opt.value ? 'text-primary bg-[#FAF6F0] font-extrabold' : ''}`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                   <button onClick={fetchReportData} className="p-2 border border-gold/30 hover:bg-cream rounded-full transition-colors text-primary flex items-center justify-center">
                     <RefreshCw className="w-3.5 h-3.5" />
                   </button>
@@ -2831,8 +2860,7 @@ function AdminDashboardContent() {
                   </div>
 
                   <DashboardCharts
-                    revenueData={chartRevenueData}
-                    bookingData={chartBookingData}
+                    bookings={filteredBookings}
                     categoryData={categoryData.length > 0 ? categoryData : undefined}
                   />
 

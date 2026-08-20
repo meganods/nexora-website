@@ -6,6 +6,9 @@ const SupportTicket = require("../models/SupportTicket");
 const ServicePartner = require("../models/ServicePartner");
 const Admin = require("../models/Admin");
 const asyncHandler = require("../utils/asyncHandler");
+const Service = require("../models/Service");
+const Deal = require("../models/Deal");
+const Package = require("../models/Package");
 const { createNotification } = require("./notificationController");
 const mongoose = require("mongoose");
 
@@ -350,11 +353,57 @@ exports.deleteTicketMessage = asyncHandler(async (req, res) => {
 
 // Get User Wishlist
 exports.getUserWishlist = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.id).populate('wishlist');
-  if (!user) {
+  const user = await User.findById(req.user.id).lean();
+  if (!user || !user.wishlist || user.wishlist.length === 0) {
     return res.json({ success: true, wishlist: [] });
   }
-  res.json({ success: true, wishlist: user.wishlist || [] });
+
+  // Fetch all services, deals, and packages matching the wishlist IDs in parallel
+  const wishlistIds = user.wishlist;
+  const [services, deals, packages] = await Promise.all([
+    Service.find({ _id: { $in: wishlistIds } }).lean(),
+    Deal.find({ _id: { $in: wishlistIds } }).lean(),
+    Package.find({ _id: { $in: wishlistIds } }).lean()
+  ]);
+
+  // Combine and normalize properties so the frontend can render them seamlessly
+  const combined = [
+    ...services.map(s => ({
+      _id: s._id,
+      name: s.name,
+      slug: s.slug,
+      basePrice: s.basePrice,
+      imageUrl: s.imageUrl,
+      rating: s.rating || 4.7,
+      reviewCount: s.reviewCount || 120,
+      description: s.description || 'Verified professional home service.',
+      type: 'service'
+    })),
+    ...deals.map(d => ({
+      _id: d._id,
+      name: d.title,
+      slug: d.slug,
+      basePrice: d.finalPrice,
+      imageUrl: d.imageUrl,
+      rating: d.rating || 4.8,
+      reviewCount: d.reviewCount || 10,
+      description: d.description || 'Special Deal',
+      type: 'deal'
+    })),
+    ...packages.map(p => ({
+      _id: p._id,
+      name: p.name,
+      slug: p.slug,
+      basePrice: p.basePrice,
+      imageUrl: p.imageUrl,
+      rating: p.rating || 4.7,
+      reviewCount: p.reviewCount || 15,
+      description: p.description || 'Exclusive Package Deal',
+      type: 'package'
+    }))
+  ];
+
+  res.json({ success: true, wishlist: combined });
 });
 
 // Toggle Wishlist Item

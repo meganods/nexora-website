@@ -63,6 +63,7 @@ const { protect, authorize } = require("../middlewares/auth");
 const router = express.Router();
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
+// router.post("/login", loginAdmin); // (Wait, is this duplicate? It is at line 66)
 router.post("/login", loginAdmin);
 
 // ─── Vendors ──────────────────────────────────────────────────────────────────

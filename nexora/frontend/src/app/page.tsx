@@ -209,8 +209,7 @@ function DealCard({
   wishlist?: string[];
   onToggleWishlist?: (id: string, name: string) => void;
 }) {
-  // Use serviceId reference if it exists, otherwise fall back to _id
-  const targetId = deal.serviceId?._id || deal.serviceId || deal._id;
+  const targetId = deal._id;
   const isFav = wishlist.includes(targetId);
 
   return (
@@ -1011,6 +1010,10 @@ export default function Home() {
   });
 
   const displayDeals = homepageDeals.length > 0 ? homepageDeals.map(d => ({
+    _id: d._id,
+    serviceId: d.serviceId,
+    packageId: d.packageId,
+    dealType: d.dealType,
     name: d.title,
     slug: d.slug,
     description: d.description || (d.serviceId?.name || d.packageId?.name || 'Special Deal'),

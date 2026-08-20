@@ -129,7 +129,16 @@ export default function WishlistPage() {
                       <IndianRupee className="w-3.5 h-3.5" />{service.basePrice}
                     </span>
                   </div>
-                  <Link href={`/services/${service.slug || service._id}`} className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-full hover:bg-primary/95 transition-all shadow-sm">
+                  <Link
+                    href={
+                      service.type === 'deal'
+                        ? `/deals/${service.slug || service._id}`
+                        : service.type === 'package'
+                          ? `/packages/${service.slug || service._id}`
+                          : `/services/${service.slug || service._id}`
+                    }
+                    className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-full hover:bg-primary/95 transition-all shadow-sm"
+                  >
                     Book Now
                   </Link>
                 </div>

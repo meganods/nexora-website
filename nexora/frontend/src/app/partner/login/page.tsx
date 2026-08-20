@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldCheck, Mail, Lock, Eye, EyeOff, Loader2, Star, CheckCircle2, Smartphone } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, Eye, EyeOff, Loader2, Star, CheckCircle2, Smartphone, ChevronLeft } from 'lucide-react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -110,7 +110,10 @@ function PartnerLoginForm() {
       {/* Right Column Service Partner Login Form */}
       <div className="flex flex-col items-center justify-start lg:justify-center w-full relative z-30 -mt-10 lg:mt-0 lg:p-16">
         <div className="w-full lg:max-w-md bg-[#FAF6F0] lg:bg-white rounded-t-[2.5rem] lg:rounded-3xl p-8 sm:p-10 lg:border lg:border-gold/20 lg:shadow-xl shadow-primary/5 min-h-[50vh]">
-          <div className="text-center mb-6 pt-2 lg:pt-0">
+          <div className="text-center mb-6 pt-2 lg:pt-0 flex flex-col items-center">
+            <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-foreground/50 hover:text-primary mb-4 transition-colors font-semibold self-start lg:self-center">
+              <ChevronLeft className="w-3.5 h-3.5" /> Back to Website
+            </Link>
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-primary">Service Partner Login</h1>
             <p className="mt-2 text-xs sm:text-sm text-foreground/60">Access your professional service partner portal</p>
           </div>
