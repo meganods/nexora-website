@@ -5,6 +5,9 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,          // STARTTLS on port 587 (NOT SSL on 465)
   family: 4,              // Force IPv4 — Render blocks outgoing IPv6
+  connectionTimeout: 15000, // Timeout after 15 seconds
+  greetingTimeout: 15000,
+  socketTimeout: 15000,
   auth: {
     user: process.env.EMAIL_USER || "meganodscare@gmail.com",
     // Strip surrounding quotes if present (common env var mistake)
@@ -13,6 +16,23 @@ const transporter = nodemailer.createTransport({
   tls: {
     rejectUnauthorized: false,  // Allow self-signed certs (Render sandbox)
   },
+});
+
+console.log("[SMTP Config] host=smtp.gmail.com port=587 secure=false family=4");
+
+const net = require("net");
+const socket = net.connect(587, "smtp.gmail.com", () => {
+  console.log("[SMTP Diagnostics] TCP connection to smtp.gmail.com:587 established SUCCESSFULLY from Render runtime.");
+  socket.destroy();
+});
+
+socket.on("error", (err) => {
+  console.error("[SMTP Diagnostics] TCP connection to smtp.gmail.com:587 FAILED from Render runtime. Error:", err.message);
+});
+
+socket.setTimeout(10000, () => {
+  console.error("[SMTP Diagnostics] TCP connection to smtp.gmail.com:587 TIMED OUT (10s) from Render runtime.");
+  socket.destroy();
 });
 
 // Verify SMTP connection on startup so we catch config errors early in logs
@@ -58,11 +78,23 @@ const sendOTP = async (email, otp) => {
     };
 
     console.log(`[SMTP Attempt] Attempting to send OTP email to: ${email}`);
-    const info = await transporter.sendMail(mailOptions);
+    console.log(`[SMTP Waiting] sendMail started`);
+
+    // Wrap the sendMail call in a promise race with a 15-second timeout
+    const sendMailPromise = transporter.sendMail(mailOptions);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("SMTP sendMail timed out after 15 seconds")), 15000)
+    );
+
+    const info = await Promise.race([sendMailPromise, timeoutPromise]);
     console.log(`[SMTP Success] Email sent successfully to ${email}. Message ID: ${info.messageId}`);
     return true;
   } catch (error) {
-    console.error(`[SMTP Failure] Failed to send OTP email to ${email}. Error: ${error.message}`, error);
+    if (error.message && error.message.includes("timed out")) {
+      console.error(`[SMTP Timeout] Failed to send OTP email to ${email} within 15 seconds. error: ${error.message}`);
+    } else {
+      console.error(`[SMTP Error] Failed to send OTP email to ${email}. Error: ${error.message}`, error);
+    }
     return false;
   }
 };
