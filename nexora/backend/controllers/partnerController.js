@@ -1087,21 +1087,6 @@ const createPartnerService = asyncHandler(async (req, res) => {
     isDeleted: false
   });
 
-  const { createNotification } = require('./notificationController');
-  const Admin = require('../models/Admin');
-  const admins = await Admin.find({});
-  const vendorName = req.user.name || "A partner";
-  for (const admin of admins) {
-    await createNotification(
-      admin._id,
-      'admin',
-      'New Service Pending Approval',
-      `${vendorName} submitted a new service/sub-service "${name}" for approval.`,
-      'system',
-      { serviceId: service._id }
-    ).catch(() => {});
-  }
-
   res.status(201).json({ success: true, message: "Service created successfully.", service });
 });
 

@@ -1280,7 +1280,6 @@ function AdminDashboardContent() {
     { id: 'metrics', label: 'Overview', icon: ShoppingBag },
     { id: 'locations', label: 'Locations', icon: MapPin },
     { id: 'categories', label: 'Service Categories', icon: Tag },
-    { id: 'service_approvals', label: 'Service Approvals', icon: CheckCircle2 },
     { id: 'services', label: 'Services', icon: Package },
     { id: 'sub_services', label: 'Sub Services', icon: ListCollapse },
     { id: 'packages', label: 'Packages', icon: Gift },
