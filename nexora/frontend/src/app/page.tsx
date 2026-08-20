@@ -1650,18 +1650,25 @@ export default function Home() {
               </div>
 
               {/* Live data trust bar */}
-              <div className="mt-10 bg-gradient-to-r from-primary/5 via-beige/60 to-primary/5 rounded-2xl px-6 py-4 flex flex-wrap items-center justify-center gap-6 border border-gold/10">
-                {displayServices.slice(0, 4).map((s: any) => (
-                  <div key={s.slug || s._id} className="flex items-center gap-2 text-xs text-foreground/60">
-                    <span className="w-2 h-2 rounded-full bg-primary/40 flex-shrink-0" />
-                    {s.bookingCount && s.bookingCount > 0 ? (
-                      <><span className="font-semibold text-primary/80">{s.bookingCount.toLocaleString('en-IN')}</span><span>{s.name} bookings</span></>
-                    ) : (
-                      <><span className="font-semibold text-primary/80">{(s.reviewCount || 0) >= 1000 ? `${((s.reviewCount || 0) / 1000).toFixed(1)}K` : (s.reviewCount || '—')}</span><span>{s.name} bookings</span></>
-                    )}
-                  </div>
-                ))}
-              </div>
+              {displayServices.slice(0, 4).some((s: any) => (s.bookingCount && s.bookingCount > 0) || (s.reviewCount && s.reviewCount > 0)) && (
+                <div className="mt-10 bg-gradient-to-r from-primary/5 via-beige/60 to-primary/5 rounded-2xl px-6 py-4 flex flex-wrap items-center justify-center gap-6 border border-gold/10">
+                  {displayServices.slice(0, 4).map((s: any) => {
+                    const hasRealBookings = s.bookingCount && s.bookingCount > 0;
+                    const hasRealReviews = s.reviewCount && s.reviewCount > 0;
+                    if (!hasRealBookings && !hasRealReviews) return null;
+                    return (
+                      <div key={s.slug || s._id} className="flex items-center gap-2 text-xs text-foreground/60">
+                        <span className="w-2 h-2 rounded-full bg-primary/40 flex-shrink-0" />
+                        {hasRealBookings ? (
+                          <><span className="font-semibold text-primary/80">{s.bookingCount.toLocaleString('en-IN')}</span><span>{s.name} bookings</span></>
+                        ) : (
+                          <><span className="font-semibold text-primary/80">{s.reviewCount >= 1000 ? `${(s.reviewCount / 1000).toFixed(1)}K` : s.reviewCount}</span><span>{s.name} bookings</span></>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </section>
         );
