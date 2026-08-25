@@ -52,7 +52,6 @@ app.use("/api/partner", require("./routes/partnerRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/bookings", require("./routes/bookingRoutes"));
 app.use("/api/promotions", require("./routes/promotionRoutes"));
-app.use("/api/webhooks", require("./routes/webhookRoutes"));
 app.use("/api/upload", require("./routes/uploadRoutes"));
 app.use("/api/locations", require("./routes/locationRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));

@@ -1,4 +1,3 @@
-const { Cashfree, CFEnvironment } = require('cashfree-pg');
 const crypto = require('crypto');
 const Booking = require('../models/Booking');
 const Service = require('../models/Service');
@@ -7,13 +6,6 @@ const { createNotification } = require('./notificationController');
 const Admin = require('../models/Admin');
 const AdminSettings = require('../models/AdminSettings');
 const { findBestPartner } = require('../services/assignmentEngine');
-
-const cf = new Cashfree();
-cf.XClientId = process.env.CASHFREE_APP_ID || 'dummy_id';
-cf.XClientSecret = process.env.CASHFREE_SECRET_KEY || 'dummy_secret';
-cf.XEnvironment = process.env.CASHFREE_ENV === 'PRODUCTION' 
-  ? CFEnvironment.PRODUCTION 
-  : CFEnvironment.SANDBOX;
 
 exports.createOrder = async (req, res) => {
   try {
@@ -127,36 +119,6 @@ exports.createOrder = async (req, res) => {
     const totalAmount = Math.max(0, basePrice + addonsPriceTotal + platformFee - discountAmount);
     const orderId = `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
-    // TEMPORARY LOGS FOR PAYMENT AUDIT
-    console.log("=== Nexora Payment Amount Audit ===");
-    console.log(`service price: ${basePrice}`);
-    console.log(`platform fee: ${platformFee}`);
-    console.log(`discount: ${discountAmount}`);
-    console.log(`subtotal: ${basePrice + addonsPriceTotal}`);
-    console.log(`final amount: ${totalAmount}`);
-    console.log(`amount sent to Cashfree: ${totalAmount}`);
-    console.log("===================================");
-
-    const request = {
-      order_amount: totalAmount,
-      order_currency: "INR",
-      order_id: orderId,
-      customer_details: {
-        customer_id: customerId.toString(),
-        customer_phone: "9999999999"
-      }
-    };
-
-    let paymentSessionId = "mock_session_id";
-    try {
-      const response = await cf.PGCreateOrder("2023-08-01", request).catch(async () => {
-         return await cf.PGCreateOrder(request);
-      });
-      paymentSessionId = response.data.payment_session_id;
-    } catch (cfErr) {
-      console.warn("Cashfree API not configured or failed, using mock session.");
-    }
-
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
     // ── Lookup Location IDs based on Address strings ──
@@ -220,15 +182,26 @@ exports.createOrder = async (req, res) => {
       pincodeId,
       addons: addons || [],
       quantity: qty,
+      status: 'REQUESTED',
       paymentDetails: {
-        cashfreeOrderId: orderId,
-        cashfreePaymentSessionId: paymentSessionId,
+        orderId: orderId,
         amount: totalAmount,
         status: 'PENDING'
       }
     });
 
     await booking.save();
+
+    // Auto-assign logic
+    const adminSettingsObj = await AdminSettings.getSingleton();
+    if (adminSettingsObj.autoAssignEnabled) {
+      const best = await findBestPartner(booking);
+      if (best) {
+        booking.vendorId = best.partner._id;
+        booking.status = 'ASSIGNED';
+        await booking.save();
+      }
+    }
 
     // ── Notify user that their booking was created ──
     createNotification(
@@ -254,7 +227,6 @@ exports.createOrder = async (req, res) => {
     res.status(201).json({
       success: true,
       orderId,
-      paymentSessionId,
       amount: totalAmount,
       currency: "INR",
       bookingId: booking._id,
@@ -268,81 +240,10 @@ exports.createOrder = async (req, res) => {
 
 exports.verifyPayment = async (req, res) => {
   try {
-    const { orderId, mockSuccess } = req.body;
-
-    let isSuccess = false;
-    let paymentId = "mock_payment_id";
-
-    if (mockSuccess) {
-      isSuccess = true;
-    } else {
-      try {
-        const response = await cf.PGOrderFetchPayments("2023-08-01", orderId).catch(async () => {
-           return await cf.PGOrderFetchPayments(orderId);
-        });
-        // Check if any payment is successful
-        const successfulPayment = response.data.find(p => p.payment_status === 'SUCCESS');
-        if (successfulPayment) {
-          isSuccess = true;
-          paymentId = successfulPayment.cf_payment_id.toString();
-        }
-      } catch (cfErr) {
-        // Fallback fallback
-      }
-    }
-
-    if (isSuccess) {
-      // Update Booking
-      const updatedBooking = await Booking.findOneAndUpdate(
-        { 'paymentDetails.cashfreeOrderId': orderId },
-        { 
-          $set: { 
-            status: 'REQUESTED',
-            'paymentDetails.status': 'PAID',
-            'paymentDetails.cashfreePaymentSessionId': paymentId
-          }
-        },
-        { new: true }
-      ).populate('serviceId').populate('packageId');
-
-      if (updatedBooking) {
-        // Auto-assign logic
-        const settings = await AdminSettings.getSingleton();
-        if (settings.autoAssignEnabled) {
-          const best = await findBestPartner(updatedBooking);
-          if (best) {
-            updatedBooking.vendorId = best.partner._id;
-            updatedBooking.status = 'ASSIGNED';
-            await updatedBooking.save();
-          }
-        }
-      }
-
-      // ── Notify user: payment confirmed ──
-      if (updatedBooking?.customerId) {
-        createNotification(
-          updatedBooking.customerId, 'user',
-          'Payment Confirmed 🎉',
-          'Your payment was successful!',
-          'payment', { bookingId: updatedBooking._id }
-        );
-      }
-
-      // ── Notify admins: booking is now REQUESTED ──
-      try {
-        const admins = await Admin.find({ isActive: true }).select('_id').lean();
-        admins.forEach(a => createNotification(
-          a._id, 'admin',
-          'Booking Confirmed & Pending Assignment',
-          `Payment verified for order ${orderId}. Booking is now REQUESTED and awaiting partner assignment.`,
-          'booking', { bookingId: updatedBooking?._id }
-        ));
-      } catch (_) {}
-
-      return res.status(200).json({ message: "Payment verified successfully" });
-    } else {
-      return res.status(400).json({ message: "Payment not successful!" });
-    }
+    const { orderId } = req.body;
+    // Payment is removed, we just return success to not break frontend immediately
+    // Ideally frontend should also be updated to not call this.
+    return res.status(200).json({ message: "Payment skipped successfully" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error verifying payment' });

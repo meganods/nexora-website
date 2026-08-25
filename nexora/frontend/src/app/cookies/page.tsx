@@ -14,7 +14,7 @@ export default function CookiePage() {
           {[
             { title: 'What are Cookies?', content: 'Cookies are small text files stored on your device when you visit a website. They help us remember your preferences and improve your experience.' },
             { title: 'Cookies We Use', content: 'Session cookies (required for login and booking state), preference cookies (remember your city/location selection), analytics cookies (understand how users interact with our platform, using anonymised data), and security cookies (protect against fraud and CSRF attacks).' },
-            { title: 'Third-Party Cookies', content: 'We use trusted third-party services including Google Analytics for usage insights, Cashfree for payment processing, and Cloudinary for image delivery. These services may set their own cookies.' },
+            { title: 'Third-Party Cookies', content: 'We use trusted third-party services including Google Analytics for usage insights, and Cloudinary for image delivery. These services may set their own cookies.' },
             { title: 'Managing Cookies', content: 'You can control cookies through your browser settings. Note that disabling essential cookies may affect website functionality such as staying logged in.' },
             { title: 'Contact', content: 'For cookie-related questions, contact us at privacy@nexora.in.' },
           ].map((section, i) => (

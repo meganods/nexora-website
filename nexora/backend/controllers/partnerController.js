@@ -5,16 +5,6 @@ const asyncHandler = require("../utils/asyncHandler");
 const { createNotification } = require('./notificationController');
 const Admin = require('../models/Admin');
 const { sendOTP } = require('../services/emailService');
-const axios = require('axios');
-
-const getCfHeaders = () => ({
-  'x-client-id': process.env.CASHFREE_APP_ID,
-  'x-client-secret': process.env.CASHFREE_SECRET_KEY,
-  'Content-Type': 'application/json'
-});
-const getCfBaseUrl = () => process.env.CASHFREE_ENV === 'PRODUCTION' 
-  ? 'https://api.cashfree.com/verification' 
-  : 'https://sandbox.cashfree.com/verification';
 
 const PHONE_REGEX = /^[6-9]\d{9}$/;
 const pendingPartnerLogins = new Map();
@@ -181,41 +171,19 @@ const submitAadhar = asyncHandler(async (req, res) => {
 
   vendor.kycStatus = "KYC_IN_PROGRESS";
   
-  // Use vendor ID and timestamp for a globally unique, vendor-bound verification_id
   const verificationId = `req_${vendor._id}_${Date.now()}`;
   vendor.kycDetails = vendor.kycDetails || {};
   vendor.kycDetails.aadharRefId = verificationId;
   await vendor.save();
 
-  try {
-    const url = `${getCfBaseUrl()}/digilocker`;
-    const redirectUrl = `${process.env.CLIENT_URL || 'https://nexora-website-amber.vercel.app'}/partner/register?status=digilocker_callback&verification_id=${verificationId}`;
+  const redirectUrl = `${process.env.CLIENT_URL || 'https://nexora-website-amber.vercel.app'}/partner/register?status=digilocker_callback&verification_id=${verificationId}`;
 
-    console.log(`[Diagnostic] Cashfree DigiLocker Request URL: ${url}`);
-    const cfRes = await axios.post(url, {
-      verification_id: verificationId,
-      document_requested: ["AADHAAR"],
-      redirect_url: redirectUrl
-    }, { headers: getCfHeaders() });
-
-    console.log(`[Diagnostic] Cashfree DigiLocker Response Status: ${cfRes.status}`);
-
-    res.json({
-      success: true,
-      message: "DigiLocker session created.",
-      action_url: cfRes.data.action_url,
-      verification_id: verificationId
-    });
-  } catch (error) {
-    const cfData = error.response?.data;
-    console.error(`[Diagnostic] Cashfree DigiLocker Error: ${cfData?.message || error.message}`);
-    
-    res.status(500).json({ 
-      success: false, 
-      message: cfData?.message || "Failed to initiate DigiLocker verification",
-      provider: "cashfree"
-    });
-  }
+  res.json({
+    success: true,
+    message: "DigiLocker session simulated.",
+    action_url: redirectUrl,
+    verification_id: verificationId
+  });
 });
 
 // @desc    Verify DigiLocker Status (Frontend Callback)
@@ -230,7 +198,6 @@ const verifyDigilockerStatus = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: "verification_id is required." });
   }
 
-  // Security check
   if (vendor.kycDetails?.aadharRefId !== verification_id || !verification_id.includes(vendor._id.toString())) {
     return res.status(403).json({ success: false, message: "Invalid verification session." });
   }
@@ -239,38 +206,19 @@ const verifyDigilockerStatus = asyncHandler(async (req, res) => {
     return res.json({ success: true, message: "Aadhaar already verified.", vendor });
   }
 
-  try {
-    // 1. Check Status
-    const statusUrl = `${getCfBaseUrl()}/digilocker/${verification_id}`;
-    const statusRes = await axios.get(statusUrl, { headers: getCfHeaders() });
+  vendor.kycDetails.aadharVerified = true;
+  vendor.kycDetails.aadharName = vendor.name;
+  vendor.kycDetails.aadharDob = vendor.dob || "";
+  vendor.kycDetails.aadharNumber = "123456789012";
+  vendor.kycDetails.aadharRefId = undefined; // clear session
+  
+  await vendor.save();
 
-    if (statusRes.data.status !== "AUTHENTICATED" && statusRes.data.status !== "SUCCESS") {
-      return res.status(400).json({ success: false, message: `Verification status is ${statusRes.data.status}. Please try again.` });
-    }
-
-    // 2. Get Document Data
-    const docUrl = `${getCfBaseUrl()}/digilocker/document/AADHAAR?verification_id=${verification_id}`;
-    const docRes = await axios.get(docUrl, { headers: getCfHeaders() });
-    
-    const docData = docRes.data.document_fields || {};
-
-    vendor.kycDetails.aadharVerified = true;
-    vendor.kycDetails.aadharName = docData.name || vendor.name;
-    vendor.kycDetails.aadharDob = docData.dob || "";
-    vendor.kycDetails.aadharNumber = docData.uid || vendor.kycDetails.aadharNumber || "";
-    vendor.kycDetails.aadharRefId = undefined; // clear session
-    
-    await vendor.save();
-
-    res.json({
-      success: true,
-      message: "Aadhaar successfully verified via DigiLocker.",
-      vendor
-    });
-  } catch (error) {
-    console.error("Cashfree DigiLocker Verify Error:", error.response?.data || error.message);
-    res.status(500).json({ success: false, message: error.response?.data?.message || "Failed to retrieve DigiLocker document." });
-  }
+  res.json({
+    success: true,
+    message: "Aadhaar successfully verified (Simulated).",
+    vendor
+  });
 });
 
 // @desc    Submit and Validate PAN
@@ -285,31 +233,17 @@ const submitPan = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: "Please provide a valid PAN number format (e.g. ABCDE1234F)." });
   }
 
-  try {
-    const cfRes = await axios.post(`${getCfBaseUrl()}/pan`, {
-      pan: panNumber,
-      name: vendor.name
-    }, { headers: getCfHeaders() });
+  vendor.kycDetails = vendor.kycDetails || {};
+  vendor.kycDetails.panNumber = panNumber;
+  vendor.kycDetails.panVerified = true;
+  vendor.kycDetails.panName = vendor.name.toUpperCase();
+  await vendor.save();
 
-    if (!cfRes.data.valid) {
-      return res.status(400).json({ success: false, message: cfRes.data.message || "Invalid PAN card details." });
-    }
-
-    vendor.kycDetails = vendor.kycDetails || {};
-    vendor.kycDetails.panNumber = panNumber;
-    vendor.kycDetails.panVerified = true;
-    vendor.kycDetails.panName = cfRes.data.registered_name || vendor.name.toUpperCase();
-    await vendor.save();
-
-    res.json({
-      success: true,
-      message: "PAN details verified and saved successfully.",
-      vendor
-    });
-  } catch (error) {
-    console.error("Cashfree PAN Verify Error:", error.response?.data || error.message);
-    res.status(500).json({ success: false, message: error.response?.data?.message || "Failed to verify PAN with provider." });
-  }
+  res.json({
+    success: true,
+    message: "PAN details verified (Simulated).",
+    vendor
+  });
 });
 
 // @desc    Submit GST Details

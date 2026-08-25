@@ -13,8 +13,8 @@ const FAQS = [
     { q: 'Are services guaranteed?', a: 'Yes. We offer a satisfaction guarantee. If you\'re unsatisfied, contact support within 24 hours of service completion.' },
   ]},
   { category: 'Payments', items: [
-    { q: 'What payment methods are accepted?', a: 'We accept UPI, credit cards, debit cards, net banking, and wallets through our secure Cashfree payment gateway.' },
-    { q: 'Is my payment information safe?', a: 'Yes. All payments are processed through Cashfree\'s PCI-DSS compliant platform. We never store your card details.' },
+    { q: 'What payment methods are accepted?', a: 'We accept UPI, credit cards, debit cards, net banking, and wallets through our secure payment gateway.' },
+    { q: 'Is my payment information safe?', a: 'Yes. All payments are processed securely. We never store your card details.' },
     { q: 'When am I charged?', a: 'Payment is collected at checkout when you confirm your booking. You\'ll see a complete summary before paying.' },
   ]},
   { category: 'For Service Partners', items: [

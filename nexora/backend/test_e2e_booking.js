@@ -53,12 +53,12 @@ async function runTests() {
     const orderId = bookingRes.data.orderId;
     let bookingId = bookingRes.data.bookingId;
 
-    // We cannot use Cashfree without a real checkout, so we mock the payment manually via Mongoose
+    // We cannot use a real payment gateway without a real checkout, so we mock the payment manually via Mongoose
     const Booking = require('./models/Booking');
     await Booking.findByIdAndUpdate(bookingId, {
       status: 'REQUESTED',
       'paymentDetails.status': 'PAID',
-      'paymentDetails.cashfreePaymentSessionId': 'mock_payment'
+      'paymentDetails.orderId': 'mock_payment'
     });
     console.log('✅ Booking creation and mock payment VERIFIED');
 

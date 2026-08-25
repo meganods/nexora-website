@@ -84,8 +84,7 @@ const bookingSchema = new mongoose.Schema({
     default: 'PENDING_PAYMENT'
   },
   paymentDetails: {
-    cashfreeOrderId: String,
-    cashfreePaymentSessionId: String,
+    orderId: String,
     amount: Number,
     status: {
       type: String,

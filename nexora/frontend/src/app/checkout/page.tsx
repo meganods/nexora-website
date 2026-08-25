@@ -326,7 +326,7 @@ function CheckoutForm() {
     return await api.post('/bookings/create-order', payload);
   };
 
-  const handlePayment = async () => {
+  const handleConfirmBooking = async () => {
     const activeAddr = getActiveAddress();
     if (!activeAddr) { alert('Please select or fill a complete service address.'); return; }
     if (!date) { alert('Please select a service date.'); return; }
@@ -339,43 +339,9 @@ function CheckoutForm() {
     setIsProcessing(true);
     try {
       const { data } = await createOrder();
-      
-      if (data.paymentSessionId === 'mock_session_id') {
-        // Fallback for development without Cashfree API keys
-        await api.post('/bookings/verify-payment', { orderId: data.orderId, mockSuccess: true });
-        router.push(`/bookings/${data.bookingId}`);
-        return;
-      }
-
-      const cashfree = await (window as any).Cashfree({ mode: 'production' });
-      cashfree.checkout({ paymentSessionId: data.paymentSessionId, redirectTarget: '_modal' }).then((result: any) => {
-        if (result.paymentDetails) router.push(`/bookings/${data.bookingId}`);
-        else if (result.error) alert('Payment failed or cancelled');
-      });
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Payment initiation failed');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleSimulatePayment = async () => {
-    const activeAddr = getActiveAddress();
-    if (!activeAddr) { alert('Please select or fill a complete service address.'); return; }
-    if (!date) { alert('Please select a service date.'); return; }
-    if (!selectedTimeSlot) { alert('Please select an available hourly time slot.'); return; }
-    if (selectedTimeSlot === 'Custom Time' && !customTimeVal.trim()) {
-      alert('Please fill in your custom time.');
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const { data } = await createOrder();
-      await api.post('/bookings/verify-payment', { orderId: data.orderId, mockSuccess: true });
       router.push(`/bookings/${data.bookingId}`);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Mock payment failed');
+      alert(error.response?.data?.message || 'Booking initiation failed');
     } finally {
       setIsProcessing(false);
     }
@@ -460,7 +426,6 @@ function CheckoutForm() {
 
   return (
     <div className="min-h-screen bg-cream overflow-x-hidden">
-      <Script src="https://sdk.cashfree.com/js/v3/cashfree.js" />
 
       {/* Header */}
       <header className="bg-white border-b border-gold/20 py-5 px-4">
@@ -799,21 +764,10 @@ function CheckoutForm() {
                 <span className="font-serif text-2xl font-bold text-primary">₹{total}</span>
               </div>
 
-              <button onClick={handlePayment} disabled={isProcessing}
+              <button onClick={handleConfirmBooking} disabled={isProcessing}
                 className="w-full flex items-center justify-center gap-2 py-3.5 bg-primary text-white rounded-full font-bold hover:bg-primary/95 transition-colors shadow-md disabled:opacity-70 text-xs sm:text-sm">
-                {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CreditCard className="w-4 h-4" /> Pay & Book</>}
+                {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Calendar className="w-4 h-4" /> Confirm Booking</>}
               </button>
-              <p className="text-center text-xs text-foreground/40 mt-3">Secured by Cashfree</p>
-
-              {process.env.NODE_ENV === 'development' && (
-                <div className="mt-5 pt-5 border-t border-gold/20">
-                  <button onClick={handleSimulatePayment} disabled={isProcessing}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-cream border border-gold/50 text-primary rounded-xl font-medium hover:bg-beige transition-colors text-xs disabled:opacity-70">
-                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : '🧪 Simulate Successful Payment'}
-                  </button>
-                  <p className="text-center text-[10px] text-foreground/40 mt-2">Development mode only</p>
-                </div>
-              )}
             </div>
           </div>
 

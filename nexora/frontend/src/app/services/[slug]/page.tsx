@@ -748,7 +748,7 @@ export default function ServiceDetailPage() {
               </button>
 
               <div className="text-center space-y-2">
-                <span className="block text-[8px] uppercase tracking-wider text-foreground/45 font-bold">Secured by Cashfree</span>
+                <span className="block text-[8px] uppercase tracking-wider text-foreground/45 font-bold">Secured</span>
                 <div className="flex items-center justify-center gap-2 bg-[#FAF6F0] p-2.5 rounded-xl border border-gold/10 text-[10px] text-foreground/75">
                   <Shield className="w-3.5 h-3.5 text-[#C3AB84] shrink-0" />
                   <span className="font-semibold">100% Secure Payments</span>

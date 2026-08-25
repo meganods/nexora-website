@@ -12,7 +12,7 @@ export default function PrivacyPage() {
       <div className="container mx-auto max-w-3xl px-4 -mt-10 pb-20">
         <div className="bg-white rounded-3xl p-8 sm:p-12 border border-gold/20 shadow-sm space-y-8">
           {[
-            { title: '1. Information We Collect', content: 'We collect information you provide during registration (name, email, phone), booking details (address, service type, date), payment information (processed securely by Cashfree, we do not store card details), and usage data (pages visited, features used).' },
+            { title: '1. Information We Collect', content: 'We collect information you provide during registration (name, email, phone), booking details (address, service type, date), payment information (processed securely, we do not store card details), and usage data (pages visited, features used).' },
             { title: '2. How We Use Your Information', content: 'We use your information to process bookings and assign professionals, communicate service updates and confirmations, improve our platform and services, comply with legal obligations, and send promotional communications (with your consent).' },
             { title: '3. Information Sharing', content: 'We share your name, address, and contact details with the assigned service professional only after booking confirmation. We do not sell your personal information to third parties. We may share data with payment processors, cloud services, and analytics providers who are bound by confidentiality agreements.' },
             { title: '4. Data Security', content: 'We implement industry-standard security measures including SSL encryption, secure database storage, access controls, and regular security audits to protect your personal information.' },

@@ -412,7 +412,7 @@ export default function PartnerRegisterWizard() {
             {[
               { icon: '📍', title: 'Reach More Customers', desc: 'Get matched with customers in your service areas automatically' },
               { icon: '📅', title: 'Manage Bookings Easily', desc: 'Accept, track and complete bookings from your dashboard' },
-              { icon: '💰', title: 'Secure & Fast Payments', desc: 'Cashfree-powered payouts directly to your registered bank account' },
+              { icon: '💰', title: 'Secure & Fast Payments', desc: 'Direct payouts to your registered bank account' },
               { icon: '📈', title: 'Grow Your Business', desc: 'Analytics, ratings, and promotions to build customer trust' },
               { icon: '🔒', title: 'Verified Professional Network', desc: 'KYC-verified partners earn premium customer confidence' },
               { icon: '⭐', title: 'Build Customer Trust', desc: 'Ratings and reviews help you stand out from the competition' },
