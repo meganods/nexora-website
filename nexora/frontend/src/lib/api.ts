@@ -1,16 +1,18 @@
 import axios from 'axios';
 
 const getBaseURL = () => {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
   if (typeof window !== 'undefined') {
     const { hostname } = window.location;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://localhost:5000/api';
     }
-    // Production Vercel deployment — use the Render backend URL
-    return 'https://nexora-website-gnhl.onrender.com/api';
+  }
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof window !== 'undefined') {
+    // Same-origin relative path for unified Vercel deployment
+    return '/api';
   }
   // SSR fallback
   return 'http://127.0.0.1:5000/api';

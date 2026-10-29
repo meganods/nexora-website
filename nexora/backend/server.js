@@ -13,10 +13,15 @@ const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || origin.startsWith("http://localhost") || origin.startsWith("http://192.168.")) {
+      if (
+        !origin ||
+        origin.startsWith("http://localhost") ||
+        origin.startsWith("http://192.168.") ||
+        origin.endsWith(".vercel.app")
+      ) {
         callback(null, true);
       } else {
-        callback(null, CLIENT_URL);
+        callback(null, CLIENT_URL || true);
       }
     },
     credentials: true,
@@ -24,6 +29,16 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// Ensure DB is connected for serverless environments
+app.use(async (_req, _res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 app.use(express.json({ 
   limit: "10mb",
@@ -88,17 +103,24 @@ app.use((err, _req, res, _next) => {
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
 const startServer = async () => {
-  await connectDB();
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error("Initial DB connection failed:", err.message);
+  }
 
-  app.listen(PORT, () => {
-    console.log(`Nexora API listening on port ${PORT} [${process.env.NODE_ENV || "development"}]`);
-    
-    // Prevent Render Free Tier from sleeping
-    const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${PORT}`;
-    setInterval(() => {
-      fetch(`${BACKEND_URL}/api/health`).catch(err => console.error("Ping failed:", err.message));
-    }, 14 * 60 * 1000); // 14 minutes
-  });
+  // Only bind port when running standalone (not on serverless/Vercel)
+  if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+      console.log(`Nexora API listening on port ${PORT} [${process.env.NODE_ENV || "development"}]`);
+      
+      // Prevent Render Free Tier from sleeping
+      const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${PORT}`;
+      setInterval(() => {
+        fetch(`${BACKEND_URL}/api/health`).catch(err => console.error("Ping failed:", err.message));
+      }, 14 * 60 * 1000); // 14 minutes
+    });
+  }
 };
 
 startServer();
